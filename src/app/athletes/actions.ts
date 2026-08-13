@@ -1,0 +1,227 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { getCurrentCoachId } from "@/lib/supabase/auth";
+import * as athletesService from "@/lib/services/athletes";
+import type {
+  AthleteSex,
+  Discipline,
+  ExperienceLevel,
+  GoalModality,
+  GoalType,
+  MembershipMode,
+  RaceReference,
+} from "@/lib/domain/types";
+
+/** Errors keyed by field name so each input can render its own message. */
+export interface FormState {
+  errors?: Partial<Record<athletesService.ValidationField, string>>;
+  success?: boolean;
+}
+
+/** Kept as an alias so the create dialog keeps its original, more descriptive type name. */
+export type CreateAthleteState = FormState;
+
+function fieldErrorState(error: unknown): FormState {
+  if (error instanceof athletesService.FieldValidationError) {
+    return { errors: { [error.field]: error.message } };
+  }
+  return { errors: { general: error instanceof Error ? error.message : "Algo salió mal." } };
+}
+
+function disciplinesFrom(formData: FormData): Discipline[] {
+  return formData.getAll("disciplines").map(String) as Discipline[];
+}
+
+function optionalString(formData: FormData, key: string): string | undefined {
+  return String(formData.get(key) ?? "") || undefined;
+}
+
+function sportProfileFrom(formData: FormData): athletesService.SportProfileFormInput {
+  return {
+    disciplines: disciplinesFrom(formData),
+    level: optionalString(formData, "level") as ExperienceLevel | undefined,
+    weeklyAvailabilityDays: optionalString(formData, "weeklyAvailabilityDays"),
+    weeklyAvailabilityHours: optionalString(formData, "weeklyAvailabilityHours"),
+    runThresholdPace: optionalString(formData, "runThresholdPace"),
+    bikeFtpWatts: optionalString(formData, "bikeFtpWatts"),
+    swimThresholdPace: optionalString(formData, "swimThresholdPace"),
+    maxHr: optionalString(formData, "maxHr"),
+    restHr: optionalString(formData, "restHr"),
+  };
+}
+
+function goalFrom(formData: FormData): athletesService.SaveGoalInput {
+  return {
+    type: String(formData.get("goalType") ?? "maintenance") as GoalType,
+    raceName: String(formData.get("raceName") ?? ""),
+    raceDate: String(formData.get("raceDate") ?? ""),
+    modality: (String(formData.get("modality") ?? "") || undefined) as GoalModality | undefined,
+    format: String(formData.get("format") ?? "") || undefined,
+    targetPace: String(formData.get("targetPace") ?? ""),
+  };
+}
+
+export async function createAthleteAction(
+  _prev: CreateAthleteState,
+  formData: FormData
+): Promise<CreateAthleteState> {
+  let athleteId: string;
+
+  try {
+    const coachId = await getCurrentCoachId();
+    const athlete = await athletesService.createAthlete(coachId, {
+      fullName: String(formData.get("fullName") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      phone: optionalString(formData, "phone"),
+      birthDate: optionalString(formData, "birthDate"),
+      sex: optionalString(formData, "sex") as AthleteSex | undefined,
+      goal: goalFrom(formData),
+      sendInviteNow: formData.get("sendInviteNow") === "on",
+      ...sportProfileFrom(formData),
+    });
+    athleteId = athlete.id;
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath("/athletes");
+  redirect(`/athletes/${athleteId}`);
+}
+
+export async function updateAthleteAction(
+  athleteId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.updateAthlete(athleteId, coachId, {
+      fullName: String(formData.get("fullName") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      phone: optionalString(formData, "phone"),
+      birthDate: optionalString(formData, "birthDate"),
+      sex: optionalString(formData, "sex") as AthleteSex | undefined,
+    });
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return { success: true };
+}
+
+export async function saveSportProfileAction(
+  athleteId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.saveSportProfile(athleteId, coachId, sportProfileFrom(formData));
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return { success: true };
+}
+
+export async function saveGoalAction(
+  athleteId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.saveGoal(athleteId, coachId, goalFrom(formData));
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return { success: true };
+}
+
+export async function saveMembershipAction(
+  athleteId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.saveMembership(athleteId, coachId, {
+      mode: String(formData.get("mode") ?? "manual") as MembershipMode,
+      amount: String(formData.get("amount") ?? ""),
+      currency: String(formData.get("currency") ?? "$"),
+    });
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return { success: true };
+}
+
+export async function addRecordAction(
+  athleteId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.addRaceRecord(athleteId, coachId, {
+      reference: String(formData.get("reference") ?? "5k") as RaceReference,
+      time: String(formData.get("time") ?? ""),
+      recordedOn: String(formData.get("recordedOn") ?? ""),
+      note: String(formData.get("note") ?? ""),
+    });
+  } catch (error) {
+    return fieldErrorState(error);
+  }
+
+  revalidatePath(`/athletes/${athleteId}`);
+  return { success: true };
+}
+
+export interface InviteActionResult {
+  error?: string;
+}
+
+export async function sendInviteAction(
+  athleteId: string,
+  email?: string
+): Promise<InviteActionResult> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.sendInvite(athleteId, coachId, email);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo enviar la invitación." };
+  }
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return {};
+}
+
+export async function cancelInviteAction(athleteId: string): Promise<InviteActionResult> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.cancelInvite(athleteId, coachId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo cancelar la invitación." };
+  }
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return {};
+}
+
+export async function markPeriodPaidAction(athleteId: string): Promise<void> {
+  const coachId = await getCurrentCoachId();
+  await athletesService.markPeriodPaid(athleteId, coachId);
+  revalidatePath(`/athletes/${athleteId}`);
+}
