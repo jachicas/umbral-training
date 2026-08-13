@@ -16,7 +16,7 @@ type Errors = Partial<Record<ValidationField, string>>;
 /**
  * Disciplines, experience, availability and the training thresholds that
  * condition on which disciplines are picked — a runner never sees an FTP
- * field. Shared by the onboarding page and the ficha's "Perfil deportivo" card.
+ * field. Shared by the onboarding page and the athlete profile's "Perfil deportivo" card.
  */
 export function SportProfileFields({ athlete, errors }: { athlete?: Athlete | null; errors?: Errors }) {
   const [disciplines, setDisciplines] = useState<Discipline[]>(athlete?.disciplines ?? []);

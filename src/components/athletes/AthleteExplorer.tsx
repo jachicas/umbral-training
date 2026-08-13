@@ -59,7 +59,7 @@ export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
   const filtered = useMemo(() => {
     return athletes.filter((a) => {
       if (pay === "paid" && a.paymentStatus !== "paid") return false;
-      // An athlete with no agreed cuota owes nothing, so it is not "pendiente".
+      // An athlete with no agreed fee owes nothing, so it is not "pending".
       if (pay === "pending" && !(a.paymentConfigured && isPendingOrOverdue(a.paymentStatus))) {
         return false;
       }

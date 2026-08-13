@@ -41,7 +41,7 @@ function SectionCard({
 
 /**
  * Full onboarding, one <form> across four cards. Field groups (identity,
- * sport profile, goal) are the same ones the ficha's edit dialogs use, so
+ * sport profile, goal) are the same ones the athlete profile's edit dialogs use, so
  * creation and later edits never drift into different shapes.
  */
 export function CreateAthleteForm() {

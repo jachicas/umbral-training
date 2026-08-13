@@ -34,7 +34,7 @@ export function isRaceGoal(goal: Goal | null): goal is Goal & { type: "race" } {
 
 /**
  * A race goal can exist before the coach knows which race it is — creating a
- * ficha only asks for the goal *type*. Until name and date are in, the detail
+ * athlete profile only asks for the goal *type*. Until name and date are in, the detail
  * card must prompt for them rather than render a card full of blanks.
  */
 export function isRaceGoalDefined(goal: Goal | null): boolean {

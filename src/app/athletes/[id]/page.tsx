@@ -140,7 +140,7 @@ export default async function AtletaDetailPage({
       {/* ---------------- 2-column grid ---------------- */}
       <div className="grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div className="flex min-w-0 flex-col gap-4">
-          {/* marcas de carrera */}
+          {/* race records */}
           <div
             className="rounded-[18px] border p-[22px] shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -195,7 +195,7 @@ export default async function AtletaDetailPage({
             </div>
           </div>
 
-          {/* entrenos asignados */}
+          {/* assigned workouts */}
           <div
             className="rounded-[18px] border p-[22px] shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -236,7 +236,7 @@ export default async function AtletaDetailPage({
         </div>
 
         <div className="flex flex-col gap-4">
-          {/* objetivo */}
+          {/* goal */}
           <div
             className="rounded-[18px] border p-5 shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -313,7 +313,7 @@ export default async function AtletaDetailPage({
             )}
           </div>
 
-          {/* membresía */}
+          {/* membership */}
           <div
             className="rounded-[18px] border p-5 shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
@@ -383,7 +383,7 @@ export default async function AtletaDetailPage({
             )}
           </div>
 
-          {/* perfil deportivo */}
+          {/* sport profile */}
           <div
             className="rounded-[18px] border p-5 shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}

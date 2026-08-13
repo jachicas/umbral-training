@@ -3,7 +3,7 @@ import { UserPlus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** Replaces the old "Añadir atleta" modal — creation needs more room than a dialog gives it. */
+/** Replaces the old "add athlete" modal — creation needs more room than a dialog gives it. */
 export function AddAthleteButton() {
   return (
     <Link

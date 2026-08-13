@@ -9,7 +9,7 @@ export interface AthleteRowVM {
   isRaceGoal: boolean;
   objectiveLabel: string;
   paymentStatus: PaymentPeriodStatus;
-  /** False until the coach agrees a cuota — the status reads "Sin configurar" instead. */
+  /** False until the coach agrees a fee — the status reads "Sin configurar" instead. */
   paymentConfigured: boolean;
   accessStatus: AccessStatus;
 }

@@ -65,7 +65,7 @@ export interface AthleteRepository {
   /** Full detail (records/goal/membership) for every athlete — powers the list card grid. */
   listDetailsByCoach(coachId: string): Promise<AthleteDetail[]>;
   getDetail(athleteId: string, coachId: string): Promise<AthleteDetail | null>;
-  /** Creates the athlete's ficha. `sendInviteNow` (with an email) starts it as "invited" instead of "draft". */
+  /** Creates the athlete's athlete profile. `sendInviteNow` (with an email) starts it as "invited" instead of "draft". */
   createAthlete(
     coachId: string,
     input: AthleteIdentityInput &

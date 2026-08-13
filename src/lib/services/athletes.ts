@@ -127,7 +127,7 @@ export interface SaveGoalInput {
   targetPace?: string;
 }
 
-/** Validates + parses a goal form, whether it came from creation or the ficha's edit dialog. */
+/** Validates + parses a goal form, whether it came from creation or the athlete profile's edit dialog. */
 function buildGoalInput(input: SaveGoalInput): GoalInput {
   if (input.type === "maintenance") {
     return { type: "maintenance" };
@@ -177,7 +177,7 @@ export async function getAthleteDetail(
   return getRepo().getDetail(athleteId, coachId);
 }
 
-/** Creates the athlete's ficha as `draft`, or `invited` when `sendInviteNow` + a valid email are given. */
+/** Creates the athlete's athlete profile as `draft`, or `invited` when `sendInviteNow` + a valid email are given. */
 export async function createAthlete(coachId: string, input: CreateAthleteInput): Promise<Athlete> {
   const fullName = input.fullName.trim();
   const email = input.email?.trim() || undefined;
