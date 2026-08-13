@@ -55,8 +55,8 @@ export interface RaceRecord {
 
 export type GoalType = "race" | "maintenance";
 export type GoalModality = "running" | "triathlon";
-export type RunningFormat = "5k" | "10k" | "21k" | "42k" | "otro";
-export type TriathlonFormat = "sprint" | "olimpico" | "70.3" | "140.6" | "otro";
+export type RunningFormat = "5k" | "10k" | "21k" | "42k" | "other";
+export type TriathlonFormat = "sprint" | "olympic" | "70.3" | "140.6" | "other";
 
 export interface Goal {
   id: string;

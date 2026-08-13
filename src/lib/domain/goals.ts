@@ -11,15 +11,15 @@ export const RUNNING_FORMAT_LABEL: Record<RunningFormat, string> = {
   "10k": "10K",
   "21k": "Media maratón",
   "42k": "Maratón",
-  otro: "Otro",
+  other: "Otro",
 };
 
 export const TRIATHLON_FORMAT_LABEL: Record<TriathlonFormat, string> = {
   sprint: "Sprint",
-  olimpico: "Olímpico",
+  olympic: "Olímpico",
   "70.3": "70.3",
   "140.6": "140.6",
-  otro: "Otro",
+  other: "Otro",
 };
 
 /** Formats available for a modality — drives the dependent select in the goal form. */
@@ -55,6 +55,14 @@ export function goalDaysRemaining(goal: Goal): number | null {
 export function formatGoalPace(goal: Goal): string {
   if (!goal.targetPaceSecPerKm) return "—";
   return `${formatDuration(goal.targetPaceSecPerKm)} /km`;
+}
+
+/** Human-readable label for a goal's format, e.g. "olympic" -> "Olímpico". */
+export function goalFormatLabel(goal: Pick<Goal, "modality" | "format">): string | undefined {
+  if (!goal.format) return undefined;
+  return goal.modality === "triathlon"
+    ? TRIATHLON_FORMAT_LABEL[goal.format as TriathlonFormat]
+    : RUNNING_FORMAT_LABEL[goal.format as RunningFormat];
 }
 
 /** Race goals within 30 days are flagged coral in the list to prompt taper planning. */

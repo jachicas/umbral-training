@@ -18,6 +18,7 @@ import {
   isRaceGoalDefined,
   goalDaysRemaining,
   formatGoalPace,
+  goalFormatLabel,
   goalSummaryLabel,
 } from "@/lib/domain/goals";
 import {
@@ -261,7 +262,7 @@ export default async function AtletaDetailPage({
                   <div className="min-w-0">
                     <div className="text-[15px] font-bold">{activeGoal.raceName}</div>
                     <div className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
-                      {activeGoal.format} · {activeGoal.raceDate && formatDateEs(activeGoal.raceDate)}
+                      {goalFormatLabel(activeGoal)} · {activeGoal.raceDate && formatDateEs(activeGoal.raceDate)}
                     </div>
                   </div>
                 </div>

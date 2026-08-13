@@ -79,7 +79,7 @@ const goals: Goal[] = [
   { id: "goal-4", athleteId: "ath-4", type: "maintenance", status: "active" },
   { id: "goal-5", athleteId: "ath-5", type: "maintenance", status: "active" },
   { id: "goal-6", athleteId: "ath-6", type: "race", raceName: "10K Popular de Otoño", raceDate: "2026-08-24", modality: "running", format: "10k", targetPaceSecPerKm: 4 * 60 + 10, status: "active" },
-  { id: "goal-7", athleteId: "ath-7", type: "race", raceName: "Triatlón Olímpico Banyoles", raceDate: "2026-10-16", modality: "triathlon", format: "olimpico", status: "active" },
+  { id: "goal-7", athleteId: "ath-7", type: "race", raceName: "Triatlón Olímpico Banyoles", raceDate: "2026-10-16", modality: "triathlon", format: "olympic", status: "active" },
   { id: "goal-8", athleteId: "ath-8", type: "maintenance", status: "active" },
 ];
 
