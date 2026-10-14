@@ -14,6 +14,14 @@ import type {
   RaceRecord,
   RaceReference,
 } from "./types";
+import type {
+  AthletePaces,
+  PlanChange,
+  ResolvedPace,
+  TrainingGroup,
+  WeekPlan,
+  WorkoutSession,
+} from "./workouts";
 
 /** Race detail is absent while the coach still only knows it's "a race". */
 export interface GoalInput {
@@ -107,4 +115,48 @@ export interface AthleteRepository {
     coachId: string,
     input: { note?: string }
   ): Promise<void>;
+}
+
+/**
+ * Port for groups and weekly plans. The real implementation will call the
+ * backend API, which owns pace resolution; today it's an in-memory mock with
+ * precomputed paces (src/lib/db/repositories/workouts-repo.mock.ts).
+ */
+export interface WorkoutRepository {
+  listGroups(coachId: string): Promise<TrainingGroup[]>;
+  /** `groupId` null takes the athlete out of every group. */
+  moveAthleteToGroup(coachId: string, athleteId: string, groupId: string | null): Promise<void>;
+  /** Saved sessions the coach picks from when filling a day. */
+  listSessionLibrary(coachId: string): Promise<WorkoutSession[]>;
+  listWeekPlans(coachId: string, weekStart: string): Promise<WeekPlan[]>;
+  getWeekPlan(planId: string, coachId: string): Promise<WeekPlan | null>;
+  /** Creates the group's week, empty or as a copy of the previous week's. */
+  createGroupWeek(
+    coachId: string,
+    groupId: string,
+    weekStart: string,
+    copyPreviousWeek: boolean
+  ): Promise<WeekPlan>;
+  /** Copies `fromPlanId` (a group week) into a custom week for one athlete; returns the existing one if any. */
+  createCustomWeek(coachId: string, athleteId: string, fromPlanId: string): Promise<WeekPlan>;
+  /** Returns the session as placed in the plan (with its own id). */
+  addSession(coachId: string, planId: string, dayIndex: number, librarySessionId: string): Promise<WorkoutSession>;
+  removeSession(coachId: string, planId: string, sessionId: string): Promise<void>;
+  /** Changes how many sets a repeat has in this plan. */
+  setRepeatTimes(coachId: string, planId: string, sessionId: string, repeatId: string, times: number): Promise<void>;
+  /** Changes a time-based step's length (seconds) in this plan. */
+  setStepSeconds(coachId: string, planId: string, sessionId: string, stepId: string, seconds: number): Promise<void>;
+  /** Date the week was sent to the athletes ("YYYY-MM-DD"), or null while it's still open. */
+  getWeekSentOn(coachId: string, weekStart: string): Promise<string | null>;
+  markWeekSent(coachId: string, weekStart: string, sentOn: string): Promise<void>;
+  /** Raw log of edits made to an athlete's own week, oldest first. */
+  listPlanChanges(coachId: string, planId: string): Promise<PlanChange[]>;
+  addPlanChange(coachId: string, planId: string, change: PlanChange): Promise<void>;
+  /** Backend-resolved paces for each athlete in a plan. */
+  resolvePaces(coachId: string, planId: string, athleteIds: string[]): Promise<Record<string, AthletePaces>>;
+  /** Latest reference pace per distance, with missing distances estimated. */
+  getReferencePaces(
+    coachId: string,
+    athleteIds: string[]
+  ): Promise<Record<string, Record<RaceReference, ResolvedPace>>>;
 }

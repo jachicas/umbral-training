@@ -119,7 +119,7 @@ interface DiscMeta {
 const DISC_META: Record<Disc, DiscMeta> = {
   swim: { label: "Natación", color: "var(--swim)", hex: "#06B6D4", tint: "rgba(6,182,212,.12)", icon: "waves", verb: "Nadar", dist: "100 m", target: "1:45–1:50 /100m", est: "32:00", dist2: "1200 m", dist2l: "Distancia estimada" },
   bike: { label: "Ciclismo", color: "var(--bike)", hex: "#D9840A", tint: "rgba(217,132,10,.12)", icon: "bike", verb: "Pedalear", dist: "2.0 km", target: "250–270 W", est: "52:00", dist2: "24.0 km", dist2l: "Distancia estimada" },
-  run: { label: "Carrera", color: "var(--run)", hex: "#E1573C", tint: "rgba(225,87,60,.12)", icon: "run", verb: "Correr", dist: "0.40 km", target: "4:30–4:40 /km", est: "48:10", dist2: "8.00 km", dist2l: "Distancia estimada" },
+  run: { label: "Carrera", color: "var(--run)", hex: "#E1573C", tint: "rgba(225,87,60,.12)", icon: "run", verb: "Correr", dist: "0.40 km", target: "85% del 1k", est: "48:10", dist2: "8.00 km", dist2l: "Distancia estimada" },
   gym: { label: "Gimnasio", color: "var(--gym)", hex: "#DB2777", tint: "rgba(219,39,119,.12)", icon: "gym", verb: "Fuerza", est: "55:00" },
 };
 
@@ -267,11 +267,22 @@ function StepNode({ node, depth }: { node: TreeNode; depth: number }) {
 /* ================================================================== */
 export type Screen = "dashboard" | "constructor" | "pdf";
 
-export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
+export function UmbralPrototype({
+  initialScreen,
+  sessionName,
+  backHref = "/workouts",
+  backLabel = "Entrenos",
+}: {
+  initialScreen: Screen;
+  sessionName?: string;
+  /** Where Cancel / Save / the back link return to (the week being edited). */
+  backHref?: string;
+  backLabel?: string;
+}) {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [discipline, setDiscipline] = useState<Disc>("run");
-  const [workoutName, setWorkoutName] = useState("Series 400");
+  const [workoutName, setWorkoutName] = useState(sessionName ?? "Nuevo entreno");
   const [notes, setNotes] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [resExtra, setResExtra] = useState<Step[]>([]);
@@ -280,13 +291,15 @@ export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
   const disc = discipline;
   const meta = DISC_META[disc];
   const isGym = disc === "gym";
-  // Dashboard ("/") and the workout builder ("/workouts") are separate routes;
-  // constructor <-> pdf stays as in-page state.
+  // Dashboard ("/") and the session builder (inside a week plan) are
+  // separate routes; constructor <-> pdf stays as in-page state.
   const go = (s: Screen) => {
     if (s === "dashboard") router.push("/");
     else if (screen === "dashboard") router.push("/workouts");
     else setScreen(s);
   };
+  // Prototype: the builder doesn't persist steps yet, so saving just returns to the week.
+  const exitBuilder = () => router.push(backHref);
 
   /* ---------- tree build (closure over collapsed state) ---------- */
   function buildTree(steps: Step[]): TreeNode[] {
@@ -447,7 +460,7 @@ export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
                   <h1 style={css("margin:6px 0 0;font-size:26px;font-weight:800;letter-spacing:-.6px")}>Hola, Laura 👋</h1>
                   <div style={css("color:var(--text-2);margin-top:4px")}>Tienes <b style={css("color:var(--text)")}>6</b> sesiones asignadas hoy y <b style={css("color:var(--pend)")}>5</b> pagos pendientes.</div>
                 </div>
-                <button onClick={() => go("constructor")} className="u-btn-coral" style={css("display:flex;align-items:center;gap:9px;height:44px;padding:0 20px;border:0;border-radius:10px;background:var(--coral);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:var(--shadow)")}><Icon name="plus" size={17} color="#fff" /> Nuevo entreno</button>
+                <button onClick={() => go("constructor")} className="u-btn-coral" style={css("display:flex;align-items:center;gap:9px;height:44px;padding:0 20px;border:0;border-radius:10px;background:var(--coral);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:var(--shadow)")}><Icon name="plus" size={17} color="#fff" /> Armar semana</button>
               </div>
 
               <div style={css("display:grid;grid-template-columns:repeat(4,1fr);gap:16px")}>
@@ -518,7 +531,7 @@ export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
               <div style={css("background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px;box-shadow:var(--shadow)")}>
                 <div style={css("display:flex;align-items:center;justify-content:space-between;margin-bottom:8px")}>
                   <div style={css("font-weight:700;font-size:16px")}>Próximas sesiones</div>
-                  <a href="#" onClick={(e) => { e.preventDefault(); go("constructor"); }} style={css("font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px")}>Ver todas <Icon name="arrow" size={15} /></a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); router.push("/workouts"); }} style={css("font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px")}>Ver todas <Icon name="arrow" size={15} /></a>
                 </div>
                 <div style={css("display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr 44px;gap:10px;padding:10px 8px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)")}>
                   <div>Atleta</div><div>Disciplina</div><div>Entreno</div><div>Cuándo</div><div></div>
@@ -545,7 +558,7 @@ export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
               {/* header */}
               <div style={css("display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap")}>
                 <div style={css("display:flex;flex-direction:column;gap:12px;min-width:0")}>
-                  <a href="#" onClick={(e) => { e.preventDefault(); go("dashboard"); }} className="u-backlink" style={css("display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--text-2)")}><Icon name="back" size={16} /> Entrenos</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); exitBuilder(); }} className="u-backlink" style={css("display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:var(--text-2)")}><Icon name="back" size={16} /> {backLabel}</a>
                   <div style={css("display:flex;align-items:center;gap:14px")}>
                     <div style={css(`width:52px;height:52px;flex:0 0 auto;border-radius:15px;background:${meta.hex};color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)`)}><Icon name={meta.icon} size={26} color="#fff" /></div>
                     <div style={css("display:flex;align-items:center;gap:8px")}>
@@ -555,8 +568,9 @@ export function UmbralPrototype({ initialScreen }: { initialScreen: Screen }) {
                   </div>
                 </div>
                 <div style={css("display:flex;gap:10px")}>
-                  <button onClick={() => go("dashboard")} className="u-btn-outline" style={css("height:44px;padding:0 20px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:700;font-size:14px;cursor:pointer")}>Cancelar</button>
-                  <button onClick={() => go("pdf")} className="u-btn-coral" style={css("height:44px;padding:0 22px;border-radius:10px;border:0;background:var(--coral);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:var(--shadow)")}>Guardar entreno</button>
+                  <button onClick={exitBuilder} className="u-btn-outline" style={css("height:44px;padding:0 20px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:700;font-size:14px;cursor:pointer")}>Cancelar</button>
+                  <button onClick={() => go("pdf")} className="u-btn-outline" style={css("height:44px;padding:0 20px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:700;font-size:14px;cursor:pointer")}>Vista PDF</button>
+                  <button onClick={exitBuilder} className="u-btn-coral" style={css("height:44px;padding:0 22px;border-radius:10px;border:0;background:var(--coral);color:#fff;font-weight:700;font-size:14px;cursor:pointer;box-shadow:var(--shadow)")}>Guardar entreno</button>
                 </div>
               </div>
 
