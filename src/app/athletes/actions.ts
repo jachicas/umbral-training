@@ -215,5 +215,7 @@ export async function cancelInviteAction(athleteId: string): Promise<InviteActio
 export async function markPeriodPaidAction(athleteId: string): Promise<void> {
   const coachId = await getCurrentCoachId();
   await athletesService.markPeriodPaid(athleteId, coachId);
+  // The list shows payment status too, so refresh it along with the detail.
+  revalidatePath("/athletes");
   revalidatePath(`/athletes/${athleteId}`);
 }

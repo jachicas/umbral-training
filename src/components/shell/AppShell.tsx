@@ -2,195 +2,254 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Bell, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS, type NavId } from "./nav";
+import { NAV_GROUPS, activeNavItem, navGroupLabel } from "./nav";
+import { THEME_STORAGE_KEY } from "./theme";
 
 const COACH_NAME = "Laura Méndez";
 const COACH_INITIALS = "LM";
+const BACKGROUND_IMAGE = "/backgrounds/tt-ride.jpg";
 
-export function AppShell({
-  active,
-  children,
-}: {
-  active: NavId;
-  children: React.ReactNode;
-}) {
+/** The theme lives as a `dark` class on <html> (set before paint by the root
+ *  layout), so the icon is swapped with CSS and no React state is needed. */
+function toggleTheme() {
+  const dark = document.documentElement.classList.toggle("dark");
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
+  } catch {
+    // Storage unavailable (private mode): theme just won't persist.
+  }
+}
+
+const roundButtonClass =
+  "glass flex size-11 flex-none items-center justify-center rounded-full text-[var(--text)] transition-[filter] hover:brightness-125";
+
+/** Rendered once by the root layout, so sidebar state survives navigation. */
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const activeItem = activeNavItem(pathname);
   const [collapsed, setCollapsed] = useState(false);
-  const [dark, setDark] = useState(false);
   const expanded = !collapsed;
+  const hideWhenCollapsed = cn("max-md:hidden", !expanded && "md:hidden");
 
   return (
-    <div
-      className={cn("flex min-h-screen w-full", dark && "dark")}
-      style={{ background: "var(--bg)", color: "var(--text)" }}
-    >
-      {/* ---------------- sidebar ---------------- */}
-      {/* Below md the rail always stays icon-only (74px) regardless of the
-          desktop expand/collapse toggle — there's no room for labels on a
-          phone screen, so we skip a full off-canvas drawer for this
-          coach-only admin surface (PRD deprioritizes mobile polish here). */}
-      <aside
-        className="sticky top-0 flex h-screen w-[74px] flex-none flex-col gap-2 border-r px-4 py-[22px] transition-[width] duration-150 md:w-[var(--sidebar-w)]"
-        style={
-          {
-            "--sidebar-w": expanded ? "240px" : "74px",
-            background: "var(--surface)",
-            borderColor: "var(--border)",
-          } as React.CSSProperties
-        }
-      >
-        <div className="flex items-center gap-3 px-2 pt-1 pb-5">
-          <div
-            className="flex size-[38px] flex-none items-center justify-center rounded-xl text-[18px] font-extrabold tracking-tight text-white"
-            style={{ background: "var(--coral)" }}
-          >
-            U
-          </div>
-          <div className={cn("min-w-0 max-md:hidden", !expanded && "md:hidden")}>
-            <div className="whitespace-nowrap text-[15px] font-extrabold tracking-tight">
-              Umbral
-            </div>
-            <div
-              className="text-[11px] font-semibold tracking-[.04em] uppercase"
-              style={{ color: "var(--text-2)" }}
-            >
-              Training
-            </div>
-          </div>
-        </div>
+    <div className="relative h-dvh w-full overflow-hidden" style={{ color: "var(--text)" }}>
+      {/* Fixed photo behind everything; the scrim token darkens it in dark mode
+          so text sitting directly on it (the header) stays legible. */}
+      <div
+        aria-hidden
+        className="fixed inset-0 bg-cover bg-no-repeat"
+        style={{
+          backgroundColor: "var(--bg)",
+          backgroundImage: `var(--bg-scrim), url(${BACKGROUND_IMAGE})`,
+          backgroundPosition: "62% center",
+        }}
+      />
 
-        {NAV_ITEMS.map((item) => {
-          const isActive = item.id === active;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.id}
-              href={item.href}
-              title={item.label}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-[11px] px-3 py-[11px] text-[13.5px] font-semibold transition-colors",
-                isActive ? "text-white" : "hover:bg-[var(--surface-2)]"
-              )}
-              style={{
-                background: isActive ? "var(--coral)" : "transparent",
-                color: isActive ? "#fff" : "var(--text-2)",
-              }}
-            >
-              <Icon size={19} className="flex-none" />
-              <span className={cn("truncate max-md:hidden", !expanded && "md:hidden")}>
-                {item.label}
-              </span>
-              {item.soon && (
-                <span
-                  className={cn(
-                    "ml-auto rounded-full border px-1.5 py-0.5 text-[9px] font-bold tracking-[.04em] max-md:hidden",
-                    !expanded && "md:hidden"
-                  )}
-                  style={{ color: "var(--text-3)", borderColor: "var(--border)" }}
-                >
-                  PRONTO
-                </span>
-              )}
-            </Link>
-          );
-        })}
-
-        <div
-          className="mt-auto flex items-center gap-2.5 rounded-2xl border p-2.5"
-          style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
+      <div className="relative flex h-full gap-3 p-3 md:gap-5 md:p-5">
+        {/* ---------------- sidebar ---------------- */}
+        {/* Below md the rail always stays icon-only (74px) regardless of the
+            desktop expand/collapse toggle — there's no room for labels on a
+            phone screen, so we skip a full off-canvas drawer for this
+            coach-only admin surface (PRD deprioritizes mobile polish here). */}
+        <aside
+          className="glass flex h-full w-[74px] flex-none flex-col gap-1 rounded-[26px] px-3 py-4 transition-[width] duration-150 md:w-[var(--sidebar-w)]"
+          style={{ "--sidebar-w": expanded ? "256px" : "74px" } as React.CSSProperties}
         >
           <div
-            className="flex size-[34px] flex-none items-center justify-center rounded-[10px] text-[13px] font-bold text-white"
-            style={{ background: "var(--gym)" }}
+            className="mb-3 flex items-center gap-3 rounded-2xl border p-2 md:p-2.5"
+            style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
           >
-            {COACH_INITIALS}
-          </div>
-          <div className={cn("min-w-0 max-md:hidden", !expanded && "md:hidden")}>
-            <div className="truncate text-[12.5px] font-bold">{COACH_NAME}</div>
-            <div className="text-[11px]" style={{ color: "var(--text-2)" }}>
-              Coach
+            <div
+              className="flex size-[34px] flex-none items-center justify-center rounded-[11px] text-[17px] font-extrabold tracking-tight text-white"
+              style={{ background: "var(--coral)" }}
+            >
+              U
+            </div>
+            <div className={cn("min-w-0", hideWhenCollapsed)}>
+              <div className="whitespace-nowrap text-[14.5px] font-bold tracking-tight">
+                Umbral Training
+              </div>
+              <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
+                Panel de coach
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+
+          <nav className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1">
+            {NAV_GROUPS.map((group, groupIndex) => (
+              <div key={group.label} className="flex flex-col gap-1">
+                <div
+                  className={cn(
+                    "px-3 pt-3 pb-1.5 text-[11px] font-semibold tracking-[.12em] uppercase",
+                    hideWhenCollapsed
+                  )}
+                  style={{ color: "var(--text-3)" }}
+                >
+                  {group.label}
+                </div>
+                {/* Collapsed rail: a hairline stands in for the group label. */}
+                {groupIndex > 0 && (
+                  <div
+                    className={cn("mx-3 my-2 h-px md:hidden", !expanded && "md:block")}
+                    style={{ background: "var(--border-2)" }}
+                  />
+                )}
+
+                {group.items.map((item) => {
+                  const isActive = item.id === activeItem?.id;
+                  const Icon = item.icon;
+                  const content = (
+                    <>
+                      <Icon size={19} className="flex-none" />
+                      <span className={cn("truncate", hideWhenCollapsed)}>{item.label}</span>
+                      {item.soon && (
+                        <span
+                          className={cn(
+                            "ml-auto rounded-full border px-1.5 py-0.5 text-[9px] font-bold tracking-[.04em]",
+                            hideWhenCollapsed
+                          )}
+                          style={{ color: "var(--text-3)", borderColor: "var(--border-2)" }}
+                        >
+                          PRONTO
+                        </span>
+                      )}
+                    </>
+                  );
+                  const itemClass =
+                    "flex w-full items-center gap-3 rounded-[13px] px-3 py-[11px] text-[14px] font-medium transition-colors";
+
+                  if (!item.href) {
+                    return (
+                      <div
+                        key={item.id}
+                        title={`${item.label} · próximamente`}
+                        aria-disabled="true"
+                        className={cn(itemClass, "cursor-default text-[var(--text-2)] opacity-60")}
+                      >
+                        {content}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      title={item.label}
+                      aria-current={isActive ? "page" : undefined}
+                      // Colors stay in classes (not inline styles) so the hover states can win.
+                      className={cn(
+                        itemClass,
+                        isActive
+                          ? "bg-[var(--coral)] font-semibold text-white hover:bg-[var(--coral-hover)] hover:text-white"
+                          : "text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]"
+                      )}
+                    >
+                      {content}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          <div
+            className="mt-2 flex items-center gap-2.5 rounded-2xl border p-2 md:p-2.5"
+            style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
+          >
+            <div
+              className="flex size-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white"
+              style={{ background: "var(--gym)" }}
+            >
+              {COACH_INITIALS}
+            </div>
+            <div className={cn("min-w-0", hideWhenCollapsed)}>
+              <div className="truncate text-[13px] font-semibold">{COACH_NAME}</div>
+              <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
+                Coach
+              </div>
+            </div>
+          </div>
+        </aside>
 
         {/* ---------------- content ---------------- */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header
-            className="sticky top-0 z-20 flex items-center gap-2 border-b px-3.5 py-3.5 backdrop-blur-md md:gap-4 md:px-7"
-            style={{
-              background: "color-mix(in srgb, var(--bg) 82%, transparent)",
-              borderColor: "var(--border)",
-            }}
-          >
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4">
+          <header className="flex items-center gap-2.5 md:gap-4 md:pt-1">
             <button
               type="button"
               onClick={() => setCollapsed((v) => !v)}
               aria-label="Alternar barra lateral"
-              className="flex size-[38px] flex-none items-center justify-center rounded-[10px] border transition-colors hover:bg-[var(--surface-2)]"
-              style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+              aria-expanded={expanded}
+              className={cn(roundButtonClass, "max-md:hidden")}
             >
               <Menu size={19} />
             </button>
 
-            <div
-              className="flex h-10 min-w-0 max-w-[460px] flex-1 items-center gap-2.5 rounded-[10px] border px-3.5"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-            >
-              <Search size={17} style={{ color: "var(--text-3)" }} />
+            {activeItem && (
+              <div className="min-w-0 flex-none leading-tight max-lg:hidden">
+                <div className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
+                  {navGroupLabel(activeItem.id)} <span className="px-1 opacity-60">/</span>{" "}
+                  {activeItem.label}
+                </div>
+                <div className="text-[19px] font-bold tracking-tight">{activeItem.label}</div>
+              </div>
+            )}
+
+            <label className="glass ml-0 flex h-11 min-w-0 max-w-[540px] flex-1 cursor-text items-center gap-2.5 rounded-full px-4 lg:ml-6">
+              <Search size={17} className="flex-none" style={{ color: "var(--text-3)" }} />
               <input
                 placeholder="Buscar atletas, entrenos, carreras…"
-                className="w-full bg-transparent text-[13.5px] outline-none placeholder:text-[var(--text-3)]"
+                className="w-full min-w-0 bg-transparent text-[14px] outline-none placeholder:text-[var(--text-3)]"
                 style={{ color: "var(--text)" }}
               />
-            </div>
+              <kbd
+                className="flex-none rounded-md border px-1.5 py-0.5 font-sans text-[11px] font-semibold max-md:hidden"
+                style={{ color: "var(--text-2)", borderColor: "var(--border-2)", background: "var(--surface-2)" }}
+              >
+                ⌘K
+              </kbd>
+            </label>
 
             <div className="flex-1" />
 
             <button
               type="button"
-              onClick={() => setDark((v) => !v)}
+              onClick={toggleTheme}
               aria-label="Cambiar tema"
               title="Cambiar tema"
-              className="flex size-10 flex-none items-center justify-center rounded-[10px] border transition-colors hover:bg-[var(--surface-2)]"
-              style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+              className={roundButtonClass}
             >
-              {dark ? <Sun size={18} /> : <Moon size={18} />}
+              <Moon size={18} className="dark:hidden" />
+              <Sun size={18} className="hidden dark:block" />
             </button>
             <button
               type="button"
               aria-label="Nuevo"
               title="Nuevo"
-              className="flex size-10 flex-none items-center justify-center rounded-[10px] border transition-colors hover:bg-[var(--surface-2)] max-md:hidden"
-              style={{ borderColor: "var(--border)", background: "var(--surface)", color: "var(--text)" }}
+              className={cn(roundButtonClass, "max-md:hidden")}
             >
               <Plus size={19} />
             </button>
-
-            <div
-              className="flex items-center gap-2.5 rounded-full border py-[5px] pr-3 pl-[5px] max-md:border-0 max-md:bg-transparent max-md:p-0"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+            <button
+              type="button"
+              aria-label="Notificaciones"
+              title="Notificaciones"
+              className={cn(roundButtonClass, "max-sm:hidden")}
             >
-              <div
-                className="flex size-8 flex-none items-center justify-center rounded-full text-[12px] font-bold text-white"
-                style={{ background: "var(--gym)" }}
-              >
-                {COACH_INITIALS}
-              </div>
-              <div className="leading-[1.15] max-md:hidden">
-                <div className="text-[12.5px] font-bold">{COACH_NAME}</div>
-                <div className="text-[10.5px]" style={{ color: "var(--text-2)" }}>
-                  Coach
-                </div>
-              </div>
-            </div>
+              <Bell size={18} />
+            </button>
           </header>
 
-          <main className="mx-auto w-full max-w-[1440px] flex-1 p-7">{children}</main>
+          {/* The only scroll container: header and sidebar stay put while the
+              glass panel scrolls its content, like a native window. */}
+          <main className="glass min-h-0 flex-1 overflow-y-auto rounded-[28px]">
+            <div className="mx-auto w-full max-w-[1440px] p-4 md:p-7">{children}</div>
+          </main>
         </div>
+      </div>
     </div>
   );
 }
-

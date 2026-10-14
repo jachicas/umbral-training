@@ -129,7 +129,7 @@ export default async function AtletaDetailPage({
         <div className="flex flex-wrap gap-2.5">
           <EditAthleteDialog athlete={athlete} />
           <Link
-            href="/"
+            href="/workouts"
             className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold text-white shadow-[var(--shadow)]"
             style={{ background: "var(--coral)" }}
           >
@@ -204,7 +204,7 @@ export default async function AtletaDetailPage({
             <div className="mb-2 flex items-center justify-between">
               <div className="text-base font-bold">Entrenos asignados</div>
               <Link
-                href="/"
+                href="/workouts"
                 className="inline-flex items-center gap-1 text-[13px] font-semibold"
                 style={{ color: "var(--text)" }}
               >
@@ -227,7 +227,7 @@ export default async function AtletaDetailPage({
                   <span className="text-[12.5px] tabular-nums whitespace-nowrap" style={{ color: "var(--text-2)" }}>
                     {formatDateEs(w.scheduledDate)}
                   </span>
-                  <Link href="/" className="text-[12.5px] font-bold" style={{ color: "var(--coral)" }}>
+                  <Link href="/workouts" className="text-[12.5px] font-bold" style={{ color: "var(--coral)" }}>
                     PDF
                   </Link>
                 </div>
