@@ -104,9 +104,12 @@ export function AthleteIdentityFields({
           <FieldError message={errors?.birthDate} />
         </div>
         <div className="flex flex-1 flex-col gap-1.5">
-          <Label>Sexo</Label>
+          <span id="sex-label" className="text-sm font-medium">
+            Sexo
+          </span>
           <Segmented
             name="sex"
+            labelId="sex-label"
             value={sex}
             onChange={setSex}
             options={[

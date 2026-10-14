@@ -1,5 +1,9 @@
-import type { Goal, GoalModality, RunningFormat, TriathlonFormat } from "./types";
+import type { Goal, GoalModality, GoalType, RunningFormat, TriathlonFormat } from "./types";
 import { daysUntil, formatDuration } from "./time";
+
+export const GOAL_TYPES: GoalType[] = ["race", "maintenance"];
+
+export const GOAL_MODALITIES: GoalModality[] = ["running", "triathlon"];
 
 export const GOAL_MODALITY_LABEL: Record<GoalModality, string> = {
   running: "Running",
@@ -28,6 +32,11 @@ export function formatsFor(modality: GoalModality): { id: string; label: string 
   return Object.entries(source).map(([id, label]) => ({ id, label }));
 }
 
+/** True when `format` is one of the formats offered for `modality` (e.g. no "sprint" marathon). */
+export function isFormatFor(modality: GoalModality, format: string): boolean {
+  return formatsFor(modality).some((o) => o.id === format);
+}
+
 export function isRaceGoal(goal: Goal | null): goal is Goal & { type: "race" } {
   return goal !== null && goal.type === "race";
 }
@@ -47,9 +56,17 @@ export function goalSummaryLabel(goal: Goal | null): string {
   return goal.raceName ? `Carrera · ${goal.raceName}` : "Carrera";
 }
 
-export function goalDaysRemaining(goal: Goal): number | null {
+/** Where a race goal stands in time — a race that already happened has no "days left". */
+export type RaceCountdown =
+  | { status: "upcoming"; days: number }
+  | { status: "today" }
+  | { status: "past" };
+
+export function raceCountdown(goal: Goal, from: Date = new Date()): RaceCountdown | null {
   if (!goal.raceDate) return null;
-  return daysUntil(goal.raceDate);
+  const days = daysUntil(goal.raceDate, from);
+  if (days > 0) return { status: "upcoming", days };
+  return days === 0 ? { status: "today" } : { status: "past" };
 }
 
 export function formatGoalPace(goal: Goal): string {

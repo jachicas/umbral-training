@@ -17,15 +17,6 @@ import {
 import { sendInviteAction, cancelInviteAction } from "@/app/athletes/actions";
 import type { AccessStatus } from "@/lib/domain/types";
 
-/**
- * Row cells double as a whole-row <Link>, so every interactive element here
- * must stop propagation or the click would also navigate to the athlete.
- */
-function stop(e: React.SyntheticEvent) {
-  e.preventDefault();
-  e.stopPropagation();
-}
-
 export function InviteAccessControl({
   athleteId,
   status,
@@ -56,8 +47,7 @@ export function InviteAccessControl({
     });
   }
 
-  function handleInviteClick(e: React.SyntheticEvent) {
-    stop(e);
+  function handleInviteClick() {
     if (!email) {
       setEmailDraft("");
       setError(null);
@@ -67,8 +57,7 @@ export function InviteAccessControl({
     runInvite();
   }
 
-  function handleCancelClick(e: React.SyntheticEvent) {
-    stop(e);
+  function handleCancelClick() {
     setError(null);
     startTransition(async () => {
       const res = await cancelInviteAction(athleteId);
@@ -82,7 +71,7 @@ export function InviteAccessControl({
     : "inline-flex items-center gap-1 text-[12px] font-bold disabled:opacity-60";
 
   return (
-    <div className="flex items-center gap-2.5" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-2.5">
       {status === "draft" && (
         <button
           type="button"

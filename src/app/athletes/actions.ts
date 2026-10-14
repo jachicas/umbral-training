@@ -4,15 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentCoachId } from "@/lib/supabase/auth";
 import * as athletesService from "@/lib/services/athletes";
-import type {
-  AthleteSex,
-  Discipline,
-  ExperienceLevel,
-  GoalModality,
-  GoalType,
-  MembershipMode,
-  RaceReference,
-} from "@/lib/domain/types";
 
 /** Errors keyed by field name so each input can render its own message. */
 export interface FormState {
@@ -30,8 +21,9 @@ function fieldErrorState(error: unknown): FormState {
   return { errors: { general: error instanceof Error ? error.message : "Algo salió mal." } };
 }
 
-function disciplinesFrom(formData: FormData): Discipline[] {
-  return formData.getAll("disciplines").map(String) as Discipline[];
+/** Raw strings only — the service whitelists every enum before anything is stored. */
+function disciplinesFrom(formData: FormData): string[] {
+  return formData.getAll("disciplines").map(String);
 }
 
 function optionalString(formData: FormData, key: string): string | undefined {
@@ -41,7 +33,7 @@ function optionalString(formData: FormData, key: string): string | undefined {
 function sportProfileFrom(formData: FormData): athletesService.SportProfileFormInput {
   return {
     disciplines: disciplinesFrom(formData),
-    level: optionalString(formData, "level") as ExperienceLevel | undefined,
+    level: optionalString(formData, "level"),
     weeklyAvailabilityDays: optionalString(formData, "weeklyAvailabilityDays"),
     weeklyAvailabilityHours: optionalString(formData, "weeklyAvailabilityHours"),
     runThresholdPace: optionalString(formData, "runThresholdPace"),
@@ -54,11 +46,11 @@ function sportProfileFrom(formData: FormData): athletesService.SportProfileFormI
 
 function goalFrom(formData: FormData): athletesService.SaveGoalInput {
   return {
-    type: String(formData.get("goalType") ?? "maintenance") as GoalType,
+    type: String(formData.get("goalType") ?? "maintenance"),
     raceName: String(formData.get("raceName") ?? ""),
     raceDate: String(formData.get("raceDate") ?? ""),
-    modality: (String(formData.get("modality") ?? "") || undefined) as GoalModality | undefined,
-    format: String(formData.get("format") ?? "") || undefined,
+    modality: optionalString(formData, "modality"),
+    format: optionalString(formData, "format"),
     targetPace: String(formData.get("targetPace") ?? ""),
   };
 }
@@ -76,7 +68,7 @@ export async function createAthleteAction(
       email: String(formData.get("email") ?? ""),
       phone: optionalString(formData, "phone"),
       birthDate: optionalString(formData, "birthDate"),
-      sex: optionalString(formData, "sex") as AthleteSex | undefined,
+      sex: optionalString(formData, "sex"),
       goal: goalFrom(formData),
       sendInviteNow: formData.get("sendInviteNow") === "on",
       ...sportProfileFrom(formData),
@@ -102,7 +94,7 @@ export async function updateAthleteAction(
       email: String(formData.get("email") ?? ""),
       phone: optionalString(formData, "phone"),
       birthDate: optionalString(formData, "birthDate"),
-      sex: optionalString(formData, "sex") as AthleteSex | undefined,
+      sex: optionalString(formData, "sex"),
     });
   } catch (error) {
     return fieldErrorState(error);
@@ -155,7 +147,7 @@ export async function saveMembershipAction(
   try {
     const coachId = await getCurrentCoachId();
     await athletesService.saveMembership(athleteId, coachId, {
-      mode: String(formData.get("mode") ?? "manual") as MembershipMode,
+      mode: String(formData.get("mode") ?? "manual"),
       amount: String(formData.get("amount") ?? ""),
       currency: String(formData.get("currency") ?? "$"),
     });
@@ -176,7 +168,7 @@ export async function addRecordAction(
   try {
     const coachId = await getCurrentCoachId();
     await athletesService.addRaceRecord(athleteId, coachId, {
-      reference: String(formData.get("reference") ?? "5k") as RaceReference,
+      reference: String(formData.get("reference") ?? "5k"),
       time: String(formData.get("time") ?? ""),
       recordedOn: String(formData.get("recordedOn") ?? ""),
       note: String(formData.get("note") ?? ""),

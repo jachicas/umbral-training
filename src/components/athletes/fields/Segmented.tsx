@@ -10,26 +10,31 @@ export interface SegmentedOption<T extends string> {
 /**
  * Coral-filled segmented control. Writes the selection into a hidden input so
  * the surrounding <form action={...}> picks it up without any client wiring.
+ * Exposed as a labelled group of toggle buttons; `labelId` points at the
+ * visible caption.
  */
 export function Segmented<T extends string>({
   name,
+  labelId,
   options,
   value,
   onChange,
 }: {
   name: string;
+  labelId: string;
   options: SegmentedOption<T>[];
   value: T;
   onChange: (next: T) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
       {options.map((opt) => {
         const active = value === opt.id;
         return (
           <button
             key={opt.id}
             type="button"
+            aria-pressed={active}
             disabled={opt.disabled}
             title={opt.hint}
             onClick={() => onChange(opt.id)}

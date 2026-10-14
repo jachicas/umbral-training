@@ -53,9 +53,12 @@ function RecordFields({ errors }: { errors: Record<string, string | undefined> }
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Distancia</span>
+        <span id="reference-label" className="text-sm font-medium">
+          Distancia
+        </span>
         <Segmented
           name="reference"
+          labelId="reference-label"
           value={reference}
           onChange={setReference}
           options={RACE_REFERENCES.map((r) => ({ id: r, label: r.toUpperCase() }))}

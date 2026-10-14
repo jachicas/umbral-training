@@ -1,24 +1,26 @@
 import { mockAthleteRepository } from "@/lib/db/repositories/athletes-repo.mock";
-import type {
-  AthleteRepository,
-  GoalInput,
-  MembershipInput,
-  SportProfileInput,
-} from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, SportProfileInput } from "@/lib/domain/repositories";
 import type {
   Athlete,
   AthleteDetail,
-  AthleteSex,
   AthleteThresholds,
-  Discipline,
-  ExperienceLevel,
   Goal,
-  GoalType,
   Membership,
   RaceRecord,
-  RaceReference,
 } from "@/lib/domain/types";
-import { parseDuration } from "@/lib/domain/time";
+import { RACE_REFERENCES, daysUntil, parseDuration } from "@/lib/domain/time";
+import { DISCIPLINE_ORDER } from "@/lib/domain/discipline";
+import {
+  ATHLETE_SEXES,
+  EXPERIENCE_LEVEL_ORDER,
+  MAX_HR_RANGE,
+  REST_HR_RANGE,
+  WEEKLY_DAYS_RANGE,
+  WEEKLY_HOURS_RANGE,
+  type NumberRange,
+} from "@/lib/domain/athlete-profile";
+import { GOAL_MODALITIES, GOAL_TYPES, isFormatFor } from "@/lib/domain/goals";
+import { MEMBERSHIP_MODES, periodStatusAfterModeChange } from "@/lib/domain/payments";
 
 function getRepo(): AthleteRepository {
   return mockAthleteRepository;
@@ -57,16 +59,44 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function parseOptionalInt(
+/**
+ * Narrows an untrusted form value to one of `allowed`. The UI only ever offers
+ * valid options, so a miss means a stale or tampered request — reject it
+ * before it reaches storage and breaks every page that renders the athlete.
+ */
+function parseEnum<T extends string>(allowed: readonly T[], raw: string, label: string): T {
+  if (!(allowed as readonly string[]).includes(raw)) {
+    throw new FieldValidationError("general", `Valor no válido para «${label}».`);
+  }
+  return raw as T;
+}
+
+function parseOptionalEnum<T extends string>(
+  allowed: readonly T[],
+  raw: string | undefined,
+  label: string
+): T | undefined {
+  const trimmed = raw?.trim();
+  return trimmed ? parseEnum(allowed, trimmed, label) : undefined;
+}
+
+function parseOptionalNumber(
   raw: string | undefined,
   field: ValidationField,
-  label: string
+  label: string,
+  { range, integer = false }: { range?: NumberRange; integer?: boolean } = {}
 ): number | undefined {
   const trimmed = raw?.trim();
   if (!trimmed) return undefined;
-  const n = Number(trimmed);
+  const n = Number(trimmed.replace(",", "."));
   if (!Number.isFinite(n) || n <= 0) {
     throw new FieldValidationError(field, `${label} debe ser un número mayor que cero.`);
+  }
+  if (integer && !Number.isInteger(n)) {
+    throw new FieldValidationError(field, `${label} debe ser un número entero.`);
+  }
+  if (range && (n < range.min || n > range.max)) {
+    throw new FieldValidationError(field, `${label} debe estar entre ${range.min} y ${range.max}.`);
   }
   return n;
 }
@@ -83,8 +113,8 @@ function parseOptionalPace(raw: string | undefined, field: ValidationField): num
 
 /** Sport-profile fields as they arrive from a <form> — free-form strings, parsed here. */
 export interface SportProfileFormInput {
-  disciplines: Discipline[];
-  level?: ExperienceLevel;
+  disciplines: string[];
+  level?: string;
   weeklyAvailabilityDays?: string;
   weeklyAvailabilityHours?: string;
   runThresholdPace?: string;
@@ -95,33 +125,52 @@ export interface SportProfileFormInput {
 }
 
 function buildSportProfile(input: SportProfileFormInput): SportProfileInput {
+  const disciplines = [...new Set(input.disciplines)].map((d) =>
+    parseEnum(DISCIPLINE_ORDER, d, "Disciplinas")
+  );
+
   const thresholds: AthleteThresholds = {
     runThresholdPaceSecPerKm: parseOptionalPace(input.runThresholdPace, "runPace"),
-    bikeFtpWatts: parseOptionalInt(input.bikeFtpWatts, "ftp", "El FTP"),
+    bikeFtpWatts: parseOptionalNumber(input.bikeFtpWatts, "ftp", "El FTP", { integer: true }),
     swimThresholdPaceSecPer100m: parseOptionalPace(input.swimThresholdPace, "swimPace"),
-    maxHr: parseOptionalInt(input.maxHr, "maxHr", "La FC máxima"),
-    restHr: parseOptionalInt(input.restHr, "restHr", "La FC de reposo"),
+    maxHr: parseOptionalNumber(input.maxHr, "maxHr", "La FC máxima", {
+      range: MAX_HR_RANGE,
+      integer: true,
+    }),
+    restHr: parseOptionalNumber(input.restHr, "restHr", "La FC de reposo", {
+      range: REST_HR_RANGE,
+      integer: true,
+    }),
   };
+  if (thresholds.maxHr && thresholds.restHr && thresholds.restHr >= thresholds.maxHr) {
+    throw new FieldValidationError("restHr", "La FC de reposo debe ser menor que la máxima.");
+  }
   const hasThresholds = Object.values(thresholds).some((v) => v !== undefined);
 
   return {
-    disciplines: input.disciplines,
-    level: input.level,
-    weeklyAvailabilityDays: parseOptionalInt(input.weeklyAvailabilityDays, "weeklyDays", "Los días"),
-    weeklyAvailabilityHours: parseOptionalInt(
+    disciplines,
+    level: parseOptionalEnum(EXPERIENCE_LEVEL_ORDER, input.level, "Nivel"),
+    weeklyAvailabilityDays: parseOptionalNumber(
+      input.weeklyAvailabilityDays,
+      "weeklyDays",
+      "El número de días",
+      { range: WEEKLY_DAYS_RANGE, integer: true }
+    ),
+    weeklyAvailabilityHours: parseOptionalNumber(
       input.weeklyAvailabilityHours,
       "weeklyHours",
-      "Las horas"
+      "El número de horas",
+      { range: WEEKLY_HOURS_RANGE }
     ),
     thresholds: hasThresholds ? thresholds : undefined,
   };
 }
 
 export interface SaveGoalInput {
-  type: GoalType;
+  type: string;
   raceName?: string;
   raceDate?: string;
-  modality?: GoalInput["modality"];
+  modality?: string;
   format?: string;
   /** Free-form "m:ss" as typed by the coach; parsed here. */
   targetPace?: string;
@@ -129,7 +178,8 @@ export interface SaveGoalInput {
 
 /** Validates + parses a goal form, whether it came from creation or the athlete profile's edit dialog. */
 function buildGoalInput(input: SaveGoalInput): GoalInput {
-  if (input.type === "maintenance") {
+  const type = parseEnum(GOAL_TYPES, input.type, "Objetivo");
+  if (type === "maintenance") {
     return { type: "maintenance" };
   }
 
@@ -138,16 +188,26 @@ function buildGoalInput(input: SaveGoalInput): GoalInput {
 
   if (!raceName) throw new FieldValidationError("raceName", "Indica el nombre de la carrera.");
   if (!raceDate) throw new FieldValidationError("raceDate", "Indica la fecha de la carrera.");
-  if (Number.isNaN(new Date(raceDate).getTime())) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raceDate) || Number.isNaN(new Date(raceDate).getTime())) {
     throw new FieldValidationError("raceDate", "La fecha no es válida.");
+  }
+  // An active goal points forward; a race that already happened is a result, not a goal.
+  if (daysUntil(raceDate) < 0) {
+    throw new FieldValidationError("raceDate", "La fecha de la carrera ya pasó.");
+  }
+
+  const modality = parseOptionalEnum(GOAL_MODALITIES, input.modality, "Modalidad");
+  const format = input.format?.trim() || undefined;
+  if (format && (!modality || !isFormatFor(modality, format))) {
+    throw new FieldValidationError("general", "Valor no válido para «Formato».");
   }
 
   return {
     type: "race",
     raceName,
     raceDate,
-    modality: input.modality,
-    format: input.format,
+    modality,
+    format,
     targetPaceSecPerKm: parseOptionalPace(input.targetPace, "targetPace"),
   };
 }
@@ -157,7 +217,7 @@ export interface CreateAthleteInput extends SportProfileFormInput {
   email?: string;
   phone?: string;
   birthDate?: string;
-  sex?: AthleteSex;
+  sex?: string;
   goal: SaveGoalInput;
   sendInviteNow: boolean;
 }
@@ -203,7 +263,7 @@ export async function createAthlete(coachId: string, input: CreateAthleteInput):
     email,
     phone,
     birthDate,
-    sex: input.sex,
+    sex: parseOptionalEnum(ATHLETE_SEXES, input.sex, "Sexo"),
     ...profile,
     goal,
     sendInviteNow: input.sendInviteNow,
@@ -232,7 +292,7 @@ export interface UpdateAthleteInput {
   email?: string;
   phone?: string;
   birthDate?: string;
-  sex?: AthleteSex;
+  sex?: string;
 }
 
 export async function updateAthlete(
@@ -252,6 +312,7 @@ export async function updateAthlete(
   if (birthDate && Number.isNaN(new Date(birthDate).getTime())) {
     throw new FieldValidationError("birthDate", "La fecha de nacimiento no es válida.");
   }
+  const sex = parseOptionalEnum(ATHLETE_SEXES, input.sex, "Sexo");
 
   // Clearing the email of an already-invited athlete would leave the invite
   // pointing nowhere, so it stays required once access has been granted.
@@ -268,7 +329,7 @@ export async function updateAthlete(
     email,
     phone,
     birthDate,
-    sex: input.sex,
+    sex,
   });
 }
 
@@ -290,7 +351,7 @@ export async function saveGoal(
 }
 
 export interface SaveMembershipInput {
-  mode: MembershipInput["mode"];
+  mode: string;
   /** Free-form amount as typed; parsed here. */
   amount?: string;
   currency: string;
@@ -301,10 +362,17 @@ export async function saveMembership(
   coachId: string,
   input: SaveMembershipInput
 ): Promise<Membership> {
-  if (input.mode === "free") {
+  const mode = parseEnum(MEMBERSHIP_MODES, input.mode, "Modo de pago");
+
+  const current = await getRepo().getDetail(athleteId, coachId);
+  if (!current) throw new Error("Atleta no encontrado");
+  const currentPeriodStatus = periodStatusAfterModeChange(current.membership, mode);
+
+  if (mode === "free") {
     return getRepo().updateMembership(athleteId, coachId, {
-      mode: "free",
+      mode,
       currency: input.currency,
+      currentPeriodStatus,
     });
   }
 
@@ -317,14 +385,15 @@ export async function saveMembership(
   }
 
   return getRepo().updateMembership(athleteId, coachId, {
-    mode: input.mode,
+    mode,
     amount,
     currency: input.currency,
+    currentPeriodStatus,
   });
 }
 
 export interface AddRecordInput {
-  reference: RaceReference;
+  reference: string;
   /** Free-form "mm:ss" / "h:mm:ss" as typed; parsed here. */
   time: string;
   recordedOn: string;
@@ -336,6 +405,7 @@ export async function addRaceRecord(
   coachId: string,
   input: AddRecordInput
 ): Promise<RaceRecord> {
+  const reference = parseEnum(RACE_REFERENCES, input.reference, "Distancia");
   const timeSeconds = parseDuration(input.time);
   if (timeSeconds === null || timeSeconds <= 0) {
     throw new FieldValidationError("time", "Usa el formato mm:ss o h:mm:ss (por ejemplo 21:30).");
@@ -348,7 +418,7 @@ export async function addRaceRecord(
   }
 
   return getRepo().addRaceRecord(athleteId, coachId, {
-    reference: input.reference,
+    reference,
     timeSeconds,
     recordedOn,
     note: input.note?.trim() || undefined,

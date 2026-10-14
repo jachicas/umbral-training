@@ -10,6 +10,7 @@ import type {
   GoalType,
   Membership,
   MembershipMode,
+  PaymentPeriodStatus,
   RaceRecord,
   RaceReference,
 } from "./types";
@@ -28,6 +29,8 @@ export interface MembershipInput {
   mode: MembershipMode;
   amount?: number;
   currency: string;
+  /** Decided by the service (see `periodStatusAfterModeChange`), not by the adapter. */
+  currentPeriodStatus: PaymentPeriodStatus;
 }
 
 export interface RaceRecordInput {

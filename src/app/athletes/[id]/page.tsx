@@ -16,7 +16,7 @@ import { historyFor, latestRecordFor } from "@/lib/domain/records";
 import {
   isRaceGoal,
   isRaceGoalDefined,
-  goalDaysRemaining,
+  raceCountdown,
   formatGoalPace,
   goalFormatLabel,
   goalSummaryLabel,
@@ -72,6 +72,7 @@ export default async function AtletaDetailPage({
   const payConfigured = isMembershipConfigured(membership);
   const payMeta = paymentDisplayMeta(membership.currentPeriodStatus, payConfigured);
   const objectiveSummary = goalSummaryLabel(activeGoal);
+  const countdown = activeGoal ? raceCountdown(activeGoal) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -269,10 +270,15 @@ export default async function AtletaDetailPage({
                 <div className="flex gap-3">
                   <div className="flex-1 rounded-xl p-3.5 text-center" style={{ background: "var(--coral-tint)" }}>
                     <div className="text-[26px] font-extrabold tabular-nums" style={{ color: "var(--coral)" }}>
-                      {goalDaysRemaining(activeGoal)}
+                      {countdown?.status === "upcoming" && countdown.days}
+                      {countdown?.status === "today" && "Hoy"}
+                      {countdown?.status === "past" && <Check size={30} className="mx-auto my-[3px]" />}
                     </div>
                     <div className="mt-0.5 text-[11.5px]" style={{ color: "var(--text-2)" }}>
-                      días restantes
+                      {countdown?.status === "upcoming" &&
+                        (countdown.days === 1 ? "día restante" : "días restantes")}
+                      {countdown?.status === "today" && "día de carrera"}
+                      {countdown?.status === "past" && "Carrera completada"}
                     </div>
                   </div>
                   <div className="flex-1 rounded-xl p-3.5 text-center" style={{ background: "var(--surface-2)" }}>

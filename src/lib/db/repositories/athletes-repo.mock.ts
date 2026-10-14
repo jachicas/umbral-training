@@ -253,13 +253,7 @@ export const mockAthleteRepository: AthleteRepository = {
     membership.mode = input.mode;
     membership.amount = input.mode === "free" ? undefined : input.amount;
     membership.currency = input.currency;
-    // A free plan has nothing to collect; a plan that turns paid starts owing
-    // the current period unless it was already settled.
-    if (input.mode === "free") {
-      membership.currentPeriodStatus = "waived";
-    } else if (membership.currentPeriodStatus === "waived") {
-      membership.currentPeriodStatus = "pending";
-    }
+    membership.currentPeriodStatus = input.currentPeriodStatus;
     return membership;
   },
 
