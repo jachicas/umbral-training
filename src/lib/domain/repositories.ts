@@ -13,6 +13,15 @@ import type {
   RaceRecord,
   RaceReference,
 } from "./types";
+import type {
+  AthletePaces,
+  LibrarySessionInput,
+  PlanChange,
+  ResolvedPace,
+  TrainingGroup,
+  WeekPlan,
+  WorkoutSession,
+} from "./workouts";
 
 /** Race detail is absent while the coach still only knows it's "a race". */
 export interface GoalInput {
@@ -56,9 +65,10 @@ export interface SportProfileInput {
 }
 
 /**
- * Port implemented by the persistence layer (Drizzle/Supabase today: an
- * in-memory mock — see src/lib/db/repositories). Every query is already
- * scoped to `coachId`; RLS is the second, DB-level line of defense.
+ * Port implemented by the HTTP adapter for the Laravel API
+ * (src/lib/db/repositories/athletes-repo.api.ts). The API scopes everything
+ * to the signed-in coach from the access token, so `coachId` is not sent;
+ * it stays in the signature for the workouts mock and for callers.
  */
 export interface AthleteRepository {
   listByCoach(coachId: string): Promise<Athlete[]>;
@@ -104,4 +114,54 @@ export interface AthleteRepository {
     coachId: string,
     input: { note?: string }
   ): Promise<void>;
+}
+
+/** What one athlete follows in a week: their own copy, else their group's week. */
+export interface AthleteWeek {
+  plan: WeekPlan | null;
+  groupId: string | null;
+  /** Net changes made to their own week (already summarized by the API). */
+  changes: PlanChange[];
+}
+
+/**
+ * Port for groups, the session library, weekly plans and paces, implemented
+ * by the HTTP adapter for the Laravel API (workouts-repo.api.ts). The API
+ * scopes everything to the signed-in coach and owns every rule: copying the
+ * group's week on an athlete's first edit, the change log, locking sent
+ * weeks, resolving paces.
+ */
+export interface WorkoutRepository {
+  listGroups(): Promise<TrainingGroup[]>;
+  createGroup(name: string): Promise<TrainingGroup>;
+  renameGroup(groupId: string, name: string): Promise<TrainingGroup>;
+  deleteGroup(groupId: string): Promise<void>;
+  /** `groupId` null takes the athlete out of every group. */
+  moveAthleteToGroup(athleteId: string, groupId: string | null): Promise<void>;
+  /** Saved sessions the coach picks from when filling a day. */
+  listSessionLibrary(): Promise<WorkoutSession[]>;
+  getLibrarySession(sessionId: string): Promise<WorkoutSession | null>;
+  createLibrarySession(input: LibrarySessionInput): Promise<WorkoutSession>;
+  /** Weeks that already hold the session keep their copy. */
+  updateLibrarySession(sessionId: string, input: LibrarySessionInput): Promise<WorkoutSession>;
+  deleteLibrarySession(sessionId: string): Promise<void>;
+  /** Every plan of the week (groups' and athletes' own) and the date it was sent, if it was. */
+  getWeek(weekStart: string): Promise<{ plans: WeekPlan[]; sentOn: string | null }>;
+  getWeekPlan(planId: string): Promise<WeekPlan | null>;
+  /** Creates the group's week, empty or as a copy of the previous week's; returns the existing one if any. */
+  createGroupWeek(groupId: string, weekStart: string, copyPreviousWeek: boolean): Promise<WeekPlan>;
+  /** Group weeks only: an athlete's own week changes through the athlete methods below. */
+  addSession(planId: string, dayIndex: number, librarySessionId: string): Promise<WeekPlan>;
+  removeSession(planId: string, sessionId: string): Promise<WeekPlan>;
+  getAthleteWeek(athleteId: string, weekStart: string): Promise<AthleteWeek>;
+  addAthleteSession(athleteId: string, weekStart: string, dayIndex: number, librarySessionId: string): Promise<AthleteWeek>;
+  removeAthleteSession(athleteId: string, weekStart: string, sessionId: string): Promise<AthleteWeek>;
+  setAthleteRepeatTimes(athleteId: string, weekStart: string, sessionId: string, repeatId: string, times: number): Promise<AthleteWeek>;
+  setAthleteStepSeconds(athleteId: string, weekStart: string, sessionId: string, stepId: string, seconds: number): Promise<AthleteWeek>;
+  /** Sends the week to the athletes and locks it; returns the date it was sent. */
+  markWeekSent(weekStart: string): Promise<string>;
+  /** Each athlete's pace for every relative step in the plan, keyed by `stepKey`. */
+  resolvePaces(planId: string, athleteIds: string[]): Promise<Record<string, AthletePaces>>;
+  /** Pace per reference distance (latest time, or estimated from another distance). */
+  getReferencePaces(athleteIds: string[]): Promise<Record<string, Record<RaceReference, ResolvedPace>>>;
 }

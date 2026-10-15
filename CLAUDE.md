@@ -6,27 +6,30 @@
 
 ## Stack
 
-- **Framework:** Next.js (App Router) — full-stack in a single app. UI + backend live together via Route Handlers and Server Actions. There is no separate backend service.
-- **Database & Auth:** Supabase (Postgres + Auth + Row-Level Security). RLS is the primary authorization mechanism — each athlete sees only their own data.
-- **ORM:** Drizzle (`drizzle-orm` + `drizzle-kit`). All DB access goes through repository modules, never raw queries scattered across the UI.
+- **Web app:** Next.js (App Router) — the UI. Route Handlers and Server Actions stay thin.
+- **Backend:** Laravel API in the sibling repo `../umbral-training-api` (decided 2026-10-14), deployed to Railway. Its contract is `docs/api.md` there, and its plan `docs/roadmap.md`.
+- **Database & Auth:** Supabase (Postgres + Auth). The web app signs users in with Supabase Auth and calls the API server-side with the user's access token. The API owns the database and authorizes every request in code. RLS stays enabled on every table, with no policies, so the Data API can't reach them.
+- **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` (`athletes-repo.api.ts`, `workouts-repo.api.ts`) are the only place that talks to the API, through `src/lib/api/client.ts`. There are no mocks left: everything runs on the API.
+- **Auth:** `src/proxy.ts` refreshes the Supabase session and keeps signed-out visitors on `/login`. Sign-in and sign-out are Server Actions, and every Supabase/API setting is server-only (no `NEXT_PUBLIC_`).
 - **UI:** Tailwind CSS + shadcn/ui. Charts with Recharts or Tremor.
 - **Language / tooling:** TypeScript, `src/` directory, import alias `@/*`, pnpm.
-- **Deploy target:** Railway — a single container. Keep resource usage minimal.
+- **Deploy target:** Railway. Keep resource usage minimal.
 
 ## Architecture
 
-This is a **modular monolith**, on purpose. The domain (athletes, plans, sessions, metrics) is mostly CRUD + reporting, so:
+The system is two parts: this Next.js web app and the Laravel API. The domain (athletes, plans, sessions, metrics) is mostly CRUD + reporting, so:
 
-- **Keep business logic framework-agnostic.** Domain types and business rules go in plain TypeScript under `src/lib/domain`. Use-cases go under `src/lib/services`. Route Handlers, Server Actions, and components stay thin and call into these services — they must not contain business logic.
+- **Business logic belongs in the backend.** New business rules — starting with the workout pace calculation (template % of a reference time → per-athlete pace) — go in the backend API. Don't build them in this app as a stopgap; the web app consumes computed results.
+- **Keep existing business logic framework-agnostic.** Domain types and business rules go in plain TypeScript under `src/lib/domain`. Use-cases go under `src/lib/services`. Route Handlers, Server Actions, and components stay thin and call into these services — they must not contain business logic.
 - **Protect the dependency direction.** `domain` and `services` must not import Next.js, Drizzle, or Supabase types directly. Those concerns live behind repository interfaces / adapters.
-- **Why it's structured this way:** it keeps the door open to extract a standalone NestJS API later (for scale or portfolio) as a lift-and-shift, without a rewrite. The separation is done with folders, not a monorepo.
+- **Why it's structured this way:** each module's domain/services code is the spec for its port to the Laravel API. Once a module migrates, its rules leave this app, and only the types and presentation stay.
 - **Reversibility over "optimal."** Prefer simple, changeable decisions. Every abstraction must earn its complexity.
 
 ## Guardrails — do NOT
 
-- Do not split the app into multiple services or a monorepo. One Next.js app.
+- Do not add services beyond the web app and the Laravel API.
 - Do not add Redis, BullMQ, or any queue until there is real async work. For scheduled tasks (e.g. weekly summary emails), use a cron.
-- Do not put business rules inside Route Handlers, Server Actions, or React components — those belong in `src/lib/services` and `src/lib/domain`.
+- Do not put business rules inside Route Handlers, Server Actions, or React components — they belong in the backend (existing ones live in `src/lib/services` and `src/lib/domain` until they move).
 - Do not introduce DDD tactical patterns (aggregates, event sourcing, CQRS) unless a concrete, present problem demands it.
 
 ## Suggested structure
@@ -36,13 +39,15 @@ src/
 ├── app/                 # Next.js routes, Server Actions, Route Handlers (thin)
 ├── components/          # UI (shadcn/ui)
 ├── lib/
-│   ├── domain/          # entities + business rules (pure TS, no framework)
-│   ├── services/        # use-cases; orchestrate domain + repositories
-│   ├── db/              # Drizzle schema + repository implementations
+│   ├── domain/          # entities + business rules (pure TS, no framework; moves to the backend)
+│   ├── services/        # use-cases; orchestrate domain + repositories (moves to the backend)
+│   ├── db/              # repository implementations (API adapters; mocks until migrated)
 │   └── supabase/        # Supabase client + auth helpers
 ```
 
 ## Commands
+
+Copy `.env.example` to `.env.local` (Supabase URL + publishable key, API URL) and run the API (`composer dev` in `../umbral-training-api`).
 
 ```bash
 pnpm dev      # start the dev server (http://localhost:3000)

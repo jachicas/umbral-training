@@ -4,8 +4,20 @@
     {
       "name": "umbral-dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["dev"],
+      "runtimeArgs": [
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "umbral-api",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd ../umbral-training-api && php artisan serve --port=8000"
+      ],
+      "port": 8000,
+      "autoPort": false
     }
   ]
 }

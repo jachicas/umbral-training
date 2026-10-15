@@ -31,9 +31,12 @@ export function MembershipFields({
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Modo de pago</span>
+        <span id="mode-label" className="text-sm font-medium">
+          Modo de pago
+        </span>
         <Segmented
           name="mode"
+          labelId="mode-label"
           value={mode}
           onChange={setMode}
           options={[

@@ -17,11 +17,10 @@
     margin: 0;
     padding: 0;
   }
-  /* Both shells default to light on first paint (no OS-theme detection, no
-     persistence), so the canvas behind them — visible only during elastic
-     overscroll bounce — stays light too, regardless of OS color scheme. */
+  /* The canvas behind the app (visible during elastic overscroll bounce)
+     follows the theme: `dark` lives on <html>, so --bg resolves per theme. */
   html {
-    background: #f3f1ef;
+    background: var(--bg);
   }
   input,
   textarea,
@@ -51,77 +50,49 @@
   }
 }
 
-/* ---------- design tokens ---------- */
-[data-om-root] {
-  --bg: #f3f1ef;
-  --surface: #ffffff;
-  --surface-2: #f7f5f3;
-  --surface-3: #efebe8;
-  --border: #e7e2de;
-  --border-2: #ded8d2;
-  --text: #1b1613;
-  --text-2: #8b827b;
-  --text-3: #aba199;
-  --coral: #e1573c;
-  --coral-hover: #c8462d;
-  --coral-tint: rgba(225, 87, 60, 0.1);
-  --coral-tint-2: rgba(225, 87, 60, 0.16);
-  --swim: #06b6d4;
-  --bike: #d9840a;
-  --run: #e1573c;
-  --gym: #db2777;
-  --ok: #16a34a;
-  --pend: #d97706;
-  --free: #7c3aed;
-  --danger: #dc2626;
-  --shadow: 0 1px 2px rgba(27, 22, 19, 0.04), 0 8px 24px rgba(27, 22, 19, 0.05);
-  --shadow-lg: 0 12px 40px rgba(27, 22, 19, 0.1);
-}
-[data-om-root][data-theme="dark"] {
-  --bg: #14100e;
-  --surface: #211b17;
-  --surface-2: #1a1512;
-  --surface-3: #2a231e;
-  --border: #332b27;
-  --border-2: #3e352f;
-  --text: #ede7e3;
-  --text-2: #9a908a;
-  --text-3: #6f655f;
-  --coral-tint: rgba(225, 87, 60, 0.16);
-  --coral-tint-2: rgba(225, 87, 60, 0.24);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.5);
-}
-
-/* ---------- interaction states (style-hover / style-focus in design) ---------- */
-.u-nav-idle:hover {
-  background: var(--surface-2) !important;
-  color: var(--text) !important;
-}
-.u-nav-active:hover {
+/* ---------- interaction states (style-hover / style-focus in design) ----------
+   The prototype sets colors via inline styles, which beat any class rule, so
+   these need !important to take effect. */
+.u-btn-coral:hover {
   background: var(--coral-hover) !important;
 }
-.u-iconbtn:hover {
-  background: var(--surface-2);
-  border-color: var(--border-2);
-}
-.u-btn-coral:hover {
-  background: var(--coral-hover);
-}
 .u-btn-outline:hover {
-  background: var(--surface-2);
+  background: var(--surface-2) !important;
 }
 .u-rowhover:hover {
-  background: var(--surface-2);
+  background: var(--surface-2) !important;
 }
 .u-backlink:hover {
-  color: var(--coral);
+  color: var(--coral) !important;
 }
 .u-nameinput:focus {
   border-bottom-color: var(--coral) !important;
 }
 .u-textarea:focus {
   border-color: var(--coral) !important;
+}
+
+/* ---------- liquid glass ----------
+   One backdrop blur per shell panel; cards inside are only translucent, so
+   they show the already-blurred photo without stacking extra filters. */
+@utility glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--glass-shadow);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+}
+
+@utility glass-strong {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 var(--glass-highlight),
+    var(--shadow-lg);
+  -webkit-backdrop-filter: blur(36px) saturate(180%);
+  backdrop-filter: blur(36px) saturate(180%);
 }
 
 @theme inline {
@@ -168,37 +139,48 @@
 }
 
 :root {
-  /* ---- Umbral design tokens (light) — exact hex per design spec ---- */
-  --bg: #f3f1ef;
-  --surface: #ffffff;
-  --surface-2: #f7f5f3;
-  --surface-3: #efebe8;
-  --border: #e7e2de;
-  --border-2: #ded8d2;
-  --text: #1b1613;
-  --text-2: #8b827b;
-  --text-3: #aba199;
+  /* ---- Umbral design tokens (light) — "liquid glass" over a photo ----
+     Surfaces are translucent on purpose: they sit on top of the blurred
+     background photo (see AppShell), so the photo tints every card. */
+  --bg: #cfe0ee;
+  --surface: rgba(255, 255, 255, 0.58);
+  --surface-2: rgba(15, 30, 50, 0.045);
+  --surface-3: rgba(15, 30, 50, 0.08);
+  --border: rgba(15, 30, 50, 0.09);
+  --border-2: rgba(15, 30, 50, 0.14);
+  --text: #0e1620;
+  --text-2: #475565;
+  --text-3: #74818f;
   --coral: #e1573c;
   --coral-hover: #c8462d;
-  --coral-tint: rgba(225, 87, 60, 0.1);
-  --coral-tint-2: rgba(225, 87, 60, 0.16);
-  --swim: #06b6d4;
+  --coral-tint: rgba(225, 87, 60, 0.12);
+  --coral-tint-2: rgba(225, 87, 60, 0.18);
+  --swim: #0891b2;
   --bike: #d9840a;
   --run: #e1573c;
   --gym: #db2777;
   --ok: #16a34a;
   --pend: #d97706;
   --free: #7c3aed;
+  --modified: #7c3aed;
   --danger: #dc2626;
-  --shadow: 0 1px 2px rgba(27, 22, 19, 0.04), 0 8px 24px rgba(27, 22, 19, 0.05);
-  --shadow-lg: 0 12px 40px rgba(27, 22, 19, 0.1);
+  --shadow: 0 1px 2px rgba(10, 25, 45, 0.05), 0 8px 24px rgba(10, 25, 45, 0.07);
+  --shadow-lg: 0 16px 48px rgba(10, 25, 45, 0.16);
+
+  /* ---- glass layers (shell panels, header pills, dialogs) ---- */
+  --glass: rgba(255, 255, 255, 0.34);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --glass-edge: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 10px 40px rgba(10, 30, 55, 0.14);
+  --bg-scrim: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.18));
 
   /* ---- shadcn semantic tokens, mapped onto the Umbral palette ---- */
-  --background: var(--bg);
+  --background: var(--surface-2);
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--glass-strong);
   --popover-foreground: var(--text);
   --primary: var(--coral);
   --primary-foreground: #ffffff;
@@ -228,27 +210,36 @@
 }
 
 .dark {
-  /* ---- Umbral design tokens (dark) — exact hex per design spec ---- */
-  --bg: #14100e;
-  --surface: #211b17;
-  --surface-2: #1a1512;
-  --surface-3: #2a231e;
-  --border: #332b27;
-  --border-2: #3e352f;
-  --text: #ede7e3;
-  --text-2: #9a908a;
-  --text-3: #6f655f;
-  --coral-tint: rgba(225, 87, 60, 0.16);
-  --coral-tint-2: rgba(225, 87, 60, 0.24);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 16px 44px rgba(0, 0, 0, 0.5);
+  /* ---- Umbral design tokens (dark) — "liquid glass" over a photo ---- */
+  --bg: #0b0e12;
+  --surface: rgba(22, 22, 24, 0.62);
+  --surface-2: rgba(255, 255, 255, 0.055);
+  --surface-3: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+  --text: #f2f3f5;
+  --text-2: rgba(235, 237, 245, 0.62);
+  --text-3: rgba(235, 237, 245, 0.4);
+  --swim: #22c3e0;
+  --modified: #b9a2ff;
+  --coral-tint: rgba(225, 87, 60, 0.18);
+  --coral-tint-2: rgba(225, 87, 60, 0.26);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 30px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.5);
+
+  --glass: rgba(16, 17, 20, 0.36);
+  --glass-strong: rgba(28, 28, 32, 0.82);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 14px 50px rgba(0, 0, 0, 0.35);
+  --bg-scrim: linear-gradient(180deg, rgba(5, 8, 12, 0.22), rgba(5, 8, 12, 0.5));
 
   /* ---- shadcn semantic tokens, mapped onto the Umbral palette ---- */
-  --background: var(--bg);
+  --background: var(--surface-2);
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--glass-strong);
   --popover-foreground: var(--text);
   --primary: var(--coral);
   --primary-foreground: #ffffff;

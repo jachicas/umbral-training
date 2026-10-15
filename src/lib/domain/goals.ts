@@ -47,9 +47,17 @@ export function goalSummaryLabel(goal: Goal | null): string {
   return goal.raceName ? `Carrera · ${goal.raceName}` : "Carrera";
 }
 
-export function goalDaysRemaining(goal: Goal): number | null {
+/** Where a race goal stands in time — a race that already happened has no "days left". */
+export type RaceCountdown =
+  | { status: "upcoming"; days: number }
+  | { status: "today" }
+  | { status: "past" };
+
+export function raceCountdown(goal: Goal, from: Date = new Date()): RaceCountdown | null {
   if (!goal.raceDate) return null;
-  return daysUntil(goal.raceDate);
+  const days = daysUntil(goal.raceDate, from);
+  if (days > 0) return { status: "upcoming", days };
+  return days === 0 ? { status: "today" } : { status: "past" };
 }
 
 export function formatGoalPace(goal: Goal): string {

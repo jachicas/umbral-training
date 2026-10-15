@@ -61,6 +61,28 @@ export function daysUntil(dateISO: string, from: Date = new Date()): number {
   return Math.round(diffMs / 86_400_000);
 }
 
+/** Local calendar date as "YYYY-MM-DD" (no UTC shift). */
+export function toISODate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function addDaysISO(dateISO: string, days: number): string {
+  const d = new Date(dateISO + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
+}
+
+/** Monday of the week containing `dateISO` (weeks run Monday–Sunday). */
+export function mondayOfISO(dateISO: string): string {
+  const d = new Date(dateISO + "T00:00:00");
+  return addDaysISO(dateISO, -((d.getDay() + 6) % 7));
+}
+
+/** The seven dates of the week starting on `mondayISO`. */
+export function weekDatesISO(mondayISO: string): string[] {
+  return Array.from({ length: 7 }, (_, i) => addDaysISO(mondayISO, i));
+}
+
 const MONTHS_ES = [
   "ene", "feb", "mar", "abr", "may", "jun",
   "jul", "ago", "sep", "oct", "nov", "dic",

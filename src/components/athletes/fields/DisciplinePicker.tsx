@@ -6,9 +6,11 @@ import type { Discipline } from "@/lib/domain/types";
 
 /** Multi-select discipline chips, submitted as repeated hidden `disciplines` inputs. */
 export function DisciplinePicker({
+  labelId,
   defaultValue,
   onChange,
 }: {
+  labelId: string;
   defaultValue: Discipline[];
   onChange?: (disciplines: Discipline[]) => void;
 }) {
@@ -21,7 +23,7 @@ export function DisciplinePicker({
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div role="group" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
       {DISCIPLINE_ORDER.map((d) => {
         const meta = DISCIPLINE_META[d];
         const active = selected.includes(d);

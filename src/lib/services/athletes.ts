@@ -1,79 +1,50 @@
-import { mockAthleteRepository } from "@/lib/db/repositories/athletes-repo.mock";
-import type {
-  AthleteRepository,
-  GoalInput,
-  MembershipInput,
-  SportProfileInput,
-} from "@/lib/domain/repositories";
+import { apiAthleteRepository } from "@/lib/db/repositories/athletes-repo.api";
+import type { AthleteRepository, GoalInput, SportProfileInput } from "@/lib/domain/repositories";
 import type {
   Athlete,
   AthleteDetail,
   AthleteSex,
-  AthleteThresholds,
   Discipline,
   ExperienceLevel,
   Goal,
+  GoalModality,
   GoalType,
   Membership,
+  MembershipMode,
   RaceRecord,
   RaceReference,
 } from "@/lib/domain/types";
 import { parseDuration } from "@/lib/domain/time";
+import { FieldValidationError, type ValidationField } from "./errors";
+
+export { FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
+
+/*
+ * The athletes module runs on the Laravel API, which owns every rule
+ * (required fields, ranges, invite and billing rules) and answers with
+ * Spanish messages per field. This layer only turns form strings into the
+ * values the API expects: "4:45" → 285 seconds, "7,5" → 7.5. Enum values
+ * pass through as typed; the API rejects anything it doesn't know.
+ */
 
 function getRepo(): AthleteRepository {
-  return mockAthleteRepository;
+  return apiAthleteRepository;
 }
 
-export type ValidationField =
-  | "fullName"
-  | "email"
-  | "birthDate"
-  | "raceName"
-  | "raceDate"
-  | "targetPace"
-  | "amount"
-  | "time"
-  | "recordedOn"
-  | "runPace"
-  | "swimPace"
-  | "ftp"
-  | "maxHr"
-  | "restHr"
-  | "weeklyDays"
-  | "weeklyHours"
-  | "general";
+const blankToUndefined = (raw: string | undefined) => raw?.trim() || undefined;
 
-/** Business-rule violation tied to a specific form field, so the UI can show it inline. */
-export class FieldValidationError extends Error {
-  constructor(
-    public field: ValidationField,
-    message: string
-  ) {
-    super(message);
-  }
+/** "7,5" → 7.5. Something that isn't a number goes to the API as typed, so the API names the problem. */
+function parseNumber(raw: string | undefined): number | undefined {
+  const trimmed = blankToUndefined(raw);
+  if (trimmed === undefined) return undefined;
+  const n = Number(trimmed.replace(",", "."));
+  return Number.isFinite(n) ? n : (trimmed as unknown as number);
 }
 
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function parseOptionalInt(
-  raw: string | undefined,
-  field: ValidationField,
-  label: string
-): number | undefined {
-  const trimmed = raw?.trim();
-  if (!trimmed) return undefined;
-  const n = Number(trimmed);
-  if (!Number.isFinite(n) || n <= 0) {
-    throw new FieldValidationError(field, `${label} debe ser un número mayor que cero.`);
-  }
-  return n;
-}
-
-function parseOptionalPace(raw: string | undefined, field: ValidationField): number | undefined {
-  const trimmed = raw?.trim();
-  if (!trimmed) return undefined;
+/** "m:ss" → seconds. The format is the web's concern, so a malformed one is caught here. */
+function parsePace(raw: string | undefined, field: ValidationField): number | undefined {
+  const trimmed = blankToUndefined(raw);
+  if (trimmed === undefined) return undefined;
   const parsed = parseDuration(trimmed);
   if (parsed === null) {
     throw new FieldValidationError(field, "Usa el formato m:ss (por ejemplo 4:45).");
@@ -83,8 +54,8 @@ function parseOptionalPace(raw: string | undefined, field: ValidationField): num
 
 /** Sport-profile fields as they arrive from a <form> — free-form strings, parsed here. */
 export interface SportProfileFormInput {
-  disciplines: Discipline[];
-  level?: ExperienceLevel;
+  disciplines: string[];
+  level?: string;
   weeklyAvailabilityDays?: string;
   weeklyAvailabilityHours?: string;
   runThresholdPace?: string;
@@ -95,60 +66,41 @@ export interface SportProfileFormInput {
 }
 
 function buildSportProfile(input: SportProfileFormInput): SportProfileInput {
-  const thresholds: AthleteThresholds = {
-    runThresholdPaceSecPerKm: parseOptionalPace(input.runThresholdPace, "runPace"),
-    bikeFtpWatts: parseOptionalInt(input.bikeFtpWatts, "ftp", "El FTP"),
-    swimThresholdPaceSecPer100m: parseOptionalPace(input.swimThresholdPace, "swimPace"),
-    maxHr: parseOptionalInt(input.maxHr, "maxHr", "La FC máxima"),
-    restHr: parseOptionalInt(input.restHr, "restHr", "La FC de reposo"),
+  const thresholds = {
+    runThresholdPaceSecPerKm: parsePace(input.runThresholdPace, "runPace"),
+    bikeFtpWatts: parseNumber(input.bikeFtpWatts),
+    swimThresholdPaceSecPer100m: parsePace(input.swimThresholdPace, "swimPace"),
+    maxHr: parseNumber(input.maxHr),
+    restHr: parseNumber(input.restHr),
   };
-  const hasThresholds = Object.values(thresholds).some((v) => v !== undefined);
 
   return {
-    disciplines: input.disciplines,
-    level: input.level,
-    weeklyAvailabilityDays: parseOptionalInt(input.weeklyAvailabilityDays, "weeklyDays", "Los días"),
-    weeklyAvailabilityHours: parseOptionalInt(
-      input.weeklyAvailabilityHours,
-      "weeklyHours",
-      "Las horas"
-    ),
-    thresholds: hasThresholds ? thresholds : undefined,
+    disciplines: [...new Set(input.disciplines)] as Discipline[],
+    level: blankToUndefined(input.level) as ExperienceLevel | undefined,
+    weeklyAvailabilityDays: parseNumber(input.weeklyAvailabilityDays),
+    weeklyAvailabilityHours: parseNumber(input.weeklyAvailabilityHours),
+    thresholds: Object.values(thresholds).some((v) => v !== undefined) ? thresholds : undefined,
   };
 }
 
 export interface SaveGoalInput {
-  type: GoalType;
+  type: string;
   raceName?: string;
   raceDate?: string;
-  modality?: GoalInput["modality"];
+  modality?: string;
   format?: string;
   /** Free-form "m:ss" as typed by the coach; parsed here. */
   targetPace?: string;
 }
 
-/** Validates + parses a goal form, whether it came from creation or the athlete profile's edit dialog. */
 function buildGoalInput(input: SaveGoalInput): GoalInput {
-  if (input.type === "maintenance") {
-    return { type: "maintenance" };
-  }
-
-  const raceName = input.raceName?.trim() || undefined;
-  const raceDate = input.raceDate?.trim() || undefined;
-
-  if (!raceName) throw new FieldValidationError("raceName", "Indica el nombre de la carrera.");
-  if (!raceDate) throw new FieldValidationError("raceDate", "Indica la fecha de la carrera.");
-  if (Number.isNaN(new Date(raceDate).getTime())) {
-    throw new FieldValidationError("raceDate", "La fecha no es válida.");
-  }
-
   return {
-    type: "race",
-    raceName,
-    raceDate,
-    modality: input.modality,
-    format: input.format,
-    targetPaceSecPerKm: parseOptionalPace(input.targetPace, "targetPace"),
+    type: input.type as GoalType,
+    raceName: blankToUndefined(input.raceName),
+    raceDate: blankToUndefined(input.raceDate),
+    modality: blankToUndefined(input.modality) as GoalModality | undefined,
+    format: blankToUndefined(input.format),
+    targetPaceSecPerKm: parsePace(input.targetPace, "targetPace"),
   };
 }
 
@@ -157,7 +109,7 @@ export interface CreateAthleteInput extends SportProfileFormInput {
   email?: string;
   phone?: string;
   birthDate?: string;
-  sex?: AthleteSex;
+  sex?: string;
   goal: SaveGoalInput;
   sendInviteNow: boolean;
 }
@@ -177,35 +129,16 @@ export async function getAthleteDetail(
   return getRepo().getDetail(athleteId, coachId);
 }
 
-/** Creates the athlete's athlete profile as `draft`, or `invited` when `sendInviteNow` + a valid email are given. */
+/** Creates the athlete as `draft`, or `invited` when `sendInviteNow` (which needs an email). */
 export async function createAthlete(coachId: string, input: CreateAthleteInput): Promise<Athlete> {
-  const fullName = input.fullName.trim();
-  const email = input.email?.trim() || undefined;
-  const phone = input.phone?.trim() || undefined;
-  const birthDate = input.birthDate?.trim() || undefined;
-
-  if (!fullName) throw new FieldValidationError("fullName", "El nombre es obligatorio.");
-  if (email && !isValidEmail(email)) {
-    throw new FieldValidationError("email", "Introduce un email válido.");
-  }
-  if (input.sendInviteNow && !email) {
-    throw new FieldValidationError("email", "Necesitas un email para invitar ahora.");
-  }
-  if (birthDate && Number.isNaN(new Date(birthDate).getTime())) {
-    throw new FieldValidationError("birthDate", "La fecha de nacimiento no es válida.");
-  }
-
-  const profile = buildSportProfile(input);
-  const goal = buildGoalInput(input.goal);
-
   return getRepo().createAthlete(coachId, {
-    fullName,
-    email,
-    phone,
-    birthDate,
-    sex: input.sex,
-    ...profile,
-    goal,
+    fullName: input.fullName.trim(),
+    email: blankToUndefined(input.email),
+    phone: blankToUndefined(input.phone),
+    birthDate: blankToUndefined(input.birthDate),
+    sex: blankToUndefined(input.sex) as AthleteSex | undefined,
+    ...buildSportProfile(input),
+    goal: buildGoalInput(input.goal),
     sendInviteNow: input.sendInviteNow,
   });
 }
@@ -216,11 +149,7 @@ export async function sendInvite(
   coachId: string,
   email?: string
 ): Promise<Athlete> {
-  const trimmed = email?.trim() || undefined;
-  if (trimmed && !isValidEmail(trimmed)) {
-    throw new FieldValidationError("email", "Introduce un email válido.");
-  }
-  return getRepo().sendInvite(athleteId, coachId, trimmed);
+  return getRepo().sendInvite(athleteId, coachId, blankToUndefined(email));
 }
 
 export async function cancelInvite(athleteId: string, coachId: string): Promise<Athlete> {
@@ -232,7 +161,7 @@ export interface UpdateAthleteInput {
   email?: string;
   phone?: string;
   birthDate?: string;
-  sex?: AthleteSex;
+  sex?: string;
 }
 
 export async function updateAthlete(
@@ -240,35 +169,12 @@ export async function updateAthlete(
   coachId: string,
   input: UpdateAthleteInput
 ): Promise<Athlete> {
-  const fullName = input.fullName.trim();
-  const email = input.email?.trim() || undefined;
-  const phone = input.phone?.trim() || undefined;
-  const birthDate = input.birthDate?.trim() || undefined;
-
-  if (!fullName) throw new FieldValidationError("fullName", "El nombre es obligatorio.");
-  if (email && !isValidEmail(email)) {
-    throw new FieldValidationError("email", "Introduce un email válido.");
-  }
-  if (birthDate && Number.isNaN(new Date(birthDate).getTime())) {
-    throw new FieldValidationError("birthDate", "La fecha de nacimiento no es válida.");
-  }
-
-  // Clearing the email of an already-invited athlete would leave the invite
-  // pointing nowhere, so it stays required once access has been granted.
-  const current = await getRepo().getDetail(athleteId, coachId);
-  if (!email && current && current.athlete.accessStatus !== "draft") {
-    throw new FieldValidationError(
-      "email",
-      "No puedes quitar el email de un atleta ya invitado. Cancela la invitación primero."
-    );
-  }
-
   return getRepo().updateAthlete(athleteId, coachId, {
-    fullName,
-    email,
-    phone,
-    birthDate,
-    sex: input.sex,
+    fullName: input.fullName.trim(),
+    email: blankToUndefined(input.email),
+    phone: blankToUndefined(input.phone),
+    birthDate: blankToUndefined(input.birthDate),
+    sex: blankToUndefined(input.sex) as AthleteSex | undefined,
   });
 }
 
@@ -277,8 +183,7 @@ export async function saveSportProfile(
   coachId: string,
   input: SportProfileFormInput
 ): Promise<Athlete> {
-  const profile = buildSportProfile(input);
-  return getRepo().updateSportProfile(athleteId, coachId, profile);
+  return getRepo().updateSportProfile(athleteId, coachId, buildSportProfile(input));
 }
 
 export async function saveGoal(
@@ -290,7 +195,7 @@ export async function saveGoal(
 }
 
 export interface SaveMembershipInput {
-  mode: MembershipInput["mode"];
+  mode: string;
   /** Free-form amount as typed; parsed here. */
   amount?: string;
   currency: string;
@@ -301,30 +206,16 @@ export async function saveMembership(
   coachId: string,
   input: SaveMembershipInput
 ): Promise<Membership> {
-  if (input.mode === "free") {
-    return getRepo().updateMembership(athleteId, coachId, {
-      mode: "free",
-      currency: input.currency,
-    });
-  }
-
-  const raw = input.amount?.trim();
-  if (!raw) throw new FieldValidationError("amount", "Indica el monto mensual.");
-
-  const amount = Number(raw.replace(",", "."));
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw new FieldValidationError("amount", "El monto debe ser un número mayor que cero.");
-  }
-
+  const mode = input.mode as MembershipMode;
   return getRepo().updateMembership(athleteId, coachId, {
-    mode: input.mode,
-    amount,
-    currency: input.currency,
+    mode,
+    amount: mode === "free" ? undefined : parseNumber(input.amount),
+    currency: input.currency.trim(),
   });
 }
 
 export interface AddRecordInput {
-  reference: RaceReference;
+  reference: string;
   /** Free-form "mm:ss" / "h:mm:ss" as typed; parsed here. */
   time: string;
   recordedOn: string;
@@ -336,25 +227,22 @@ export async function addRaceRecord(
   coachId: string,
   input: AddRecordInput
 ): Promise<RaceRecord> {
-  const timeSeconds = parseDuration(input.time);
-  if (timeSeconds === null || timeSeconds <= 0) {
+  const time = blankToUndefined(input.time);
+  const timeSeconds = time === undefined ? undefined : parseDuration(time);
+  if (timeSeconds === null) {
     throw new FieldValidationError("time", "Usa el formato mm:ss o h:mm:ss (por ejemplo 21:30).");
   }
 
-  const recordedOn = input.recordedOn.trim();
-  if (!recordedOn) throw new FieldValidationError("recordedOn", "Indica la fecha de la marca.");
-  if (Number.isNaN(new Date(recordedOn).getTime())) {
-    throw new FieldValidationError("recordedOn", "La fecha no es válida.");
-  }
-
   return getRepo().addRaceRecord(athleteId, coachId, {
-    reference: input.reference,
-    timeSeconds,
-    recordedOn,
-    note: input.note?.trim() || undefined,
+    reference: input.reference as RaceReference,
+    // Missing: the API answers "Indica el tiempo." next to the field.
+    timeSeconds: timeSeconds as number,
+    recordedOn: input.recordedOn.trim(),
+    note: blankToUndefined(input.note),
   });
 }
 
+/** Marks the oldest owed month as paid. */
 export async function markPeriodPaid(
   athleteId: string,
   coachId: string,

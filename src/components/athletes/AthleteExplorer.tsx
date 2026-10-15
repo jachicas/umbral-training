@@ -36,6 +36,7 @@ function Pill({
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={cn(
         "h-8 rounded-lg border px-3 text-[12.5px] font-bold transition-colors",
@@ -74,17 +75,35 @@ export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
     setAccess("all");
   }
 
+  if (athletes.length === 0) {
+    return (
+      <div
+        className="flex flex-col items-center gap-3.5 rounded-[10px] border border-dashed px-4 py-16 text-center"
+        style={{ borderColor: "var(--border-2)" }}
+      >
+        <div>
+          <p className="text-[15px] font-bold">Aún no tienes atletas</p>
+          <p className="mt-1 text-sm" style={{ color: "var(--text-2)" }}>
+            Añade tu primer atleta para empezar a planificar sus entrenos.
+          </p>
+        </div>
+        <AddAthleteButton />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-[22px]">
       <div className="flex flex-wrap items-center gap-[22px]">
         <div className="flex items-center gap-2.5">
           <span
+            id="pay-filter-label"
             className="text-xs font-bold tracking-[.03em] uppercase"
             style={{ color: "var(--text-3)" }}
           >
             Pago
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div role="group" aria-labelledby="pay-filter-label" className="flex flex-wrap gap-1.5">
             {PAY_FILTERS.map((f) => (
               <Pill key={f.id} active={pay === f.id} onClick={() => setPay(f.id)}>
                 {f.label}
@@ -94,12 +113,13 @@ export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
         </div>
         <div className="flex items-center gap-2.5">
           <span
+            id="access-filter-label"
             className="text-xs font-bold tracking-[.03em] uppercase"
             style={{ color: "var(--text-3)" }}
           >
             Acceso
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          <div role="group" aria-labelledby="access-filter-label" className="flex flex-wrap gap-1.5">
             {ACCESS_FILTERS.map((f) => (
               <Pill key={f.id} active={access === f.id} onClick={() => setAccess(f.id)}>
                 {f.label}

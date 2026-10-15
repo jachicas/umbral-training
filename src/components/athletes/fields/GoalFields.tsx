@@ -31,9 +31,12 @@ export function GoalFields({ goal, errors }: { goal?: Goal | null; errors?: Erro
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Objetivo</span>
+        <span id="goalType-label" className="text-sm font-medium">
+          Objetivo
+        </span>
         <Segmented
           name="goalType"
+          labelId="goalType-label"
           value={type}
           onChange={setType}
           options={[
@@ -46,9 +49,12 @@ export function GoalFields({ goal, errors }: { goal?: Goal | null; errors?: Erro
       {type === "race" && (
         <>
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Modalidad</span>
+            <span id="modality-label" className="text-sm font-medium">
+              Modalidad
+            </span>
             <Segmented
               name="modality"
+              labelId="modality-label"
               value={modality}
               onChange={setModality}
               options={[
@@ -59,7 +65,9 @@ export function GoalFields({ goal, errors }: { goal?: Goal | null; errors?: Erro
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Formato</span>
+            <span id="format-label" className="text-sm font-medium">
+              Formato
+            </span>
             {/* Keyed so switching modality re-initialises the format selection. */}
             <FormatPicker key={modality} modality={modality} currentFormat={goal?.format} />
           </div>
@@ -123,5 +131,13 @@ function FormatPicker({
   const stillValid = options.some((o) => o.id === currentFormat);
   const [format, setFormat] = useState(stillValid ? currentFormat! : options[0].id);
 
-  return <Segmented name="format" value={format} onChange={setFormat} options={options} />;
+  return (
+    <Segmented
+      name="format"
+      labelId="format-label"
+      value={format}
+      onChange={setFormat}
+      options={options}
+    />
+  );;
 }
