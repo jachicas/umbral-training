@@ -19,9 +19,9 @@ export default async function SendWeekPage({
   const coachId = await getCurrentCoachId();
   const [details, groups, plans, sentOn] = await Promise.all([
     listAthleteDetails(coachId),
-    listGroups(coachId),
-    listWeekPlans(coachId, monday),
-    getWeekSentOn(coachId, monday),
+    listGroups(),
+    listWeekPlans(monday),
+    getWeekSentOn(monday),
   ]);
 
   const assignments = details.flatMap(({ athlete }) => {
@@ -31,7 +31,7 @@ export default async function SendWeekPage({
 
   const messages: AthleteMessage[] = await Promise.all(
     assignments.map(async ({ athlete, plan }) => {
-      const paces = await resolvePaces(coachId, plan.id, [athlete.id]);
+      const paces = await resolvePaces(plan.id, [athlete.id]);
       return {
         athleteId: athlete.id,
         fullName: athlete.fullName,

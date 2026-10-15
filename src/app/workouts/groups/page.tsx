@@ -4,6 +4,7 @@ import { listAthleteDetails } from "@/lib/services/athletes";
 import { listGroups } from "@/lib/services/workouts";
 import { WorkoutsHeader } from "@/components/workouts/WorkoutsHeader";
 import { GroupSelect } from "@/components/workouts/GroupSelect";
+import { GroupTitle, NewGroupForm } from "@/components/workouts/GroupControls";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { countLabel } from "@/components/workouts/format";
 import { objectiveLabel } from "../week";
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: "Grupos · Umbral Training" };
 
 export default async function GroupsPage() {
   const coachId = await getCurrentCoachId();
-  const [details, groups] = await Promise.all([listAthleteDetails(coachId), listGroups(coachId)]);
+  const [details, groups] = await Promise.all([listAthleteDetails(coachId), listGroups()]);
   const groupOptions = groups.map((g) => ({ id: g.id, name: g.name }));
   const ungrouped = details.filter((d) => !groups.some((g) => g.athleteIds.includes(d.athlete.id)));
 
@@ -30,8 +31,14 @@ export default async function GroupsPage() {
       <WorkoutsHeader
         active="groups"
         subtitle="Cada grupo recibe la misma semana; cada atleta, con sus propios ritmos"
-        actions={null}
+        actions={<NewGroupForm />}
       />
+
+      {groups.length === 0 && (
+        <div className="rounded-[14px] border border-dashed px-5 py-4 text-[13px]" style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}>
+          Todavía no tienes grupos. Crea el primero (por ejemplo «Fondo · 21k y maratón») y asígnale atletas: cada grupo recibe su propia semana.
+        </div>
+      )}
 
       <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
         {columns.map((col) => (
@@ -44,11 +51,13 @@ export default async function GroupsPage() {
               borderStyle: col.id ? "solid" : "dashed",
             }}
           >
-            <div className="flex items-baseline justify-between gap-2">
+            {col.id ? (
+              <GroupTitle groupId={col.id} name={col.name} memberCount={col.members.length} />
+            ) : (
               <div className="text-[15px] font-bold">{col.name}</div>
-              <div className="text-[12px]" style={{ color: "var(--text-3)" }}>
-                {countLabel(col.members.length, "atleta", "atletas")}
-              </div>
+            )}
+            <div className="text-[12px]" style={{ color: "var(--text-3)" }}>
+              {countLabel(col.members.length, "atleta", "atletas")}
             </div>
             {col.id === null && (
               <div className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>

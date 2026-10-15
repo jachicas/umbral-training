@@ -24,10 +24,10 @@ export default async function WorkoutsWeekPage({
   const coachId = await getCurrentCoachId();
   const [details, groups, plans, previousPlans, sentOn] = await Promise.all([
     listAthleteDetails(coachId),
-    listGroups(coachId),
-    listWeekPlans(coachId, monday),
-    listWeekPlans(coachId, addDaysISO(monday, -7)),
-    getWeekSentOn(coachId, monday),
+    listGroups(),
+    listWeekPlans(monday),
+    listWeekPlans(addDaysISO(monday, -7)),
+    getWeekSentOn(monday),
   ]);
 
   const athleteById = new Map<string, PlanCardAthlete>(
@@ -80,6 +80,18 @@ export default async function WorkoutsWeekPage({
       </div>
 
       <div className="flex flex-col gap-4">
+        {groups.length === 0 && (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-dashed px-5 py-4 text-[13px]"
+            style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
+          >
+            <span>Cada semana se arma por grupo. Crea tus grupos y asígnales atletas para empezar.</span>
+            <Link href="/workouts/groups" className="font-semibold hover:underline" style={{ color: "var(--coral)" }}>
+              Ir a Grupos
+            </Link>
+          </div>
+        )}
+
         {groups.map((group) => {
           const plan = groupPlan(group.id);
           const hasPrevious = previousPlans.some((p) => p.owner.kind === "group" && p.owner.groupId === group.id);

@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
 import * as workoutsService from "@/lib/services/workouts";
 
 export interface ActionState {
@@ -14,9 +13,9 @@ function errorState(error: unknown): ActionState {
 }
 
 /** Runs a mutation and refreshes every Entrenos screen; errors come back as state instead of throwing. */
-async function mutate(run: (coachId: string) => Promise<unknown>): Promise<ActionState> {
+async function mutate(run: () => Promise<unknown>): Promise<ActionState> {
   try {
-    await run(await getCurrentCoachId());
+    await run();
   } catch (error) {
     return errorState(error);
   }
@@ -31,8 +30,7 @@ export async function createGroupWeekAction(
 ): Promise<ActionState> {
   let planId: string;
   try {
-    const coachId = await getCurrentCoachId();
-    planId = (await workoutsService.createGroupWeek(coachId, groupId, weekStart, copyPreviousWeek)).id;
+    planId = (await workoutsService.createGroupWeek(groupId, weekStart, copyPreviousWeek)).id;
   } catch (error) {
     return errorState(error);
   }
@@ -41,11 +39,11 @@ export async function createGroupWeekAction(
 }
 
 export async function addSessionAction(planId: string, dayIndex: number, librarySessionId: string) {
-  return mutate((coachId) => workoutsService.addSession(coachId, planId, dayIndex, librarySessionId));
+  return mutate(() => workoutsService.addSession(planId, dayIndex, librarySessionId));
 }
 
 export async function removeSessionAction(planId: string, sessionId: string) {
-  return mutate((coachId) => workoutsService.removeSession(coachId, planId, sessionId));
+  return mutate(() => workoutsService.removeSession(planId, sessionId));
 }
 
 /* Edits to one athlete's week: the first one copies the group's week for them. */
@@ -56,13 +54,13 @@ export async function addAthleteSessionAction(
   dayIndex: number,
   librarySessionId: string
 ) {
-  return mutate((coachId) =>
-    workoutsService.addAthleteSession(coachId, athleteId, weekStart, dayIndex, librarySessionId)
+  return mutate(() =>
+    workoutsService.addAthleteSession(athleteId, weekStart, dayIndex, librarySessionId)
   );
 }
 
 export async function removeAthleteSessionAction(athleteId: string, weekStart: string, sessionId: string) {
-  return mutate((coachId) => workoutsService.removeAthleteSession(coachId, athleteId, weekStart, sessionId));
+  return mutate(() => workoutsService.removeAthleteSession(athleteId, weekStart, sessionId));
 }
 
 export async function setAthleteRepeatTimesAction(
@@ -72,8 +70,8 @@ export async function setAthleteRepeatTimesAction(
   repeatId: string,
   times: number
 ) {
-  return mutate((coachId) =>
-    workoutsService.setAthleteRepeatTimes(coachId, athleteId, weekStart, sessionId, repeatId, times)
+  return mutate(() =>
+    workoutsService.setAthleteRepeatTimes(athleteId, weekStart, sessionId, repeatId, times)
   );
 }
 
@@ -84,16 +82,30 @@ export async function setAthleteStepMinutesAction(
   stepId: string,
   minutes: number
 ) {
-  return mutate((coachId) =>
-    workoutsService.setAthleteStepMinutes(coachId, athleteId, weekStart, sessionId, stepId, minutes)
+  return mutate(() =>
+    workoutsService.setAthleteStepMinutes(athleteId, weekStart, sessionId, stepId, minutes)
   );
 }
 
 /** Locks the week: once sent, nothing in it can change. */
 export async function markWeekSentAction(weekStart: string) {
-  return mutate((coachId) => workoutsService.markWeekSent(coachId, weekStart));
+  return mutate(() => workoutsService.markWeekSent(weekStart));
 }
 
 export async function moveAthleteAction(athleteId: string, groupId: string | null) {
-  return mutate((coachId) => workoutsService.moveAthleteToGroup(coachId, athleteId, groupId));
+  return mutate(() => workoutsService.moveAthleteToGroup(athleteId, groupId));
+}
+
+/* Groups */
+
+export async function createGroupAction(name: string) {
+  return mutate(() => workoutsService.createGroup(name));
+}
+
+export async function renameGroupAction(groupId: string, name: string) {
+  return mutate(() => workoutsService.renameGroup(groupId, name));
+}
+
+export async function deleteGroupAction(groupId: string) {
+  return mutate(() => workoutsService.deleteGroup(groupId));
 }

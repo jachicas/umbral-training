@@ -4,8 +4,8 @@ import { getCurrentCoachId } from "@/lib/supabase/auth";
 import { getAthleteDetail } from "@/lib/services/athletes";
 import {
   getAthleteWeek,
-  getAthleteWeekChanges,
   getWeekSentOn,
+  listGroups,
   listSessionLibrary,
   listWeekPlans,
   resolvePaces,
@@ -29,18 +29,15 @@ export default async function AthleteWeekPage({
   const detail = await getAthleteDetail(athleteId, coachId);
   if (!detail) notFound();
 
-  const [{ plan, group }, library, weekPlans, sentOn] = await Promise.all([
-    getAthleteWeek(coachId, athleteId, monday),
-    listSessionLibrary(coachId),
-    listWeekPlans(coachId, monday),
-    getWeekSentOn(coachId, monday),
+  const [{ plan, groupId, changes }, groups, library, weekPlans, sentOn] = await Promise.all([
+    getAthleteWeek(athleteId, monday),
+    listGroups(),
+    listSessionLibrary(),
+    listWeekPlans(monday),
+    getWeekSentOn(monday),
   ]);
-  const [paces, changes] = plan
-    ? await Promise.all([
-        resolvePaces(coachId, plan.id, [athleteId]).then((r) => r[athleteId] ?? {}),
-        getAthleteWeekChanges(coachId, plan),
-      ])
-    : [{}, []];
+  const group = groups.find((g) => g.id === groupId);
+  const paces = plan ? ((await resolvePaces(plan.id, [athleteId]))[athleteId] ?? {}) : {};
   const groupPlan = group
     ? weekPlans.find((p) => p.owner.kind === "group" && p.owner.groupId === group.id)
     : undefined;

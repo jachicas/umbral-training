@@ -16,7 +16,8 @@ export function SignInForm() {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.email} required />
+        {/* Keyed by the last attempt: a new default value needs a fresh field (Base UI warns otherwise). */}
+        <Input key={state.email ?? ""} id="email" name="email" type="email" autoComplete="email" defaultValue={state.email} required />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="password">Contraseña</Label>

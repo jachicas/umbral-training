@@ -7,9 +7,9 @@
 ## Stack
 
 - **Web app:** Next.js (App Router) — the UI. Route Handlers and Server Actions stay thin.
-- **Backend:** Laravel API in the sibling repo `../umbral-training-api` (decided 2026-10-14), deployed to Railway. It is built module by module (see its `docs/roadmap.md`). Modules not migrated yet still run on the in-memory mock repositories here.
+- **Backend:** Laravel API in the sibling repo `../umbral-training-api` (decided 2026-10-14), deployed to Railway. Its contract is `docs/api.md` there, and its plan `docs/roadmap.md`.
 - **Database & Auth:** Supabase (Postgres + Auth). The web app signs users in with Supabase Auth and calls the API server-side with the user's access token. The API owns the database and authorizes every request in code. RLS stays enabled on every table, with no policies, so the Data API can't reach them.
-- **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` are the only place that talks to the API (`athletes-repo.api.ts`), through `src/lib/api/client.ts`. Workouts still run on their mock, behind `workouts-repo.rekeyed.ts`, which maps the mock's seed athletes onto the coach's real ones until workouts move to the API.
+- **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` (`athletes-repo.api.ts`, `workouts-repo.api.ts`) are the only place that talks to the API, through `src/lib/api/client.ts`. There are no mocks left: everything runs on the API.
 - **Auth:** `src/proxy.ts` refreshes the Supabase session and keeps signed-out visitors on `/login`. Sign-in and sign-out are Server Actions, and every Supabase/API setting is server-only (no `NEXT_PUBLIC_`).
 - **UI:** Tailwind CSS + shadcn/ui. Charts with Recharts or Tremor.
 - **Language / tooling:** TypeScript, `src/` directory, import alias `@/*`, pnpm.

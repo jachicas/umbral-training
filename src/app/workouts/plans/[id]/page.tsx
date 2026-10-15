@@ -21,7 +21,7 @@ export const metadata: Metadata = { title: "Semana del grupo · Umbral Training"
 export default async function GroupWeekPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const coachId = await getCurrentCoachId();
-  const plan = await getWeekPlan(id, coachId);
+  const plan = await getWeekPlan(id);
   if (!plan) notFound();
   // An athlete's own week is edited from their page.
   if (plan.owner.kind === "athlete") redirect(`/workouts/athletes/${plan.owner.athleteId}?week=${plan.weekStart}`);
@@ -29,10 +29,10 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
   const groupId = plan.owner.groupId;
   const [details, groups, library, sentOn, weekPlans] = await Promise.all([
     listAthleteDetails(coachId),
-    listGroups(coachId),
-    listSessionLibrary(coachId),
-    getWeekSentOn(coachId, plan.weekStart),
-    listWeekPlans(coachId, plan.weekStart),
+    listGroups(),
+    listSessionLibrary(),
+    getWeekSentOn(plan.weekStart),
+    listWeekPlans(plan.weekStart),
   ]);
   const group = groups.find((g) => g.id === groupId);
   const dates = weekDatesISO(plan.weekStart);
@@ -43,7 +43,7 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
       if (!detail) return [];
       const custom = customWeekOf(athleteId, weekPlans);
       return [
-        (custom ? getAthleteWeekChanges(coachId, custom) : Promise.resolve([])).then((changes) => ({
+        (custom ? getAthleteWeekChanges(custom) : Promise.resolve([])).then((changes) => ({
           id: athleteId,
           fullName: detail.athlete.fullName,
           avatarColor: detail.athlete.avatarColor,
