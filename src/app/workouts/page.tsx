@@ -36,7 +36,6 @@ export default async function WorkoutsWeekPage({
   const athletesOf = (ids: string[]) => ids.flatMap((id) => athleteById.get(id) ?? []);
   const groupPlan = (groupId: string) =>
     plans.find((p) => p.owner.kind === "group" && p.owner.groupId === groupId) ?? null;
-  const ungrouped = details.filter((d) => !groups.some((g) => g.athleteIds.includes(d.athlete.id)));
   const readyCount = groups.filter((g) => groupPlan(g.id)).length;
 
   const navButton =
@@ -128,21 +127,6 @@ export default async function WorkoutsWeekPage({
             />
           );
         })}
-
-        {ungrouped.length > 0 && (
-          <div
-            className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-dashed px-5 py-3.5 text-[13px]"
-            style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
-          >
-            <span>
-              Sin grupo: <b style={{ color: "var(--text)" }}>{ungrouped.map((d) => d.athlete.fullName).join(", ")}</b> ·
-              no reciben semana
-            </span>
-            <Link href="/workouts/groups" className="font-semibold hover:underline" style={{ color: "var(--coral)" }}>
-              Asignar grupo
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );

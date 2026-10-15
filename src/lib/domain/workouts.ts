@@ -42,7 +42,14 @@ export interface WorkoutRepeat {
   steps: WorkoutStep[];
 }
 
-export type WorkoutNode = WorkoutStep | WorkoutRepeat;
+/** Free text (stretching, drills…): no duration or target, the same for everyone. */
+export interface WorkoutNote {
+  type: "note";
+  id: string;
+  text: string;
+}
+
+export type WorkoutNode = WorkoutStep | WorkoutRepeat | WorkoutNote;
 
 /** One training session (a run, a swim, a gym block…). */
 export interface WorkoutSession {
@@ -56,7 +63,10 @@ export interface WorkoutSession {
 
 /** A session as written in the editor: the API assigns node ids by position. */
 export type WorkoutStepInput = Omit<WorkoutStep, "id">;
-export type WorkoutNodeInput = WorkoutStepInput | { type: "repeat"; times: number; steps: WorkoutStepInput[] };
+export type WorkoutNodeInput =
+  | WorkoutStepInput
+  | { type: "repeat"; times: number; steps: WorkoutStepInput[] }
+  | { type: "note"; text: string };
 
 export interface LibrarySessionInput {
   name: string;
@@ -114,7 +124,7 @@ export function sessionRepeats(session: WorkoutSession): WorkoutRepeat[] {
 /** Steps whose pace depends on the athlete. */
 export function sessionRelativeSteps(session: WorkoutSession): WorkoutStep[] {
   return session.nodes
-    .flatMap((n) => (n.type === "repeat" ? n.steps : [n]))
+    .flatMap((n) => (n.type === "repeat" ? n.steps : n.type === "step" ? [n] : []))
     .filter((s) => s.target.kind === "relative");
 }
 

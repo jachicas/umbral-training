@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Plus, Repeat, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowDown, ArrowUp, Bike, Dumbbell, Footprints, Plus, Repeat, StickyNote, Trash2, Waves, type LucideIcon } from "lucide-react";
 import type { Discipline, RaceReference } from "@/lib/domain/types";
 import type {
   LibrarySessionInput,
@@ -19,6 +20,16 @@ import {
   saveLibrarySessionAction,
   type AddToWeek,
 } from "@/app/workouts/library/actions";
+import { NativeSelect } from "@/components/ui/native-select";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { sessionSummary } from "./format";
 
 /*
@@ -37,11 +48,20 @@ const STEP_KIND_LABEL: Record<WorkoutStepKind, string> = {
 };
 const STEP_KINDS = Object.keys(STEP_KIND_LABEL) as WorkoutStepKind[];
 
+const DISCIPLINE_ICON: Record<Discipline, LucideIcon> = {
+  swim: Waves,
+  bike: Bike,
+  run: Footprints,
+  gym: Dumbbell,
+};
+
 interface StepDraft {
   key: number;
   type: "step";
   kind: WorkoutStepKind;
   durationKind: "time" | "distance";
+  /** Unit the distance is typed in; the API always stores meters. */
+  distanceUnit: "m" | "km";
   /** "m:ss" / "h:mm:ss" for time (a bare number means minutes); meters for distance. */
   durationText: string;
   targetKind: "relative" | "feel";
@@ -57,7 +77,13 @@ interface RepeatDraft {
   steps: StepDraft[];
 }
 
-type NodeDraft = StepDraft | RepeatDraft;
+interface NoteDraft {
+  key: number;
+  type: "note";
+  text: string;
+}
+
+type NodeDraft = StepDraft | RepeatDraft | NoteDraft;
 
 let nextKey = 1;
 const newKey = () => nextKey++;
@@ -75,7 +101,11 @@ function stepDraft(step?: WorkoutStep): StepDraft {
           step.duration.seconds % 60 === 0
           ? String(step.duration.seconds / 60)
           : formatDuration(step.duration.seconds)
-        : String(step.duration.meters),
+        : // 1000 m and up read as km ("16", "1.5"); shorter as meters ("400").
+          step.duration.meters >= 1000
+          ? String(step.duration.meters / 1000)
+          : String(step.duration.meters),
+    distanceUnit: step?.duration.kind === "distance" && step.duration.meters >= 1000 ? "km" : "m",
     targetKind: step?.target.kind ?? "feel",
     reference: step?.target.kind === "relative" ? step.target.reference : "5k",
     percentText: step?.target.kind === "relative" ? String(step.target.percent) : "85",
@@ -85,11 +115,13 @@ function stepDraft(step?: WorkoutStep): StepDraft {
 
 function draftsFrom(session: WorkoutSession | null): NodeDraft[] {
   if (!session) return [stepDraft()];
-  return session.nodes.map((node) =>
-    node.type === "repeat"
-      ? { key: newKey(), type: "repeat", timesText: String(node.times), steps: node.steps.map(stepDraft) }
-      : stepDraft(node)
-  );
+  return session.nodes.map((node): NodeDraft => {
+    if (node.type === "note") return { key: newKey(), type: "note", text: node.text };
+    if (node.type === "repeat") {
+      return { key: newKey(), type: "repeat", timesText: String(node.times), steps: node.steps.map(stepDraft) };
+    }
+    return stepDraft(node);
+  });
 }
 
 /** Text that isn't a number is sent as-is so the API names the problem. */
@@ -114,7 +146,10 @@ function toInput(
       if (seconds === null) errors[`${path}.duration.seconds`] = "Usa minutos (30) o m:ss (4:30).";
       duration = { kind: "time", seconds: seconds ?? 0 };
     } else {
-      duration = { kind: "distance", meters: toNumber(draft.durationText) };
+      const value = toNumber(draft.durationText);
+      // km → meters; anything unreadable goes to the API as typed, so it names the problem.
+      const meters = draft.distanceUnit === "km" && typeof value === "number" ? Math.round(value * 1000) : value;
+      duration = { kind: "distance", meters };
     }
 
     const target: WorkoutStepInput["target"] =
@@ -125,15 +160,17 @@ function toInput(
     return { type: "step", kind: draft.kind, duration, target };
   };
 
-  const nodes: WorkoutNodeInput[] = drafts.map((draft, i) =>
-    draft.type === "repeat"
-      ? {
-          type: "repeat",
-          times: toNumber(draft.timesText),
-          steps: draft.steps.map((s, j) => step(s, `nodes.${i}.steps.${j}`)),
-        }
-      : step(draft, `nodes.${i}`)
-  );
+  const nodes: WorkoutNodeInput[] = drafts.map((draft, i): WorkoutNodeInput => {
+    if (draft.type === "note") return { type: "note", text: draft.text };
+    if (draft.type === "repeat") {
+      return {
+        type: "repeat",
+        times: toNumber(draft.timesText),
+        steps: draft.steps.map((s, j) => step(s, `nodes.${i}.steps.${j}`)),
+      };
+    }
+    return step(draft, `nodes.${i}`);
+  });
 
   return { input: { name: name.trim(), discipline, nodes }, errors };
 }
@@ -236,24 +273,25 @@ function StepRow({
   return (
     <div className="flex flex-col gap-1.5 rounded-[12px] border px-3 py-2.5" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
       <div className="flex flex-wrap items-center gap-2">
-        <select
+        <NativeSelect
           aria-label="Tipo de paso"
           value={step.kind}
           onChange={(e) => set({ kind: e.target.value as WorkoutStepKind })}
-          className={field}
-          style={fieldStyle}
+          className="min-w-[150px]"
         >
           {STEP_KINDS.map((k) => (
             <option key={k} value={k}>
               {STEP_KIND_LABEL[k]}
             </option>
           ))}
-        </select>
+        </NativeSelect>
 
         <Toggle
           label="Duración"
           value={step.durationKind}
-          onChange={(durationKind) => set({ durationKind, durationText: durationKind === "time" ? "10" : "400" })}
+          onChange={(durationKind) =>
+            set({ durationKind, durationText: durationKind === "time" ? "10" : "400", distanceUnit: "m" })
+          }
           options={[
             { id: "time", label: "Tiempo" },
             { id: "distance", label: "Distancia" },
@@ -261,15 +299,25 @@ function StepRow({
         />
         <label className="flex items-center gap-1.5 text-[12px]" style={{ color: "var(--text-2)" }}>
           <input
-            aria-label={step.durationKind === "time" ? "Tiempo" : "Distancia en metros"}
+            aria-label={step.durationKind === "time" ? "Tiempo" : "Distancia"}
             value={step.durationText}
             onChange={(e) => set({ durationText: e.target.value })}
-            inputMode={step.durationKind === "time" ? "text" : "numeric"}
+            inputMode={step.durationKind === "time" ? "text" : "decimal"}
             className={`${field} w-[76px] text-right`}
             style={fieldStyle}
           />
-          {step.durationKind === "time" ? "min" : "m"}
+          {step.durationKind === "time" && "min"}
         </label>
+        {step.durationKind === "distance" && (
+          <NativeSelect
+            aria-label="Unidad de distancia"
+            value={step.distanceUnit}
+            onChange={(e) => set({ distanceUnit: e.target.value as StepDraft["distanceUnit"] })}
+          >
+            <option value="m">m</option>
+            <option value="km">km</option>
+          </NativeSelect>
+        )}
 
         <Toggle
           label="Intensidad"
@@ -291,19 +339,18 @@ function StepRow({
               style={fieldStyle}
             />
             % del
-            <select
+            <NativeSelect
               aria-label="Distancia de referencia"
               value={step.reference}
               onChange={(e) => set({ reference: e.target.value as RaceReference })}
-              className={field}
-              style={fieldStyle}
+              className="min-w-[72px]"
             >
               {RACE_REFERENCES.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </span>
         ) : (
           <input
@@ -341,6 +388,42 @@ export function SessionEditor({
   const [formError, setFormError] = useState<string>();
   const [pending, startTransition] = useTransition();
   const topRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Unsaved changes: what would be saved differs from what was loaded.
+  const snapshot = (n: string, d: Discipline, drafts: NodeDraft[]) => JSON.stringify(toInput(n, d, drafts).input);
+  const [initialSnapshot] = useState(() => snapshot(name, discipline, nodes));
+  const dirty = snapshot(name, discipline, nodes) !== initialSnapshot;
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  const leaving = useRef(false);
+
+  // Any link (Cancelar, the back link, the sidebar) asks first while there are unsaved changes.
+  useEffect(() => {
+    if (!dirty) return;
+    const onClick = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest("a[href]");
+      if (!link || leaving.current || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const href = link.getAttribute("href")!;
+      if (!href.startsWith("/")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setLeaveTo(href);
+    };
+    // Closing or reloading the tab gets the browser's own warning.
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    document.addEventListener("click", onClick, true);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [dirty]);
+
+  function leaveWithoutSaving() {
+    if (!leaveTo) return;
+    leaving.current = true;
+    router.push(leaveTo);
+  }
 
   const updateNode = (index: number, node: NodeDraft) => setNodes((all) => all.map((n, i) => (i === index ? node : n)));
   const removeNode = (index: number) => setNodes((all) => all.filter((_, i) => i !== index));
@@ -350,10 +433,14 @@ export function SessionEditor({
     if (Object.keys(local).length > 0) {
       setErrors(local);
       setFormError("Revisa los campos marcados.");
+      setLeaveTo(null);
       return;
     }
+    setLeaveTo(null);
+    leaving.current = true; // the action redirects on success
     startTransition(async () => {
       const result = await saveLibrarySessionAction(session?.id ?? null, input, addTo);
+      leaving.current = false;
       setErrors(result.fieldErrors ?? {});
       setFormError(result.error);
       topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -374,7 +461,9 @@ export function SessionEditor({
     nodes: preview.input.nodes.map((n, i) =>
       n.type === "repeat"
         ? { ...n, id: `r${i}`, steps: n.steps.map((s, j) => ({ ...s, id: `r${i}s${j}` })) }
-        : { ...n, id: `s${i}` }
+        : n.type === "note"
+          ? { ...n, id: `n${i}` }
+          : { ...n, id: `s${i}` }
     ),
   };
 
@@ -440,13 +529,17 @@ export function SessionEditor({
             type="button"
             aria-pressed={d === discipline}
             onClick={() => setDiscipline(d)}
-            className="rounded-[10px] border px-3.5 py-2 text-[13px] font-bold"
+            className="flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-[13px] font-bold"
             style={
               d === discipline
                 ? { background: DISCIPLINE_META[d].colorVar, borderColor: "transparent", color: "#fff" }
                 : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-2)" }
             }
           >
+            {(() => {
+              const Icon = DISCIPLINE_ICON[d];
+              return <Icon size={16} aria-hidden style={{ color: d === discipline ? "#fff" : DISCIPLINE_META[d].colorVar }} />;
+            })()}
             {DISCIPLINE_META[d].label}
           </button>
         ))}
@@ -470,6 +563,32 @@ export function SessionEditor({
               </IconButton>
             </>
           );
+
+          if (node.type === "note") {
+            return (
+              <div
+                key={node.key}
+                className="flex flex-col gap-1.5 rounded-[12px] border border-dashed px-3 py-2.5"
+                style={{ background: "var(--surface)", borderColor: "var(--border-2)" }}
+              >
+                <div className="flex items-start gap-2">
+                  <StickyNote size={15} className="mt-2 flex-none" style={{ color: "var(--text-3)" }} />
+                  <textarea
+                    aria-label="Nota"
+                    placeholder="Estiramiento 10 min, ejercicios de técnica…"
+                    value={node.text}
+                    maxLength={300}
+                    rows={2}
+                    onChange={(e) => updateNode(i, { ...node, text: e.target.value })}
+                    className="min-h-9 flex-1 resize-y rounded-[9px] border px-2.5 py-1.5 text-[13px] outline-none"
+                    style={fieldStyle}
+                  />
+                  <div className="flex items-center">{controls}</div>
+                </div>
+                <Errors messages={errorsAt(errors, path)} />
+              </div>
+            );
+          }
 
           if (node.type === "step") {
             return (
@@ -574,7 +693,35 @@ export function SessionEditor({
         >
           <Repeat size={15} /> Serie
         </button>
+        <button
+          type="button"
+          onClick={() => setNodes((all) => [...all, { key: newKey(), type: "note", text: "" }])}
+          className="flex h-[40px] items-center gap-1.5 rounded-[10px] border px-4 text-[13px] font-bold"
+          style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+        >
+          <StickyNote size={15} /> Nota
+        </button>
       </div>
+
+      <Dialog open={leaveTo !== null} onOpenChange={(open) => !open && setLeaveTo(null)}>
+        <DialogContent className="rounded-[18px] sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Tienes cambios sin guardar</DialogTitle>
+            <DialogDescription>Si sales ahora, se pierden los cambios de esta sesión.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="h-10 rounded-[10px]" onClick={() => setLeaveTo(null)}>
+              Seguir editando
+            </Button>
+            <Button type="button" variant="outline" className="h-10 rounded-[10px]" onClick={leaveWithoutSaving}>
+              Salir sin guardar
+            </Button>
+            <Button type="button" disabled={pending} className="h-10 rounded-[10px] font-bold" onClick={save}>
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

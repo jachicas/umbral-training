@@ -230,6 +230,14 @@ export function SessionLines({
             </div>
           );
         }
+        if (node.type === "note") {
+          if (onlyKeyBlocks && session.nodes.length > 1) return null;
+          return (
+            <span key={node.id} className="text-[12px] italic" style={{ color: "var(--text-2)" }}>
+              {node.text}
+            </span>
+          );
+        }
         if (node.target.kind === "relative") {
           return <StepTarget key={node.id} session={session} step={node} paces={paces} onSetMinutes={onSetMinutes} />;
         }
@@ -252,7 +260,11 @@ export function SessionLines({
   );
 }
 
-/** Library picker for one day. */
+/**
+ * Library picker for one day: "create a new one" first, then a search over
+ * the library, grouped by discipline. The list scrolls inside the menu so a
+ * long library never runs off the screen.
+ */
 export function AddSessionMenu({
   library,
   onAdd,
@@ -266,6 +278,7 @@ export function AddSessionMenu({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
+  const [query, setQuery] = useState("");
 
   function add(librarySessionId: string) {
     startTransition(async () => {
@@ -275,51 +288,78 @@ export function AddSessionMenu({
     });
   }
 
+  const needle = query.trim().toLowerCase();
+  const matches = needle ? library.filter((s) => s.name.toLowerCase().includes(needle)) : library;
+
   return (
     <>
       <button type="button" aria-label="Cerrar" className="fixed inset-0 z-20 cursor-default" onClick={onClose} />
-      <div role="menu" className="glass-strong absolute top-full left-0 z-30 mt-1.5 flex w-[240px] flex-col gap-0.5 rounded-[14px] p-2">
-        {DISCIPLINE_ORDER.map((discipline) => {
-          const items = library.filter((s) => s.discipline === discipline);
-          if (items.length === 0) return null;
-          return (
-            <div key={discipline} className="flex flex-col">
-              <div
-                className="px-2 pt-1.5 pb-1 text-[10.5px] font-bold tracking-[.05em] uppercase"
-                style={{ color: DISCIPLINE_META[discipline].colorVar }}
-              >
-                {DISCIPLINE_META[discipline].label}
-              </div>
-              {items.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  role="menuitem"
-                  disabled={pending}
-                  onClick={() => add(s.id)}
-                  className="rounded-[8px] px-2 py-1.5 text-left text-[12.5px] transition-colors hover:bg-[var(--surface-2)] disabled:opacity-50"
-                >
-                  <div className="font-semibold">{s.name}</div>
-                  <div className="text-[11px]" style={{ color: "var(--text-3)" }}>
-                    {sessionSummary(s)}
-                  </div>
-                </button>
-              ))}
-            </div>
-          );
-        })}
+      <div
+        role="menu"
+        onKeyDown={(e) => e.key === "Escape" && onClose()}
+        className="glass-strong absolute top-full left-0 z-30 mt-1.5 flex w-[260px] flex-col gap-1.5 rounded-[14px] p-2"
+      >
         {newSessionHref && (
-          <>
-            <div className="my-1 h-px" style={{ background: "var(--border)" }} />
-            <Link
-              href={newSessionHref}
-              className="flex items-center gap-1.5 rounded-[8px] px-2 py-1.5 text-[12.5px] font-semibold hover:bg-[var(--surface-2)]"
-              style={{ color: "var(--coral)" }}
-            >
-              <Plus size={13} /> Crear entreno nuevo
-            </Link>
-          </>
+          <Link
+            href={newSessionHref}
+            className="flex items-center gap-1.5 rounded-[9px] border px-2.5 py-2 text-[12.5px] font-semibold transition-colors hover:bg-[var(--surface-2)]"
+            style={{ borderColor: "var(--border)", color: "var(--text)" }}
+          >
+            <Plus size={14} style={{ color: "var(--coral)" }} /> Crear entreno nuevo
+          </Link>
         )}
+
+        {library.length > 0 && (
+          <input
+            autoFocus
+            aria-label="Buscar en tu biblioteca"
+            placeholder="Buscar en tu biblioteca…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-8 rounded-[8px] border px-2.5 text-[12.5px] outline-none"
+            style={{ background: "var(--surface-2)", borderColor: "var(--border)", color: "var(--text)" }}
+          />
+        )}
+
+        <div className="flex max-h-[min(50vh,320px)] flex-col gap-0.5 overflow-y-auto pr-0.5">
+          {DISCIPLINE_ORDER.map((discipline) => {
+            const items = matches.filter((s) => s.discipline === discipline);
+            if (items.length === 0) return null;
+            return (
+              <div key={discipline} className="flex flex-col">
+                {/* Neutral heading; the discipline's color is just a dot. */}
+                <div
+                  className="flex items-center gap-1.5 px-2 pt-1.5 pb-1 text-[10.5px] font-bold tracking-[.05em] uppercase"
+                  style={{ color: "var(--text-3)" }}
+                >
+                  <span className="size-1.5 rounded-full" style={{ background: DISCIPLINE_META[discipline].colorVar }} />
+                  {DISCIPLINE_META[discipline].label}
+                </div>
+                {items.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    role="menuitem"
+                    disabled={pending}
+                    onClick={() => add(s.id)}
+                    className="rounded-[8px] px-2 py-1.5 text-left text-[12.5px] transition-colors hover:bg-[var(--surface-2)] disabled:opacity-50"
+                  >
+                    <div className="font-semibold">{s.name}</div>
+                    <div className="text-[11px]" style={{ color: "var(--text-3)" }}>
+                      {sessionSummary(s)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+          {matches.length === 0 && (
+            <div className="px-2 py-2 text-[12px]" style={{ color: "var(--text-3)" }}>
+              {library.length === 0 ? "Tu biblioteca está vacía." : "Ninguna sesión con ese nombre."}
+            </div>
+          )}
+        </div>
+
         {error && (
           <div className="px-2 text-[11.5px] font-semibold" style={{ color: "var(--danger)" }}>
             {error}

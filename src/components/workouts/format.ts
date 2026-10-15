@@ -91,6 +91,7 @@ function stepPhrase(session: WorkoutSession, step: WorkoutStep, paces?: AthleteP
  */
 export function describeSession(session: WorkoutSession, view: AthleteView = {}): string[] {
   return session.nodes.map((node) => {
+    if (node.type === "note") return node.text;
     if (node.type === "step") return stepPhrase(session, node, view.paces);
     const work = node.steps.filter((s) => s.kind !== "recovery").map((s) => stepPhrase(session, s, view.paces));
     const recovery = node.steps
@@ -103,9 +104,13 @@ export function describeSession(session: WorkoutSession, view: AthleteView = {})
 /** Compact one-liner for a day card: "10 × 400 m · 85% del 1k". */
 export function sessionSummary(session: WorkoutSession): string {
   const repeat = sessionRepeats(session)[0];
-  const first = session.nodes[0];
-  const mainStep = repeat ? repeat.steps[0] : first?.type === "step" ? first : undefined;
-  if (!mainStep) return "";
+  const firstStep = session.nodes.find((n): n is WorkoutStep => n.type === "step");
+  const mainStep = repeat ? repeat.steps[0] : firstStep;
+  if (!mainStep) {
+    // Only notes (e.g. a stretching session): show the first one.
+    const note = session.nodes.find((n) => n.type === "note");
+    return note && note.type === "note" ? note.text : "";
+  }
   const amount = repeat
     ? `${repeat.times} × ${formatStepDuration(mainStep.duration)}`
     : formatStepDuration(mainStep.duration);
