@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as workoutsService from "@/lib/services/workouts";
+import type { LibrarySessionInput } from "@/lib/domain/workouts";
+import type { SessionEditorState } from "./library/actions";
 
 export interface ActionState {
   error?: string;
@@ -108,4 +110,39 @@ export async function renameGroupAction(groupId: string, name: string) {
 
 export async function deleteGroupAction(groupId: string) {
   return mutate(() => workoutsService.deleteGroup(groupId));
+}
+
+/* One session of an athlete's week, edited in full (from its own screen) */
+
+export async function replaceAthleteSessionAction(
+  athleteId: string,
+  weekStart: string,
+  sessionId: string,
+  input: LibrarySessionInput
+): Promise<SessionEditorState> {
+  try {
+    await workoutsService.replaceAthleteSession(athleteId, weekStart, sessionId, { name: input.name, nodes: input.nodes });
+  } catch (error) {
+    if (error instanceof workoutsService.LibrarySessionErrors) {
+      return { fieldErrors: error.errors, error: "Revisa los campos marcados." };
+    }
+    return errorState(error);
+  }
+  revalidatePath("/workouts", "layout");
+  redirect(`/workouts/athletes/${athleteId}?week=${weekStart}`);
+}
+
+/** From the session's screen: the editor goes back to the athlete's week once it resolves. */
+export async function removeAthleteSessionFromEditorAction(
+  athleteId: string,
+  weekStart: string,
+  sessionId: string
+): Promise<SessionEditorState> {
+  try {
+    await workoutsService.removeAthleteSession(athleteId, weekStart, sessionId);
+  } catch (error) {
+    return errorState(error);
+  }
+  revalidatePath("/workouts", "layout");
+  return {};
 }

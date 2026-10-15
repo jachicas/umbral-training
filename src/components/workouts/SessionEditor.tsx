@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Bike, Dumbbell, Footprints, Plus, Repeat, StickyNote, Trash2, Waves, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Repeat, StickyNote, Trash2 } from "lucide-react";
 import type { Discipline, RaceReference } from "@/lib/domain/types";
 import type {
   LibrarySessionInput,
@@ -15,11 +15,9 @@ import type {
 } from "@/lib/domain/workouts";
 import { DISCIPLINE_META, DISCIPLINE_ORDER } from "@/lib/domain/discipline";
 import { RACE_REFERENCES, formatDuration, parseDuration } from "@/lib/domain/time";
-import {
-  deleteLibrarySessionAction,
-  saveLibrarySessionAction,
-  type AddToWeek,
-} from "@/app/workouts/library/actions";
+import type { SessionEditorState } from "@/app/workouts/library/actions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DISCIPLINE_ICON } from "./discipline-icons";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,12 +46,6 @@ const STEP_KIND_LABEL: Record<WorkoutStepKind, string> = {
 };
 const STEP_KINDS = Object.keys(STEP_KIND_LABEL) as WorkoutStepKind[];
 
-const DISCIPLINE_ICON: Record<Discipline, LucideIcon> = {
-  swim: Waves,
-  bike: Bike,
-  run: Footprints,
-  gym: Dumbbell,
-};
 
 interface StepDraft {
   key: number;
@@ -371,15 +363,32 @@ function StepRow({
   );
 }
 
+/** A destructive action offered next to Cancelar, always behind a confirmation. */
+export interface SessionEditorRemove {
+  label: string;
+  title: string;
+  description: string;
+  /** Redirects on success, or resolves without an error and the editor goes back to `cancelHref`. */
+  run: () => Promise<SessionEditorState>;
+}
+
 export function SessionEditor({
   session,
-  addTo,
   cancelHref,
+  save: saveSession,
+  saveLabel,
+  remove: removal,
+  disciplineLocked = false,
 }: {
   /** null when creating. */
   session: WorkoutSession | null;
-  addTo: AddToWeek | null;
   cancelHref: string;
+  /** Server action that stores the session; it redirects on success. */
+  save: (input: LibrarySessionInput) => Promise<SessionEditorState>;
+  saveLabel: string;
+  remove?: SessionEditorRemove;
+  /** A session already placed in a week keeps its discipline. */
+  disciplineLocked?: boolean;
 }) {
   const [name, setName] = useState(session?.name ?? "");
   const [discipline, setDiscipline] = useState<Discipline>(session?.discipline ?? "run");
@@ -439,7 +448,7 @@ export function SessionEditor({
     setLeaveTo(null);
     leaving.current = true; // the action redirects on success
     startTransition(async () => {
-      const result = await saveLibrarySessionAction(session?.id ?? null, input, addTo);
+      const result = await saveSession(input);
       leaving.current = false;
       setErrors(result.fieldErrors ?? {});
       setFormError(result.error);
@@ -447,9 +456,21 @@ export function SessionEditor({
     });
   }
 
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+
   function remove() {
-    if (!session || !window.confirm(`¿Borrar «${session.name}» de tu biblioteca? Las semanas que ya la tienen no cambian.`)) return;
-    startTransition(async () => setFormError((await deleteLibrarySessionAction(session.id)).error));
+    if (!removal) return;
+    setConfirmingRemove(false);
+    leaving.current = true;
+    startTransition(async () => {
+      const result = await removal.run();
+      if (result.error) {
+        leaving.current = false;
+        setFormError(result.error);
+      } else {
+        router.push(cancelHref);
+      }
+    });
   }
 
   // A live summary, from whatever parses so far.
@@ -486,15 +507,15 @@ export function SessionEditor({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          {session && (
+          {removal && (
             <button
               type="button"
-              onClick={remove}
+              onClick={() => setConfirmingRemove(true)}
               disabled={pending}
               className="flex h-[42px] items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold disabled:opacity-60"
               style={{ color: "var(--danger)" }}
             >
-              <Trash2 size={15} /> Borrar
+              <Trash2 size={15} /> {removal.label}
             </button>
           )}
           <Link
@@ -511,7 +532,7 @@ export function SessionEditor({
             className="flex h-[42px] items-center rounded-[10px] px-5 text-[13.5px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
             style={{ background: "var(--coral)" }}
           >
-            {pending ? "Guardando…" : addTo ? "Guardar y agregar al día" : "Guardar sesión"}
+            {pending ? "Guardando…" : saveLabel}
           </button>
         </div>
       </div>
@@ -523,11 +544,12 @@ export function SessionEditor({
       )}
 
       <div className="flex flex-wrap gap-2">
-        {DISCIPLINE_ORDER.map((d) => (
+        {(disciplineLocked ? [discipline] : DISCIPLINE_ORDER).map((d) => (
           <button
             key={d}
             type="button"
             aria-pressed={d === discipline}
+            disabled={disciplineLocked}
             onClick={() => setDiscipline(d)}
             className="flex items-center gap-2 rounded-[10px] border px-3.5 py-2 text-[13px] font-bold"
             style={
@@ -702,6 +724,18 @@ export function SessionEditor({
           <StickyNote size={15} /> Nota
         </button>
       </div>
+
+      {removal && (
+        <ConfirmDialog
+          open={confirmingRemove}
+          title={removal.title}
+          description={removal.description}
+          confirmLabel={removal.label}
+          pending={pending}
+          onCancel={() => setConfirmingRemove(false)}
+          onConfirm={remove}
+        />
+      )}
 
       <Dialog open={leaveTo !== null} onOpenChange={(open) => !open && setLeaveTo(null)}>
         <DialogContent className="rounded-[18px] sm:max-w-[400px]">

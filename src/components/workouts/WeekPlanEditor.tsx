@@ -1,7 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ArrowRight, Send, X } from "lucide-react";
 import type { WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
@@ -25,6 +26,7 @@ const cardStyle = { background: "var(--surface)", borderColor: "var(--border)" }
 
 function SessionCard({ planId, session, locked }: { planId: string; session: WorkoutSession; locked: boolean }) {
   const [pending, startTransition] = useTransition();
+  const [confirming, setConfirming] = useState(false);
   return (
     <div
       className="group/session relative rounded-[10px] border px-2.5 py-2"
@@ -51,13 +53,25 @@ function SessionCard({ planId, session, locked }: { planId: string; session: Wor
           type="button"
           aria-label={`Quitar ${session.name}`}
           disabled={pending}
-          onClick={() => startTransition(async () => void (await removeSessionAction(planId, session.id)))}
+          onClick={() => setConfirming(true)}
           className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/session:opacity-100 focus-visible:opacity-100"
           style={{ background: "var(--surface-3)", color: "var(--text-2)" }}
         >
           <X size={11} />
         </button>
       )}
+      <ConfirmDialog
+        open={confirming}
+        title={`¿Quitar «${session.name}» de la semana del grupo?`}
+        description="Lo pierden los atletas que siguen la semana del grupo; quien ya tiene su propia semana la conserva."
+        confirmLabel="Quitar"
+        pending={pending}
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => {
+          setConfirming(false);
+          startTransition(async () => void (await removeSessionAction(planId, session.id)));
+        }}
+      />
     </div>
   );
 }

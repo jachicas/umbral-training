@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getWeekPlan } from "@/lib/services/workouts";
 import { BackLink } from "@/components/workouts/WorkoutsHeader";
 import { SessionEditor } from "@/components/workouts/SessionEditor";
+import { saveLibrarySessionAction } from "../actions";
 
 export const metadata: Metadata = { title: "Nueva sesión · Umbral Training" };
 
@@ -22,7 +23,12 @@ export default async function NewLibrarySessionPage({
   return (
     <div className="flex flex-col gap-4">
       <BackLink href={back}>{addTo ? "Semana" : "Biblioteca"}</BackLink>
-      <SessionEditor session={null} addTo={addTo} cancelHref={back} />
+      <SessionEditor
+        session={null}
+        cancelHref={back}
+        save={saveLibrarySessionAction.bind(null, null, addTo)}
+        saveLabel={addTo ? "Guardar y agregar al día" : "Guardar sesión"}
+      />
     </div>
   );
 }

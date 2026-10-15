@@ -156,6 +156,13 @@ export interface WorkoutRepository {
   getAthleteWeek(athleteId: string, weekStart: string): Promise<AthleteWeek>;
   addAthleteSession(athleteId: string, weekStart: string, dayIndex: number, librarySessionId: string): Promise<AthleteWeek>;
   removeAthleteSession(athleteId: string, weekStart: string, sessionId: string): Promise<AthleteWeek>;
+  /** Rewrites one session (name and steps) in the athlete's own week; the discipline stays. */
+  replaceAthleteSession(
+    athleteId: string,
+    weekStart: string,
+    sessionId: string,
+    session: Pick<LibrarySessionInput, "name" | "nodes">
+  ): Promise<AthleteWeek>;
   setAthleteRepeatTimes(athleteId: string, weekStart: string, sessionId: string, repeatId: string, times: number): Promise<AthleteWeek>;
   setAthleteStepSeconds(athleteId: string, weekStart: string, sessionId: string, stepId: string, seconds: number): Promise<AthleteWeek>;
   /** Sends the week to the athletes and locks it; returns the date it was sent. */

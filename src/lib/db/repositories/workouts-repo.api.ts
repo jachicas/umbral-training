@@ -77,6 +77,9 @@ export const apiWorkoutRepository: WorkoutRepository = {
       librarySessionId,
     }),
 
+  replaceAthleteSession: (athleteId, weekStart, sessionId, session) =>
+    apiFetch<AthleteWeek>("PUT", athleteWeekPath(athleteId, weekStart, "sessions", sessionId), session),
+
   removeAthleteSession: (athleteId, weekStart, sessionId) =>
     apiFetch<AthleteWeek>("DELETE", athleteWeekPath(athleteId, weekStart, "sessions", sessionId)),
 

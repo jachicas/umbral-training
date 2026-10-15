@@ -124,6 +124,16 @@ export async function addAthleteSession(athleteId: string, weekStart: string, da
   return getRepo().addAthleteSession(athleteId, weekStart, dayIndex, librarySessionId);
 }
 
+/** Rewrites one session for this athlete only; the API logs what changed. */
+export async function replaceAthleteSession(
+  athleteId: string,
+  weekStart: string,
+  sessionId: string,
+  session: Pick<LibrarySessionInput, "name" | "nodes">
+) {
+  return withSessionErrors(() => getRepo().replaceAthleteSession(athleteId, weekStart, sessionId, session));
+}
+
 export async function removeAthleteSession(athleteId: string, weekStart: string, sessionId: string) {
   return getRepo().removeAthleteSession(athleteId, weekStart, sessionId);
 }

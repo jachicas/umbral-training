@@ -14,6 +14,7 @@ function describeChange(change: PlanChange): string {
   if (change.kind === "duration") {
     return `${DURATION_LABEL[change.stepKind]} ${change.from / 60}' → ${change.to / 60}'`;
   }
+  if (change.kind === "edited") return "editado";
   return change.kind === "added" ? "agregado" : "quitado";
 }
 

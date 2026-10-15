@@ -174,4 +174,6 @@ export type PlanChange =
   /** A time-based step's length, in seconds. */
   | (PlanChangeBase & { kind: "duration"; stepId: string; stepKind: WorkoutStepKind; from: number; to: number })
   | (PlanChangeBase & { kind: "added" })
-  | (PlanChangeBase & { kind: "removed" });
+  | (PlanChangeBase & { kind: "removed" })
+  /** The session itself was rewritten for this athlete (steps, targets, name). */
+  | (PlanChangeBase & { kind: "edited" });

@@ -18,10 +18,11 @@ export interface AddToWeek {
   dayIndex: number;
 }
 
+/** Bound by the page (`sessionId`, `addTo`); the editor passes the input. */
 export async function saveLibrarySessionAction(
   sessionId: string | null,
-  input: LibrarySessionInput,
-  addTo: AddToWeek | null
+  addTo: AddToWeek | null,
+  input: LibrarySessionInput
 ): Promise<SessionEditorState> {
   let destination: string;
 

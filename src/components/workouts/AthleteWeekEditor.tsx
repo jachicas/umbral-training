@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { AthletePaces, PlanChange, WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
-import {
-  addAthleteSessionAction,
-  removeAthleteSessionAction,
-  setAthleteRepeatTimesAction,
-  setAthleteStepMinutesAction,
-} from "@/app/workouts/actions";
+import { addAthleteSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, EstimatedTag, ModifiedTag, SentBanner, SessionLines } from "./WeekParts";
+import { AddSessionButton, EstimatedTag, ModifiedTag, SentBanner } from "./WeekParts";
+import { WeekPreviewButton } from "./WeekPreviewDialog";
+import { DISCIPLINE_ICON } from "./discipline-icons";
 import { ChangesCard } from "./ChangesCard";
 import { dayLabel } from "./format";
 
@@ -49,15 +45,9 @@ export function AthleteWeekEditor({
   weekLabel: string;
   library: WorkoutSession[];
 }) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string>();
   const weekStart = weekDates[0];
   const changedSessions = new Set(changes.filter((c) => c.kind !== "removed").map((c) => c.sessionId));
 
-  function run(action: () => Promise<{ error?: string }>) {
-    setError(undefined);
-    startTransition(async () => setError((await action()).error));
-  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -75,17 +65,21 @@ export function AthleteWeekEditor({
             {groupName && ` · ${groupName}`}
           </div>
         </div>
+        {plan && (
+          <WeekPreviewButton
+            athleteName={athlete.fullName}
+            weekLabel={weekLabel}
+            weekDates={weekDates}
+            plan={plan}
+            paces={paces}
+          />
+        )}
       </div>
 
       {sentOn && <SentBanner sentOn={sentOn} />}
 
       {changes.length > 0 && <ChangesCard changes={changes} weekDates={weekDates} />}
 
-      {error && (
-        <div className="text-[13px] font-semibold" style={{ color: "var(--danger)" }}>
-          {error}
-        </div>
-      )}
 
       {!plan ? (
         <div className={cardClass} style={cardStyle}>
@@ -108,7 +102,7 @@ export function AthleteWeekEditor({
           </div>
         </div>
       ) : (
-        <div className={cardClass} style={{ ...cardStyle, opacity: pending ? 0.7 : 1 }}>
+        <div className={cardClass} style={cardStyle}>
           <div className="flex flex-col">
             {plan.days.map((sessions, dayIndex) => (
               <div
@@ -120,50 +114,38 @@ export function AthleteWeekEditor({
                   {dayLabel(weekDates[dayIndex])}
                 </div>
                 <div className="flex flex-wrap items-start gap-2">
-                  {sessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="group/session relative min-w-[220px] rounded-[12px] border px-3.5 py-2.5 text-[13px]"
-                      style={{
-                        background: "var(--surface)",
-                        borderColor: "var(--border)",
-                        borderLeft: `3px solid ${DISCIPLINE_META[session.discipline].colorVar}`,
-                      }}
-                    >
-                      <div className="mb-1.5 flex items-center gap-2 pr-5">
-                        <span className="text-[13.5px] font-bold">{session.name}</span>
-                        {changedSessions.has(session.id) && <ModifiedTag />}
-                      </div>
-                      <SessionLines
-                        session={session}
-                        paces={paces}
-                        onSetTimes={
-                          sentOn
-                            ? undefined
-                            : (repeatId, times) =>
-                                run(() => setAthleteRepeatTimesAction(athlete.id, weekStart, session.id, repeatId, times))
-                        }
-                        onSetMinutes={
-                          sentOn
-                            ? undefined
-                            : (stepId, minutes) =>
-                                run(() => setAthleteStepMinutesAction(athlete.id, weekStart, session.id, stepId, minutes))
-                        }
-                      />
-                      {!sentOn && (
-                        <button
-                          type="button"
-                          aria-label={`Quitar ${session.name}`}
-                          disabled={pending}
-                          onClick={() => run(() => removeAthleteSessionAction(athlete.id, weekStart, session.id))}
-                          className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/session:opacity-100 focus-visible:opacity-100"
-                          style={{ background: "var(--surface-3)", color: "var(--text-2)" }}
+                  {sessions.map((session) => {
+                    const meta = DISCIPLINE_META[session.discipline];
+                    const Icon = DISCIPLINE_ICON[session.discipline];
+                    return (
+                      <Link
+                        key={session.id}
+                        href={`/workouts/athletes/${athlete.id}/sessions/${session.id}?week=${weekStart}`}
+                        className="group/session flex min-w-[200px] items-center gap-2.5 rounded-[12px] border px-2.5 py-2 transition-colors hover:bg-[var(--surface-2)]"
+                        style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+                      >
+                        <span
+                          className="flex size-8 flex-none items-center justify-center rounded-[9px]"
+                          style={{ background: meta.tintVar }}
                         >
-                          <X size={11} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                          <Icon size={16} style={{ color: meta.colorVar }} />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{session.name}</span>
+                        {changedSessions.has(session.id) && (
+                          <span
+                            title="Cambiada para este atleta"
+                            className="size-1.5 flex-none rounded-full"
+                            style={{ background: "var(--modified)" }}
+                          />
+                        )}
+                        <ChevronRight
+                          size={15}
+                          className="flex-none transition-transform group-hover/session:translate-x-0.5"
+                          style={{ color: "var(--text-3)" }}
+                        />
+                      </Link>
+                    );
+                  })}
                   {sessions.length === 0 && (
                     <div className="pt-2 text-[13px]" style={{ color: "var(--text-3)" }}>
                       Descanso
