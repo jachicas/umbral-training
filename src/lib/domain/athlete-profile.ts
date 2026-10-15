@@ -8,8 +8,6 @@ export const EXPERIENCE_LEVEL_LABEL: Record<ExperienceLevel, string> = {
 
 export const EXPERIENCE_LEVEL_ORDER: ExperienceLevel[] = ["beginner", "intermediate", "advanced"];
 
-export const ATHLETE_SEXES: AthleteSex[] = ["female", "male"];
-
 export const ATHLETE_SEX_LABEL: Record<AthleteSex, string> = {
   male: "Masculino",
   female: "Femenino",
@@ -33,14 +31,3 @@ export function relevantThresholdFields(disciplines: Discipline[]): {
     swim: disciplines.includes("swim"),
   };
 }
-
-/** Inclusive bounds for numeric profile fields; anything outside is a typo, not data. */
-export interface NumberRange {
-  min: number;
-  max: number;
-}
-
-export const WEEKLY_DAYS_RANGE: NumberRange = { min: 1, max: 7 };
-export const WEEKLY_HOURS_RANGE: NumberRange = { min: 1, max: 40 };
-export const MAX_HR_RANGE: NumberRange = { min: 100, max: 230 };
-export const REST_HR_RANGE: NumberRange = { min: 30, max: 120 };

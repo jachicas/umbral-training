@@ -10,7 +10,12 @@ import type {
 } from "@/lib/domain/workouts";
 import { DAYS_PER_WEEK, planSessions, sessionRelativeSteps, stepKey } from "@/lib/domain/workouts";
 import { addDaysISO, mondayOfISO, toISODate } from "@/lib/domain/time";
-import { MOCK_COACH_ID } from "./athletes-repo.mock";
+
+/** The mock's own coach; the re-keyed wrapper (workouts-repo.rekeyed.ts) maps the signed-in coach onto it. */
+export const MOCK_COACH_ID = "coach-laura-mendez";
+
+/** Mock athletes, in the order they map onto the coach's real athletes. */
+export const MOCK_ATHLETE_IDS = ["ath-1", "ath-2", "ath-3", "ath-4", "ath-5", "ath-6", "ath-7", "ath-8"];
 
 /**
  * In-memory stand-in for the backend's plans API. Paces are NOT computed

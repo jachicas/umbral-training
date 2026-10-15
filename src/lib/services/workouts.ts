@@ -1,5 +1,5 @@
-import { mockWorkoutRepository } from "@/lib/db/repositories/workouts-repo.mock";
-import { mockAthleteRepository } from "@/lib/db/repositories/athletes-repo.mock";
+import { rekeyedWorkoutRepository } from "@/lib/db/repositories/workouts-repo.rekeyed";
+import { listAthletes } from "./athletes";
 import type { WorkoutRepository } from "@/lib/domain/repositories";
 import type { RaceReference } from "@/lib/domain/types";
 import type {
@@ -14,14 +14,14 @@ import { DAYS_PER_WEEK, effectivePlanFor, groupOf, summarizeChanges } from "@/li
 import { toISODate } from "@/lib/domain/time";
 
 function getRepo(): WorkoutRepository {
-  return mockWorkoutRepository;
+  return rekeyedWorkoutRepository;
 }
 
 const MAX_REPEAT_TIMES = 50;
 const MAX_STEP_MINUTES = 600;
 
 async function requireOwnAthlete(coachId: string, athleteId: string) {
-  const own = await mockAthleteRepository.listByCoach(coachId);
+  const own = await listAthletes(coachId);
   if (!own.some((a) => a.id === athleteId)) throw new Error("Atleta no encontrado.");
 }
 

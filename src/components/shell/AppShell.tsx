@@ -3,13 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, activeNavItem, navGroupLabel } from "./nav";
 import { THEME_STORAGE_KEY } from "./theme";
+import { signOutAction } from "@/app/login/actions";
 
-const COACH_NAME = "Laura Méndez";
-const COACH_INITIALS = "LM";
+/** Who is signed in, as shown in the sidebar. */
+export interface ShellUser {
+  name: string;
+  initials: string;
+}
 const BACKGROUND_IMAGE = "/backgrounds/tt-ride.jpg";
 
 /** The theme lives as a `dark` class on <html> (set before paint by the root
@@ -27,12 +31,15 @@ const roundButtonClass =
   "glass flex size-11 flex-none items-center justify-center rounded-full text-[var(--text)] transition-[filter] hover:brightness-125";
 
 /** Rendered once by the root layout, so sidebar state survives navigation. */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser | null }) {
   const pathname = usePathname();
   const activeItem = activeNavItem(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const expanded = !collapsed;
   const hideWhenCollapsed = cn("max-md:hidden", !expanded && "md:hidden");
+
+  // Signed out (the sign-in page): no navigation to show.
+  if (!user) return <>{children}</>;
 
   return (
     <div className="relative h-dvh w-full overflow-hidden" style={{ color: "var(--text)" }}>
@@ -164,14 +171,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="flex size-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white"
               style={{ background: "var(--gym)" }}
             >
-              {COACH_INITIALS}
+              {user.initials}
             </div>
-            <div className={cn("min-w-0", hideWhenCollapsed)}>
-              <div className="truncate text-[13px] font-semibold">{COACH_NAME}</div>
+            <div className={cn("min-w-0 flex-1", hideWhenCollapsed)}>
+              <div className="truncate text-[13px] font-semibold">{user.name}</div>
               <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
                 Coach
               </div>
             </div>
+            <form action={signOutAction} className={hideWhenCollapsed}>
+              <button
+                type="submit"
+                aria-label="Cerrar sesión"
+                title="Cerrar sesión"
+                className="flex size-8 items-center justify-center rounded-full transition-[filter] hover:brightness-125"
+                style={{ color: "var(--text-2)" }}
+              >
+                <LogOut className="size-4" />
+              </button>
+            </form>
           </div>
         </aside>
 

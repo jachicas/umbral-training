@@ -9,7 +9,8 @@
 - **Web app:** Next.js (App Router) — the UI. Route Handlers and Server Actions stay thin.
 - **Backend:** Laravel API in the sibling repo `../umbral-training-api` (decided 2026-10-14), deployed to Railway. It is built module by module (see its `docs/roadmap.md`). Modules not migrated yet still run on the in-memory mock repositories here.
 - **Database & Auth:** Supabase (Postgres + Auth). The web app signs users in with Supabase Auth and calls the API server-side with the user's access token. The API owns the database and authorizes every request in code. RLS stays enabled on every table, with no policies, so the Data API can't reach them.
-- **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` are the only place that talks to the API (or to a mock, until its module migrates).
+- **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` are the only place that talks to the API (`athletes-repo.api.ts`), through `src/lib/api/client.ts`. Workouts still run on their mock, behind `workouts-repo.rekeyed.ts`, which maps the mock's seed athletes onto the coach's real ones until workouts move to the API.
+- **Auth:** `src/proxy.ts` refreshes the Supabase session and keeps signed-out visitors on `/login`. Sign-in and sign-out are Server Actions, and every Supabase/API setting is server-only (no `NEXT_PUBLIC_`).
 - **UI:** Tailwind CSS + shadcn/ui. Charts with Recharts or Tremor.
 - **Language / tooling:** TypeScript, `src/` directory, import alias `@/*`, pnpm.
 - **Deploy target:** Railway. Keep resource usage minimal.
@@ -45,6 +46,8 @@ src/
 ```
 
 ## Commands
+
+Copy `.env.example` to `.env.local` (Supabase URL + publishable key, API URL) and run the API (`composer dev` in `../umbral-training-api`).
 
 ```bash
 pnpm dev      # start the dev server (http://localhost:3000)

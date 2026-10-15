@@ -1,9 +1,5 @@
-import type { Goal, GoalModality, GoalType, RunningFormat, TriathlonFormat } from "./types";
+import type { Goal, GoalModality, RunningFormat, TriathlonFormat } from "./types";
 import { daysUntil, formatDuration } from "./time";
-
-export const GOAL_TYPES: GoalType[] = ["race", "maintenance"];
-
-export const GOAL_MODALITIES: GoalModality[] = ["running", "triathlon"];
 
 export const GOAL_MODALITY_LABEL: Record<GoalModality, string> = {
   running: "Running",
@@ -30,11 +26,6 @@ export const TRIATHLON_FORMAT_LABEL: Record<TriathlonFormat, string> = {
 export function formatsFor(modality: GoalModality): { id: string; label: string }[] {
   const source = modality === "running" ? RUNNING_FORMAT_LABEL : TRIATHLON_FORMAT_LABEL;
   return Object.entries(source).map(([id, label]) => ({ id, label }));
-}
-
-/** True when `format` is one of the formats offered for `modality` (e.g. no "sprint" marathon). */
-export function isFormatFor(modality: GoalModality, format: string): boolean {
-  return formatsFor(modality).some((o) => o.id === format);
 }
 
 export function isRaceGoal(goal: Goal | null): goal is Goal & { type: "race" } {

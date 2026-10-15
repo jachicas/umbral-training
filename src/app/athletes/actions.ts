@@ -15,13 +15,16 @@ export interface FormState {
 export type CreateAthleteState = FormState;
 
 function fieldErrorState(error: unknown): FormState {
+  if (error instanceof athletesService.ValidationErrors) {
+    return { errors: error.errors };
+  }
   if (error instanceof athletesService.FieldValidationError) {
     return { errors: { [error.field]: error.message } };
   }
   return { errors: { general: error instanceof Error ? error.message : "Algo salió mal." } };
 }
 
-/** Raw strings only — the service whitelists every enum before anything is stored. */
+/** Raw strings only — the API whitelists every enum before anything is stored. */
 function disciplinesFrom(formData: FormData): string[] {
   return formData.getAll("disciplines").map(String);
 }

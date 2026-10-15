@@ -41,23 +41,6 @@ export function isPendingOrOverdue(status: PaymentPeriodStatus): boolean {
   return status === "pending" || status === "overdue";
 }
 
-export const MEMBERSHIP_MODES: MembershipMode[] = ["manual", "free", "gateway"];
-
-/**
- * Period status after the coach switches the plan's mode. A free plan has
- * nothing to collect; going back to a paid plan owes the period again unless
- * it had already been paid before the switch (`paidOn` belongs to the current
- * period). Otherwise the status is left as it was.
- */
-export function periodStatusAfterModeChange(
-  membership: Pick<Membership, "currentPeriodStatus" | "paidOn">,
-  nextMode: MembershipMode
-): PaymentPeriodStatus {
-  if (nextMode === "free") return "waived";
-  if (membership.currentPeriodStatus !== "waived") return membership.currentPeriodStatus;
-  return membership.paidOn ? "paid" : "pending";
-}
-
 export const MEMBERSHIP_MODE_LABEL: Record<MembershipMode, string> = {
   manual: "Manual",
   free: "Gratis",

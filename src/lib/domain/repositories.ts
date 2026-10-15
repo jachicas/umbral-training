@@ -10,7 +10,6 @@ import type {
   GoalType,
   Membership,
   MembershipMode,
-  PaymentPeriodStatus,
   RaceRecord,
   RaceReference,
 } from "./types";
@@ -37,8 +36,6 @@ export interface MembershipInput {
   mode: MembershipMode;
   amount?: number;
   currency: string;
-  /** Decided by the service (see `periodStatusAfterModeChange`), not by the adapter. */
-  currentPeriodStatus: PaymentPeriodStatus;
 }
 
 export interface RaceRecordInput {
@@ -67,9 +64,10 @@ export interface SportProfileInput {
 }
 
 /**
- * Port implemented by the persistence layer (Drizzle/Supabase today: an
- * in-memory mock — see src/lib/db/repositories). Every query is already
- * scoped to `coachId`; RLS is the second, DB-level line of defense.
+ * Port implemented by the HTTP adapter for the Laravel API
+ * (src/lib/db/repositories/athletes-repo.api.ts). The API scopes everything
+ * to the signed-in coach from the access token, so `coachId` is not sent;
+ * it stays in the signature for the workouts mock and for callers.
  */
 export interface AthleteRepository {
   listByCoach(coachId: string): Promise<Athlete[]>;
