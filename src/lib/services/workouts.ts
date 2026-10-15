@@ -1,9 +1,11 @@
 import { cache } from "react";
+import { ApiValidationError } from "@/lib/api/client";
 import { apiWorkoutRepository } from "@/lib/db/repositories/workouts-repo.api";
 import type { AthleteWeek, WorkoutRepository } from "@/lib/domain/repositories";
 import type { RaceReference } from "@/lib/domain/types";
 import type {
   AthletePaces,
+  LibrarySessionInput,
   PlanChange,
   ResolvedPace,
   TrainingGroup,
@@ -57,6 +59,42 @@ export async function moveAthleteToGroup(athleteId: string, groupId: string | nu
 }
 
 export const listSessionLibrary = cache((): Promise<WorkoutSession[]> => getRepo().listSessionLibrary());
+
+/** The API's rejections of a library session, keyed by path ("nodes.1.steps.0.duration.meters"). */
+export class LibrarySessionErrors extends Error {
+  constructor(public errors: Record<string, string>) {
+    super(Object.values(errors)[0] ?? "Revisa la sesión.");
+  }
+}
+
+async function withSessionErrors<T>(request: () => Promise<T>): Promise<T> {
+  try {
+    return await request();
+  } catch (error) {
+    if (error instanceof ApiValidationError) {
+      throw new LibrarySessionErrors(
+        Object.fromEntries(Object.entries(error.errors).map(([key, messages]) => [key, messages[0]]))
+      );
+    }
+    throw error;
+  }
+}
+
+export async function getLibrarySession(sessionId: string): Promise<WorkoutSession | null> {
+  return getRepo().getLibrarySession(sessionId);
+}
+
+export async function createLibrarySession(input: LibrarySessionInput): Promise<WorkoutSession> {
+  return withSessionErrors(() => getRepo().createLibrarySession(input));
+}
+
+export async function updateLibrarySession(sessionId: string, input: LibrarySessionInput): Promise<WorkoutSession> {
+  return withSessionErrors(() => getRepo().updateLibrarySession(sessionId, input));
+}
+
+export async function deleteLibrarySession(sessionId: string): Promise<void> {
+  return getRepo().deleteLibrarySession(sessionId);
+}
 
 export async function getWeekPlan(planId: string): Promise<WeekPlan | null> {
   return getRepo().getWeekPlan(planId);

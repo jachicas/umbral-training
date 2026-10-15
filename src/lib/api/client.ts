@@ -30,6 +30,8 @@ export async function apiFetch<T>(method: Method, path: string, body?: unknown):
   });
 
   if (response.ok) {
+    // 204 No Content (deletes) has no body to parse.
+    if (response.status === 204) return undefined as T;
     const json = (await response.json()) as { data: T };
     return json.data;
   }

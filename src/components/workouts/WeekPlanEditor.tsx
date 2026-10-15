@@ -35,7 +35,12 @@ function SessionCard({ planId, session, locked }: { planId: string; session: Wor
         opacity: pending ? 0.5 : 1,
       }}
     >
-      <Link href={`/workouts/plans/${planId}/sessions/${session.id}`} className="block pr-4" style={{ color: "var(--text)" }}>
+      {/* Opens the library session it was copied from; editing it there doesn't change this week. */}
+      <Link
+        href={session.librarySessionId ? `/workouts/library/${session.librarySessionId}` : "/workouts/library"}
+        className="block pr-4"
+        style={{ color: "var(--text)" }}
+      >
         <div className="text-[12.5px] leading-tight font-bold">{session.name}</div>
         <div className="mt-0.5 text-[11px] leading-snug" style={{ color: "var(--text-2)" }}>
           {sessionSummary(session)}
@@ -120,7 +125,7 @@ export function WeekPlanEditor({
                   className="mt-auto"
                   library={library}
                   onAdd={(id) => addSessionAction(plan.id, dayIndex, id)}
-                  newSessionHref={`/workouts/plans/${plan.id}/sessions/new?day=${dayIndex}`}
+                  newSessionHref={`/workouts/library/new?plan=${plan.id}&day=${dayIndex}`}
                 />
               )}
             </div>

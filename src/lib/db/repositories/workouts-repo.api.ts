@@ -33,6 +33,23 @@ export const apiWorkoutRepository: WorkoutRepository = {
 
   listSessionLibrary: () => apiFetch<WorkoutSession[]>("GET", path("library", "sessions")),
 
+  async getLibrarySession(sessionId) {
+    try {
+      return await apiFetch<WorkoutSession>("GET", path("library", "sessions", sessionId));
+    } catch (error) {
+      if (error instanceof ApiNotFoundError) return null;
+      throw error;
+    }
+  },
+
+  createLibrarySession: (input) => apiFetch<WorkoutSession>("POST", path("library", "sessions"), input),
+  updateLibrarySession: (sessionId, input) =>
+    apiFetch<WorkoutSession>("PUT", path("library", "sessions", sessionId), input),
+
+  async deleteLibrarySession(sessionId) {
+    await apiFetch<void>("DELETE", path("library", "sessions", sessionId));
+  },
+
   getWeek: (weekStart) =>
     apiFetch<{ weekStart: string; sentOn: string | null; plans: WeekPlan[] }>("GET", path("weeks", weekStart)),
 

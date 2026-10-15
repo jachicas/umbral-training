@@ -15,6 +15,7 @@ import type {
 } from "./types";
 import type {
   AthletePaces,
+  LibrarySessionInput,
   PlanChange,
   ResolvedPace,
   TrainingGroup,
@@ -139,6 +140,11 @@ export interface WorkoutRepository {
   moveAthleteToGroup(athleteId: string, groupId: string | null): Promise<void>;
   /** Saved sessions the coach picks from when filling a day. */
   listSessionLibrary(): Promise<WorkoutSession[]>;
+  getLibrarySession(sessionId: string): Promise<WorkoutSession | null>;
+  createLibrarySession(input: LibrarySessionInput): Promise<WorkoutSession>;
+  /** Weeks that already hold the session keep their copy. */
+  updateLibrarySession(sessionId: string, input: LibrarySessionInput): Promise<WorkoutSession>;
+  deleteLibrarySession(sessionId: string): Promise<void>;
   /** Every plan of the week (groups' and athletes' own) and the date it was sent, if it was. */
   getWeek(weekStart: string): Promise<{ plans: WeekPlan[]; sentOn: string | null }>;
   getWeekPlan(planId: string): Promise<WeekPlan | null>;

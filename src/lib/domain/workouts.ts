@@ -50,6 +50,18 @@ export interface WorkoutSession {
   name: string;
   discipline: Discipline;
   nodes: WorkoutNode[];
+  /** On a session placed in a week: the library session it was copied from. */
+  librarySessionId?: string | null;
+}
+
+/** A session as written in the editor: the API assigns node ids by position. */
+export type WorkoutStepInput = Omit<WorkoutStep, "id">;
+export type WorkoutNodeInput = WorkoutStepInput | { type: "repeat"; times: number; steps: WorkoutStepInput[] };
+
+export interface LibrarySessionInput {
+  name: string;
+  discipline: Discipline;
+  nodes: WorkoutNodeInput[];
 }
 
 /** A fixed set of athletes who share the same weekly plan. */

@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type WorkoutsTab = "week" | "groups";
+type WorkoutsTab = "week" | "groups" | "library";
 
 const TABS: { id: WorkoutsTab; label: string; href: string }[] = [
   { id: "week", label: "Semana", href: "/workouts" },
   { id: "groups", label: "Grupos", href: "/workouts/groups" },
+  { id: "library", label: "Biblioteca", href: "/workouts/library" },
 ];
 
 /** Shared header for the Entrenos tabs: title, subtitle, actions and the tab switcher. */
