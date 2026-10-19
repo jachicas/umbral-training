@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
+import { FilterSelect, type FilterOption } from "@/components/ui/filter-select";
 import { isPendingOrOverdue } from "@/lib/domain/payments";
 import { AthleteTable } from "./AthleteTable";
 import { AddAthleteButton } from "./AddAthleteButton";
@@ -10,48 +10,19 @@ import type { AthleteRowVM } from "./types";
 type PayFilter = "all" | "paid" | "pending" | "free";
 type AccessFilter = "all" | "draft" | "invited" | "linked";
 
-const PAY_FILTERS: { id: PayFilter; label: string }[] = [
-  { id: "all", label: "Todos" },
-  { id: "paid", label: "Pagados" },
-  { id: "pending", label: "Pendientes" },
-  { id: "free", label: "Gratis" },
+const PAY_FILTERS: FilterOption<PayFilter>[] = [
+  { value: "all", label: "Todos" },
+  { value: "paid", label: "Pagados" },
+  { value: "pending", label: "Pendientes" },
+  { value: "free", label: "Gratis" },
 ];
 
-const ACCESS_FILTERS: { id: AccessFilter; label: string }[] = [
-  { id: "all", label: "Todos" },
-  { id: "draft", label: "Borrador" },
-  { id: "invited", label: "Invitado" },
-  { id: "linked", label: "Vinculado" },
+const ACCESS_FILTERS: FilterOption<AccessFilter>[] = [
+  { value: "all", label: "Todos" },
+  { value: "draft", label: "Borrador" },
+  { value: "invited", label: "Invitado" },
+  { value: "linked", label: "Vinculado" },
 ];
-
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "h-8 rounded-lg border px-3 text-[12.5px] font-bold transition-colors",
-        active ? "border-transparent text-white" : "hover:bg-[var(--surface-2)]"
-      )}
-      style={
-        active
-          ? { background: "var(--coral)" }
-          : { background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }
-      }
-    >
-      {children}
-    </button>
-  );
-}
 
 export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
   const [pay, setPay] = useState<PayFilter>("all");
@@ -94,39 +65,9 @@ export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <div className="flex flex-wrap items-center gap-[22px]">
-        <div className="flex items-center gap-2.5">
-          <span
-            id="pay-filter-label"
-            className="text-xs font-bold tracking-[.03em] uppercase"
-            style={{ color: "var(--text-3)" }}
-          >
-            Pago
-          </span>
-          <div role="group" aria-labelledby="pay-filter-label" className="flex flex-wrap gap-1.5">
-            {PAY_FILTERS.map((f) => (
-              <Pill key={f.id} active={pay === f.id} onClick={() => setPay(f.id)}>
-                {f.label}
-              </Pill>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <span
-            id="access-filter-label"
-            className="text-xs font-bold tracking-[.03em] uppercase"
-            style={{ color: "var(--text-3)" }}
-          >
-            Acceso
-          </span>
-          <div role="group" aria-labelledby="access-filter-label" className="flex flex-wrap gap-1.5">
-            {ACCESS_FILTERS.map((f) => (
-              <Pill key={f.id} active={access === f.id} onClick={() => setAccess(f.id)}>
-                {f.label}
-              </Pill>
-            ))}
-          </div>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterSelect label="Pago" value={pay} defaultValue="all" options={PAY_FILTERS} onChange={setPay} />
+        <FilterSelect label="Acceso" value={access} defaultValue="all" options={ACCESS_FILTERS} onChange={setAccess} />
       </div>
 
       {filtered.length === 0 ? (
