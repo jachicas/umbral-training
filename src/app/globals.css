@@ -40,36 +40,10 @@
   ::selection {
     background: rgba(225, 87, 60, 0.18);
   }
-  .tn {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-  }
 
   body {
     font-family: var(--font-inter), Inter, system-ui, sans-serif;
   }
-}
-
-/* ---------- interaction states (style-hover / style-focus in design) ----------
-   The prototype sets colors via inline styles, which beat any class rule, so
-   these need !important to take effect. */
-.u-btn-coral:hover {
-  background: var(--coral-hover) !important;
-}
-.u-btn-outline:hover {
-  background: var(--surface-2) !important;
-}
-.u-rowhover:hover {
-  background: var(--surface-2) !important;
-}
-.u-backlink:hover {
-  color: var(--coral) !important;
-}
-.u-nameinput:focus {
-  border-bottom-color: var(--coral) !important;
-}
-.u-textarea:focus {
-  border-color: var(--coral) !important;
 }
 
 /* ---------- liquid glass ----------

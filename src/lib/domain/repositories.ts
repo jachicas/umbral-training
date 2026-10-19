@@ -24,6 +24,7 @@ import type {
   WeekPlan,
   WorkoutSession,
 } from "./workouts";
+import type { Dashboard } from "./dashboard";
 
 /** A file to hand to the browser as a download. */
 export interface DownloadFile {
@@ -196,4 +197,9 @@ export interface WorkoutRepository {
   resolvePaces(planId: string, athleteIds: string[]): Promise<Record<string, AthletePaces>>;
   /** Pace per reference distance (latest time, or estimated from another distance). */
   getReferencePaces(athleteIds: string[]): Promise<Record<string, Record<RaceReference, ResolvedPace>>>;
+}
+
+/** The coach's day at a glance; the API computes it. */
+export interface DashboardRepository {
+  getDashboard(): Promise<Dashboard>;
 }
