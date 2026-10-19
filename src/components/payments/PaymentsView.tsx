@@ -85,7 +85,7 @@ function Kpi({ icon: Icon, value, label, note, tone }: {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-const GRID = "lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_.8fr_.8fr_.8fr_.6fr_150px] lg:items-center lg:gap-4";
+const GRID = "lg:grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_.8fr_.8fr_.8fr_.6fr_190px] lg:items-center lg:gap-4";
 
 /** The coach's collections: totals from the API, then every athlete's standing. */
 export function PaymentsView({ overview }: { overview: PaymentsOverview }) {
@@ -235,7 +235,7 @@ function PaymentRow({ athlete: a, first }: { athlete: PaymentsAthlete; first: bo
 
       <div className="flex justify-start lg:justify-end">
         {isPayActionable(m) ? (
-          <SettleButtons athleteId={a.athleteId} athleteName={a.fullName} membership={m} variant="row" />
+          <SettleButtons athleteId={a.athleteId} athleteName={a.fullName} email={a.email} membership={m} variant="row" />
         ) : !isMembershipConfigured(m) ? (
           <Link
             href={`/athletes/${a.athleteId}`}

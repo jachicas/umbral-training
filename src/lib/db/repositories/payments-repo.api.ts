@@ -9,6 +9,7 @@ import { type ApiMembership, athletePath, call, periodLabel, toMembership } from
 interface ApiPaymentsAthlete {
   athleteId: string;
   fullName: string;
+  email: string | null;
   status: AthleteStatus;
   groupId: string | null;
   lastPaidOn: string | null;
@@ -32,6 +33,7 @@ function toPaymentsAthlete(api: ApiPaymentsAthlete): PaymentsAthlete {
   return {
     athleteId: api.athleteId,
     fullName: api.fullName,
+    email: api.email ?? undefined,
     status: api.status,
     groupId: api.groupId ?? undefined,
     lastPaidOn: api.lastPaidOn ?? undefined,
@@ -76,6 +78,11 @@ export const apiPaymentsRepository: PaymentsRepository = {
     const membership = await call(() =>
       apiFetch<ApiMembership>("POST", `${membershipPath(athleteId)}/waivers`, { note: note ?? null })
     );
+    return toMembership(membership);
+  },
+
+  async remind(athleteId) {
+    const membership = await call(() => apiFetch<ApiMembership>("POST", `${membershipPath(athleteId)}/reminders`));
     return toMembership(membership);
   },
 

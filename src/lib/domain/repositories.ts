@@ -163,6 +163,8 @@ export interface PaymentsRepository {
   markPaid(athleteId: string, input: MarkPaidInput): Promise<Membership>;
   /** Forgives the oldest owed month. */
   waive(athleteId: string, note?: string): Promise<Membership>;
+  /** Emails the athlete a fee reminder now (the overdue one, or the heads-up). */
+  remind(athleteId: string): Promise<Membership>;
   /** Undoes the latest settled month, which is owed again. */
   undo(athleteId: string, paymentId: string): Promise<Membership>;
 }

@@ -45,6 +45,17 @@ export async function waiveAction(athleteId: string, _prev: FormState, formData:
   return { success: true };
 }
 
+export async function sendReminderAction(athleteId: string): Promise<{ error?: string }> {
+  try {
+    await paymentsService.sendReminder(athleteId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo enviar el aviso." };
+  }
+
+  revalidateFees();
+  return {};
+}
+
 export async function undoPaymentAction(athleteId: string, paymentId: string): Promise<{ error?: string }> {
   try {
     await paymentsService.undoPayment(athleteId, paymentId);

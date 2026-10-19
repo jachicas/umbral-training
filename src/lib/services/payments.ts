@@ -51,6 +51,11 @@ export async function waivePeriod(athleteId: string, note?: string): Promise<Mem
   return getRepo().waive(athleteId, blankToUndefined(note));
 }
 
+/** Emails the athlete a fee reminder now. */
+export async function sendReminder(athleteId: string): Promise<Membership> {
+  return getRepo().remind(athleteId);
+}
+
 /** Undoes the latest settled month. */
 export async function undoPayment(athleteId: string, paymentId: string): Promise<Membership> {
   return getRepo().undo(athleteId, paymentId);

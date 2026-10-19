@@ -7,6 +7,7 @@ import { FormDialog } from "@/components/athletes/fields/FormDialog";
 import { formatMoney } from "@/lib/domain/payments";
 import type { Membership } from "@/lib/domain/types";
 import { NoteField, PaymentFields } from "./PaymentFields";
+import { SendReminderButton } from "./SendReminderButton";
 
 /** What settling the shown month leaves: "Queda debiendo 2 meses." */
 function owedAfter(membership: Membership): string {
@@ -22,11 +23,14 @@ function owedAfter(membership: Membership): string {
 export function SettleButtons({
   athleteId,
   athleteName,
+  email,
   membership,
   variant,
 }: {
   athleteId: string;
   athleteName: string;
+  /** Without one, the reminder button is off. */
+  email?: string;
   membership: Membership;
   variant: "card" | "row";
 }) {
@@ -73,7 +77,18 @@ export function SettleButtons({
       </button>
     );
 
+  const reminder = (
+    <SendReminderButton
+      athleteId={athleteId}
+      athleteName={athleteName}
+      email={email}
+      lastRemindedOn={membership.lastRemindedOn}
+      variant={variant}
+    />
+  );
+
   return (
+    <>
     <div className={variant === "card" ? "mt-4 flex gap-2" : "flex items-center justify-end gap-1.5"}>
       <FormDialog
         title={`Registrar pago · ${period}`}
@@ -94,7 +109,10 @@ export function SettleButtons({
       >
         {() => <WaiveNote />}
       </FormDialog>
+      {variant === "row" && reminder}
     </div>
+    {variant === "card" && reminder}
+    </>
   );
 }
 

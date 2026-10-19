@@ -134,6 +134,7 @@ export interface PaymentsOverview {
 export interface PaymentsAthlete {
   athleteId: string;
   fullName: string;
+  email?: string;
   status: AthleteStatus;
   groupId?: string;
   lastPaidOn?: string;

@@ -110,6 +110,8 @@ export interface Membership {
   lastPaymentNote?: string;
   /** When the next fee is due (computed by the API); absent when nothing is billed. */
   dueOn?: string;
+  /** When the athlete last got a fee reminder, automatic or sent by hand. */
+  lastRemindedOn?: string;
 }
 
 /** A month settled by the athlete paying, or by the coach waiving it. */

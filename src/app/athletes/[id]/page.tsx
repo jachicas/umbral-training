@@ -429,7 +429,13 @@ export default async function AtletaDetailPage({
               </div>
             )}
             {isPayActionable(membership) && (
-              <SettleButtons athleteId={athlete.id} athleteName={athlete.fullName} membership={membership} variant="card" />
+              <SettleButtons
+                athleteId={athlete.id}
+                athleteName={athlete.fullName}
+                email={athlete.email}
+                membership={membership}
+                variant="card"
+              />
             )}
             {(payments.length > 0 || (payConfigured && membership.mode !== "free")) && (
               <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--border)" }}>

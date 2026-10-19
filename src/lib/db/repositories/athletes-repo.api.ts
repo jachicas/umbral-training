@@ -74,6 +74,7 @@ export interface ApiMembership {
   paidOn: string | null;
   lastPaymentNote: string | null;
   dueOn: string | null;
+  lastRemindedOn?: string | null;
 }
 
 interface ApiAthlete {
@@ -185,6 +186,7 @@ export function toMembership(api: ApiMembership): Membership {
     paidOn: orUndefined(api.paidOn),
     lastPaymentNote: orUndefined(api.lastPaymentNote),
     dueOn: orUndefined(api.dueOn),
+    lastRemindedOn: api.lastRemindedOn ?? undefined,
   };
 }
 
