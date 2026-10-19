@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { getPaymentsOverview } from "@/lib/services/payments";
+import { getSettings } from "@/lib/services/settings";
 import { monthName } from "@/lib/domain/payments";
 import { PaymentsView } from "@/components/payments/PaymentsView";
+import { PaymentInstructionsCard } from "@/components/payments/PaymentInstructionsCard";
 
 export const metadata: Metadata = { title: "Pagos · Umbral Training" };
 
 export default async function PaymentsPage() {
-  const overview = await getPaymentsOverview();
+  const [overview, settings] = await Promise.all([getPaymentsOverview(), getSettings()]);
   const { owingCount } = overview.summary;
   const month = monthName(overview.month);
 
@@ -24,6 +26,8 @@ export default async function PaymentsPage() {
       </div>
 
       <PaymentsView overview={overview} />
+
+      <PaymentInstructionsCard instructions={settings.paymentInstructions} />
     </div>
   );
 }

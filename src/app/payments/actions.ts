@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { FormState } from "@/app/athletes/actions";
 import * as paymentsService from "@/lib/services/payments";
+import * as settingsService from "@/lib/services/settings";
 import { ValidationErrors } from "@/lib/services/errors";
 
 function errorState(error: unknown): FormState {
@@ -53,4 +54,15 @@ export async function undoPaymentAction(athleteId: string, paymentId: string): P
 
   revalidateFees();
   return {};
+}
+
+export async function savePaymentInstructionsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  try {
+    await settingsService.savePaymentInstructions(String(formData.get("paymentInstructions") ?? ""));
+  } catch (error) {
+    return errorState(error);
+  }
+
+  revalidatePath("/payments");
+  return { success: true };
 }

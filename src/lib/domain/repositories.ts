@@ -228,6 +228,18 @@ export interface WorkoutRepository {
   getReferencePaces(athleteIds: string[]): Promise<Record<string, Record<RaceReference, ResolvedPace>>>;
 }
 
+/** The coach's own settings, kept by the API. */
+export interface CoachSettings {
+  /** How athletes pay the coach (bank, account); at the foot of every fee reminder. */
+  paymentInstructions?: string;
+}
+
+export interface SettingsRepository {
+  getSettings(): Promise<CoachSettings>;
+  /** Blank clears them. */
+  savePaymentInstructions(text: string): Promise<CoachSettings>;
+}
+
 /** The coach's day at a glance; the API computes it. */
 export interface DashboardRepository {
   getDashboard(): Promise<Dashboard>;
