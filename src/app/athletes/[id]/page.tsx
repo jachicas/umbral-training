@@ -23,6 +23,7 @@ import {
 import { raceSummary } from "@/lib/domain/races";
 import {
   MEMBERSHIP_MODE_LABEL,
+  dueLabel,
   formatMonthlyAmount,
   isMembershipConfigured,
   isPayActionable,
@@ -372,6 +373,19 @@ export default async function AtletaDetailPage({
                 </span>
                 <span className="text-[13.5px] font-bold">{membership.currentPeriodLabel}</span>
               </div>
+              {membership.dueOn && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px]" style={{ color: "var(--text-2)" }}>
+                    {dueLabel(membership)}
+                  </span>
+                  <span
+                    className="text-[13.5px] font-bold"
+                    style={membership.currentPeriodStatus === "overdue" ? { color: "var(--danger)" } : undefined}
+                  >
+                    {formatDateEs(membership.dueOn)}
+                  </span>
+                </div>
+              )}
             </div>
             {!payConfigured && (
               <div className="mt-4 flex flex-col gap-2.5">

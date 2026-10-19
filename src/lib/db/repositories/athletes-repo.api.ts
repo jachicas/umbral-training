@@ -71,6 +71,7 @@ interface ApiMembership {
   currentPeriodStatus: PaymentPeriodStatus;
   paidOn: string | null;
   lastPaymentNote: string | null;
+  dueOn: string | null;
 }
 
 interface ApiAthlete {
@@ -179,6 +180,7 @@ function toMembership(api: ApiMembership): Membership {
     currentPeriodStatus: api.currentPeriodStatus,
     paidOn: orUndefined(api.paidOn),
     lastPaymentNote: orUndefined(api.lastPaymentNote),
+    dueOn: orUndefined(api.dueOn),
   };
 }
 

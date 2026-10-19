@@ -57,3 +57,10 @@ export function isPayActionable(membership: Membership): boolean {
   if (!isMembershipConfigured(membership)) return false;
   return membership.mode === "manual" && membership.currentPeriodStatus !== "paid";
 }
+
+/** "Vence" while the month is owed, "Venció" once it's overdue, "Próximo pago" after paying it. */
+export function dueLabel(membership: Membership): string {
+  if (membership.currentPeriodStatus === "overdue") return "Venció";
+  if (membership.currentPeriodStatus === "paid") return "Próximo pago";
+  return "Vence";
+}

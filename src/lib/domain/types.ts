@@ -103,6 +103,8 @@ export interface Membership {
   currentPeriodStatus: PaymentPeriodStatus;
   paidOn?: string;
   lastPaymentNote?: string;
+  /** When the next fee is due (computed by the API); absent when nothing is billed. */
+  dueOn?: string;
 }
 
 export interface AssignedWorkout {
