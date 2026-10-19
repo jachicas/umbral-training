@@ -1,32 +1,6 @@
-import type { Goal, GoalModality, RunningFormat, TriathlonFormat } from "./types";
+import type { Goal } from "./types";
 import { daysUntil, formatDuration } from "./time";
-
-export const GOAL_MODALITY_LABEL: Record<GoalModality, string> = {
-  running: "Running",
-  triathlon: "Triatlón",
-};
-
-export const RUNNING_FORMAT_LABEL: Record<RunningFormat, string> = {
-  "5k": "5K",
-  "10k": "10K",
-  "21k": "Media maratón",
-  "42k": "Maratón",
-  other: "Otro",
-};
-
-export const TRIATHLON_FORMAT_LABEL: Record<TriathlonFormat, string> = {
-  sprint: "Sprint",
-  olympic: "Olímpico",
-  "70.3": "70.3",
-  "140.6": "140.6",
-  other: "Otro",
-};
-
-/** Formats available for a modality — drives the dependent select in the goal form. */
-export function formatsFor(modality: GoalModality): { id: string; label: string }[] {
-  const source = modality === "running" ? RUNNING_FORMAT_LABEL : TRIATHLON_FORMAT_LABEL;
-  return Object.entries(source).map(([id, label]) => ({ id, label }));
-}
+import { raceAimsForPace } from "./races";
 
 export function isRaceGoal(goal: Goal | null): goal is Goal & { type: "race" } {
   return goal !== null && goal.type === "race";
@@ -60,17 +34,18 @@ export function raceCountdown(goal: Goal, from: Date = new Date()): RaceCountdow
   return days === 0 ? { status: "today" } : { status: "past" };
 }
 
-export function formatGoalPace(goal: Goal): string {
-  if (!goal.targetPaceSecPerKm) return "—";
-  return `${formatDuration(goal.targetPaceSecPerKm)} /km`;
-}
-
-/** Human-readable label for a goal's format, e.g. "olympic" -> "Olímpico". */
-export function goalFormatLabel(goal: Pick<Goal, "modality" | "format">): string | undefined {
-  if (!goal.format) return undefined;
-  return goal.modality === "triathlon"
-    ? TRIATHLON_FORMAT_LABEL[goal.format as TriathlonFormat]
-    : RUNNING_FORMAT_LABEL[goal.format as RunningFormat];
+/** The goal's target as shown on the card: a pace for road and trail, a finish time for the rest. */
+export function goalTarget(goal: Goal): { value: string; label: string } {
+  if (!goal.race || raceAimsForPace(goal.race.sport)) {
+    return {
+      value: goal.targetPaceSecPerKm ? `${formatDuration(goal.targetPaceSecPerKm)} /km` : "—",
+      label: "ritmo objetivo",
+    };
+  }
+  return {
+    value: goal.targetTimeSeconds ? formatDuration(goal.targetTimeSeconds) : "—",
+    label: "tiempo objetivo",
+  };
 }
 
 /** Race goals within 30 days are flagged coral in the list to prompt taper planning. */

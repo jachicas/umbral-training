@@ -37,6 +37,7 @@ export default async function SendWeekPage({
         fullName: athlete.fullName,
         avatarColor: athlete.avatarColor,
         phone: athlete.phone,
+        email: athlete.email,
         workoutCount: planSessions(plan).length,
         text: weekMessage(athlete.fullName, dates, plan, { paces: paces[athlete.id] }),
       };

@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { createAthleteAction, type CreateAthleteState } from "@/app/athletes/actions";
 import { AthleteIdentityFields } from "./fields/AthleteIdentityFields";
 import { SportProfileFields } from "./fields/SportProfileFields";
-import { GoalFields } from "./fields/GoalFields";
+import { GoalWizard } from "./fields/GoalWizard";
+import type { Race } from "@/lib/domain/types";
 import { FieldError } from "./fields/FieldError";
 
 const initialState: CreateAthleteState = {};
@@ -44,7 +45,7 @@ function SectionCard({
  * sport profile, goal) are the same ones the athlete profile's edit dialogs use, so
  * creation and later edits never drift into different shapes.
  */
-export function CreateAthleteForm() {
+export function CreateAthleteForm({ races }: { races: Race[] }) {
   const [state, formAction, pending] = useActionState(createAthleteAction, initialState);
   const [email, setEmail] = useState("");
   const [sendNow, setSendNow] = useState(false);
@@ -69,8 +70,8 @@ export function CreateAthleteForm() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <SectionCard title="Objetivo" description="Mantenimiento, o una carrera con su fecha.">
-            <GoalFields errors={errors} />
+          <SectionCard title="Objetivo">
+            <GoalWizard races={races} errors={errors} />
           </SectionCard>
 
           <SectionCard

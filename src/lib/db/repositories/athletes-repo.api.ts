@@ -11,13 +11,15 @@ import type {
   Discipline,
   ExperienceLevel,
   Goal,
-  GoalModality,
   GoalType,
   Membership,
   MembershipMode,
   PaymentPeriodStatus,
+  Race,
+  RaceDistances,
   RaceRecord,
   RaceReference,
+  RaceSport,
 } from "@/lib/domain/types";
 import { ValidationErrors, type ValidationField } from "@/lib/services/athletes";
 
@@ -26,16 +28,28 @@ import { ValidationErrors, type ValidationField } from "@/lib/services/athletes"
 /* where the domain uses undefined.                                     */
 /* ------------------------------------------------------------------ */
 
+interface ApiRace {
+  id: string;
+  name: string;
+  date: string;
+  location: string | null;
+  sport: RaceSport;
+  sportLabel: string | null;
+  format: string | null;
+  distances: RaceDistances | null;
+  athleteCount?: number;
+}
+
 interface ApiGoal {
   id: string;
   athleteId: string;
   type: GoalType;
   status: Goal["status"];
+  race: ApiRace | null;
   raceName: string | null;
   raceDate: string | null;
-  modality: GoalModality | null;
-  format: string | null;
   targetPaceSecPerKm: number | null;
+  targetTimeSeconds: number | null;
 }
 
 interface ApiRecord {
@@ -128,11 +142,25 @@ function toGoal(api: ApiGoal): Goal {
     athleteId: api.athleteId,
     type: api.type,
     status: api.status,
+    race: api.race ? toRace(api.race) : undefined,
     raceName: orUndefined(api.raceName),
     raceDate: orUndefined(api.raceDate),
-    modality: orUndefined(api.modality),
-    format: orUndefined(api.format) as Goal["format"],
     targetPaceSecPerKm: orUndefined(api.targetPaceSecPerKm),
+    targetTimeSeconds: orUndefined(api.targetTimeSeconds),
+  };
+}
+
+function toRace(api: ApiRace): Race {
+  return {
+    id: api.id,
+    name: api.name,
+    date: api.date,
+    location: orUndefined(api.location),
+    sport: api.sport,
+    sportLabel: orUndefined(api.sportLabel),
+    format: orUndefined(api.format),
+    distances: orUndefined(api.distances),
+    athleteCount: api.athleteCount,
   };
 }
 
@@ -172,11 +200,20 @@ function toDetail(api: ApiAthlete): AthleteDetail {
 function goalBody(goal: GoalInput) {
   return {
     type: goal.type,
-    raceName: goal.raceName ?? null,
-    raceDate: goal.raceDate ?? null,
-    modality: goal.modality ?? null,
-    format: goal.format ?? null,
+    raceId: goal.raceId ?? null,
+    race: goal.race
+      ? {
+          name: goal.race.name,
+          date: goal.race.date,
+          location: goal.race.location ?? null,
+          sport: goal.race.sport,
+          sportLabel: goal.race.sportLabel ?? null,
+          format: goal.race.format ?? null,
+          distances: goal.race.distances,
+        }
+      : null,
     targetPaceSecPerKm: goal.targetPaceSecPerKm ?? null,
+    targetTimeSeconds: goal.targetTimeSeconds ?? null,
   };
 }
 
@@ -192,17 +229,26 @@ const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   "thresholds.swimThresholdPaceSecPer100m": "swimPace",
   "thresholds.maxHr": "maxHr",
   "thresholds.restHr": "restHr",
-  raceName: "raceName",
-  raceDate: "raceDate",
+  raceId: "race",
+  race: "race",
+  "race.name": "raceName",
+  "race.date": "raceDate",
+  "race.location": "raceLocation",
+  "race.sport": "raceSport",
+  "race.sportLabel": "raceSportLabel",
+  "race.format": "raceFormat",
   targetPaceSecPerKm: "targetPace",
+  targetTimeSeconds: "targetTime",
   amount: "amount",
   timeSeconds: "time",
   recordedOn: "recordedOn",
 };
 
 function fieldFor(apiKey: string): ValidationField {
-  // Goal fields arrive prefixed when sent inside an athlete ("goal.raceDate").
-  return FIELD_FOR_API_KEY[apiKey] ?? FIELD_FOR_API_KEY[apiKey.replace(/^goal\./, "")] ?? "general";
+  // Goal fields arrive prefixed when sent inside an athlete ("goal.race.date").
+  const key = apiKey.replace(/^goal\./, "");
+  if (key.startsWith("race.distances.")) return "raceDistances";
+  return FIELD_FOR_API_KEY[apiKey] ?? FIELD_FOR_API_KEY[key] ?? "general";
 }
 
 /** Runs an API call, turning a 422 into field errors the forms can show. */
@@ -299,6 +345,11 @@ export const apiAthleteRepository: AthleteRepository = {
       })
     );
     return toAthlete(athlete);
+  },
+
+  async listUpcomingRaces() {
+    const races = await call(() => apiFetch<ApiRace[]>("GET", "/v1/races?upcoming=1"));
+    return races.map(toRace);
   },
 
   async upsertActiveGoal(athleteId, _coachId, input) {

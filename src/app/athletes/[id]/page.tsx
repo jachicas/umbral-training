@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Activity, ChevronLeft, ChevronRight, Check, Flag, Plus, Target } from "lucide-react";
 import { getCurrentCoachId } from "@/lib/supabase/auth";
-import { getAthleteDetail } from "@/lib/services/athletes";
+import { getAthleteDetail, listUpcomingRaces } from "@/lib/services/athletes";
 import { markPeriodPaidAction } from "../actions";
 import {
   RACE_REFERENCES,
@@ -17,10 +17,10 @@ import {
   isRaceGoal,
   isRaceGoalDefined,
   raceCountdown,
-  formatGoalPace,
-  goalFormatLabel,
+  goalTarget,
   goalSummaryLabel,
 } from "@/lib/domain/goals";
+import { raceSummary } from "@/lib/domain/races";
 import {
   MEMBERSHIP_MODE_LABEL,
   formatMonthlyAmount,
@@ -64,7 +64,7 @@ export default async function AtletaDetailPage({
 }) {
   const { id } = await params;
   const coachId = await getCurrentCoachId();
-  const detail = await getAthleteDetail(id, coachId);
+  const [detail, races] = await Promise.all([getAthleteDetail(id, coachId), listUpcomingRaces(coachId)]);
   if (!detail) notFound();
 
   const { athlete, records, activeGoal, membership, assignedWorkouts } = detail;
@@ -152,7 +152,15 @@ export default async function AtletaDetailPage({
                 <span className="text-xs" style={{ color: "var(--text-3)" }}>
                   ritmo min/km derivado
                 </span>
-                <AddRecordDialog athleteId={athlete.id} />
+                <AddRecordDialog
+                  athleteId={athlete.id}
+                  latest={Object.fromEntries(
+                    RACE_REFERENCES.flatMap((ref) => {
+                      const mark = latestRecordFor(records, ref);
+                      return mark ? [[ref, { timeSeconds: mark.timeSeconds, recordedOn: mark.recordedOn, note: mark.note }]] : [];
+                    })
+                  )}
+                />
               </div>
             </div>
             <div className="flex flex-col">
@@ -247,7 +255,7 @@ export default async function AtletaDetailPage({
               <div className="flex items-center gap-1.5">
                 <Target size={18} style={{ color: "var(--text-3)" }} />
                 {raceDefined && (
-                  <EditGoalDialog athleteId={athlete.id} goal={activeGoal} defined />
+                  <EditGoalDialog athleteId={athlete.id} goal={activeGoal} races={races} defined />
                 )}
               </div>
             </div>
@@ -263,7 +271,8 @@ export default async function AtletaDetailPage({
                   <div className="min-w-0">
                     <div className="text-[15px] font-bold">{activeGoal.raceName}</div>
                     <div className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
-                      {goalFormatLabel(activeGoal)} · {activeGoal.raceDate && formatDateEs(activeGoal.raceDate)}
+                      {activeGoal.race && `${raceSummary(activeGoal.race)} · `}
+                      {activeGoal.raceDate && formatDateEs(activeGoal.raceDate)}
                     </div>
                   </div>
                 </div>
@@ -283,10 +292,10 @@ export default async function AtletaDetailPage({
                   </div>
                   <div className="flex-1 rounded-xl p-3.5 text-center" style={{ background: "var(--surface-2)" }}>
                     <div className="text-[26px] font-extrabold tabular-nums">
-                      {formatGoalPace(activeGoal)}
+                      {goalTarget(activeGoal).value}
                     </div>
                     <div className="mt-0.5 text-[11.5px]" style={{ color: "var(--text-2)" }}>
-                      ritmo objetivo
+                      {goalTarget(activeGoal).label}
                     </div>
                   </div>
                 </div>
@@ -314,7 +323,7 @@ export default async function AtletaDetailPage({
                     </div>
                   </div>
                 </div>
-                <EditGoalDialog athleteId={athlete.id} goal={activeGoal} defined={false} />
+                <EditGoalDialog athleteId={athlete.id} goal={activeGoal} races={races} defined={false} />
               </div>
             )}
           </div>

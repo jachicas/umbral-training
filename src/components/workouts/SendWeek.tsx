@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, Check, Copy, Link2, Lock } from "lucide-react";
+import { useState, useTransition } from "react";
+import { ArrowRight, Check, Copy, FileDown, Link2, Send } from "lucide-react";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { markWeekSentAction } from "@/app/workouts/actions";
 import { BackLink } from "./WorkoutsHeader";
-import { ActionButton } from "./ActionButton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SentBanner } from "./WeekParts";
 
 export interface AthleteMessage {
@@ -13,6 +13,8 @@ export interface AthleteMessage {
   fullName: string;
   avatarColor: string;
   phone?: string;
+  /** Where the week's PDF goes when the week is sent. */
+  email?: string;
   workoutCount: number;
   text: string;
 }
@@ -20,7 +22,10 @@ export interface AthleteMessage {
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
 const cardStyle = { background: "var(--surface)", borderColor: "var(--border)" };
 
-/** Walk through each athlete's weekly message and copy it for WhatsApp. */
+/**
+ * Sending the week: it's locked, and each athlete with an email gets their
+ * PDF. Each athlete's WhatsApp message and PDF are here too, to send by hand.
+ */
 export function SendWeek({
   weekStart,
   weekLabel,
@@ -38,6 +43,19 @@ export function SendWeek({
   const [activeId, setActiveId] = useState(messages[0]?.athleteId);
   const [copied, setCopied] = useState<string[]>([]);
   const [copyError, setCopyError] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [sending, startSending] = useTransition();
+  const [sendError, setSendError] = useState<string>();
+
+  const withEmail = messages.filter((m) => m.email).length;
+
+  function send() {
+    startSending(async () => {
+      const result = await markWeekSentAction(weekStart);
+      setSendError(result?.error);
+      setConfirming(false);
+    });
+  }
 
   const activeIndex = messages.findIndex((m) => m.athleteId === activeId);
   const active = messages[activeIndex];
@@ -61,21 +79,58 @@ export function SendWeek({
         <div>
           <h1 className="m-0 text-[24px] font-bold tracking-[-.4px]">Enviar semana {weekLabel}</h1>
           <div className="mt-1" style={{ color: "var(--text-2)" }}>
-            Copia el mensaje de cada atleta y pégalo en su chat de WhatsApp ·{" "}
+            Al enviarla, cada atleta con email recibe su PDF. También puedes copiar su mensaje para WhatsApp ·{" "}
             <b style={{ color: "var(--text)" }}>
               {copied.length}/{messages.length}
             </b>{" "}
             copiados
           </div>
         </div>
-        {!sentOn && messages.length > 0 && (
-          <span title="Cuando ya mandaste todos los mensajes. Después de esto la semana no se puede cambiar.">
-            <ActionButton action={markWeekSentAction.bind(null, weekStart)}>
-              <Lock size={14} /> Marcar como enviada
-            </ActionButton>
-          </span>
+        {messages.length > 0 && (
+          <div className="flex flex-wrap items-start gap-2.5">
+            <a
+              href={`/workouts/pdf/${weekStart}`}
+              download
+              className="flex h-[38px] items-center gap-1.5 rounded-[10px] border px-4 text-[13px] font-bold"
+              style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+            >
+              <FileDown size={14} /> Descargar PDFs
+            </a>
+            {!sentOn && (
+              <span className="inline-flex flex-col items-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => setConfirming(true)}
+                  className="flex h-[38px] items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+                  style={{ background: "var(--coral)" }}
+                >
+                  <Send size={14} /> Enviar semana
+                </button>
+                {sendError && (
+                  <span className="text-[11.5px] font-semibold" style={{ color: "var(--danger)" }}>
+                    {sendError}
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirming}
+        title={`Enviar semana ${weekLabel}`}
+        description={
+          (withEmail > 0
+            ? `Le llega su PDF por email a ${withEmail} de ${messages.length} ${messages.length === 1 ? "atleta" : "atletas"}.`
+            : "Ningún atleta tiene email: no sale ningún correo.") + " Después la semana ya no se puede cambiar."
+        }
+        confirmLabel={sending ? "Enviando…" : "Enviar"}
+        tone="primary"
+        pending={sending}
+        onConfirm={send}
+        onCancel={() => setConfirming(false)}
+      />
 
       {sentOn && <SentBanner sentOn={sentOn} />}
 
@@ -106,6 +161,7 @@ export function SendWeek({
                       <div className="truncate text-[13.5px] font-semibold">{m.fullName}</div>
                       <div className="text-[11.5px]" style={{ color: "var(--text-3)" }}>
                         {m.workoutCount} {m.workoutCount === 1 ? "entreno" : "entrenos"}
+                        {!m.email && " · sin email"}
                       </div>
                     </div>
                     {isCopied && (
@@ -132,6 +188,14 @@ export function SendWeek({
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <a
+                    href={`/workouts/pdf/${weekStart}/${active.athleteId}`}
+                    download
+                    className="flex h-10 items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-bold"
+                    style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+                  >
+                    <FileDown size={14} /> PDF
+                  </a>
                   <button
                     type="button"
                     disabled

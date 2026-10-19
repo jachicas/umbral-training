@@ -13,6 +13,14 @@ export class ApiNotFoundError extends Error {}
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
+/** A file the API serves (a PDF, a zip), passed through as is. */
+export interface ApiFile {
+  body: ArrayBuffer;
+  contentType: string;
+  /** The API's Content-Disposition, with the file name. */
+  disposition: string;
+}
+
 /**
  * Calls the Laravel API as the signed-in user and returns the response's
  * `data`. Server-side only: the token never reaches the browser.
@@ -49,4 +57,26 @@ export async function apiFetch<T>(method: Method, path: string, body?: unknown):
       // 403 ("Esta cuenta no es de un coach.") and anything unexpected.
       throw new Error(json.message ?? `La API respondió ${response.status}.`);
   }
+}
+
+/** GETs a file from the API as the signed-in user. Errors are thrown like apiFetch's. */
+export async function apiFile(path: string): Promise<ApiFile> {
+  const response = await fetch(`${apiUrl()}${path}`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const json = (await response.json().catch(() => ({}))) as { message?: string; errors?: Record<string, string[]> };
+    if (response.status === 401) redirect("/login");
+    if (response.status === 404) throw new ApiNotFoundError(json.message ?? "No encontrado.");
+    if (response.status === 422) throw new ApiValidationError(json.errors ?? {});
+    throw new Error(json.message ?? `La API respondió ${response.status}.`);
+  }
+
+  return {
+    body: await response.arrayBuffer(),
+    contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
+    disposition: response.headers.get("Content-Disposition") ?? "attachment",
+  };
 }

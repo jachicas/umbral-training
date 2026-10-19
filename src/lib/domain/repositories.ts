@@ -6,12 +6,14 @@ import type {
   Discipline,
   ExperienceLevel,
   Goal,
-  GoalModality,
   GoalType,
   Membership,
   MembershipMode,
+  Race,
+  RaceDistances,
   RaceRecord,
   RaceReference,
+  RaceSport,
 } from "./types";
 import type {
   AthletePaces,
@@ -23,14 +25,31 @@ import type {
   WorkoutSession,
 } from "./workouts";
 
-/** Race detail is absent while the coach still only knows it's "a race". */
+/** A file to hand to the browser as a download. */
+export interface DownloadFile {
+  body: ArrayBuffer;
+  contentType: string;
+  disposition: string;
+}
+
+/** A new race for the catalog; only the fields its sport asks for are kept. */
+export interface RaceInput {
+  name: string;
+  date: string;
+  location?: string;
+  sport: RaceSport;
+  sportLabel?: string;
+  format?: string;
+  distances: RaceDistances;
+}
+
+/** A race goal points to a catalog race (`raceId`) or registers a new one (`race`). */
 export interface GoalInput {
   type: GoalType;
-  raceName?: string;
-  raceDate?: string;
-  modality?: GoalModality;
-  format?: string;
+  raceId?: string;
+  race?: RaceInput;
   targetPaceSecPerKm?: number;
+  targetTimeSeconds?: number;
 }
 
 export interface MembershipInput {
@@ -97,6 +116,8 @@ export interface AthleteRepository {
     coachId: string,
     input: SportProfileInput
   ): Promise<Athlete>;
+  /** The coach's races from today on, by date — what a goal can point to. */
+  listUpcomingRaces(coachId: string): Promise<Race[]>;
   /** Replaces the athlete's active goal (there is only ever one). */
   upsertActiveGoal(athleteId: string, coachId: string, input: GoalInput): Promise<Goal>;
   updateMembership(
@@ -165,8 +186,12 @@ export interface WorkoutRepository {
   ): Promise<AthleteWeek>;
   setAthleteRepeatTimes(athleteId: string, weekStart: string, sessionId: string, repeatId: string, times: number): Promise<AthleteWeek>;
   setAthleteStepSeconds(athleteId: string, weekStart: string, sessionId: string, stepId: string, seconds: number): Promise<AthleteWeek>;
-  /** Sends the week to the athletes and locks it; returns the date it was sent. */
+  /** Sends the week to the athletes and locks it (each one with an email gets their PDF); returns the date it was sent. */
   markWeekSent(weekStart: string): Promise<string>;
+  /** The athlete's week as they receive it, as a PDF. */
+  getWeekPdf(athleteId: string, weekStart: string): Promise<DownloadFile>;
+  /** Every athlete's PDF of the week, in a zip. */
+  getWeekPdfZip(weekStart: string): Promise<DownloadFile>;
   /** Each athlete's pace for every relative step in the plan, keyed by `stepKey`. */
   resolvePaces(planId: string, athleteIds: string[]): Promise<Record<string, AthletePaces>>;
   /** Pace per reference distance (latest time, or estimated from another distance). */

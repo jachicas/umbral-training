@@ -10,13 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-/** Asks before something that can't be undone with one click (removing a session…). */
+/** Asks before something that can't be undone with one click (removing a session, sending a week…). */
 export function ConfirmDialog({
   open,
   title,
   description,
   confirmLabel,
   pending = false,
+  tone = "danger",
   onConfirm,
   onCancel,
 }: {
@@ -25,6 +26,8 @@ export function ConfirmDialog({
   description?: string;
   confirmLabel: string;
   pending?: boolean;
+  /** "primary" for a step that commits rather than destroys (sending a week). */
+  tone?: "danger" | "primary";
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -43,7 +46,7 @@ export function ConfirmDialog({
             type="button"
             disabled={pending}
             className="h-10 rounded-[10px] font-bold text-white"
-            style={{ background: "var(--danger)" }}
+            style={{ background: tone === "danger" ? "var(--danger)" : "var(--coral)" }}
             onClick={onConfirm}
           >
             {confirmLabel}

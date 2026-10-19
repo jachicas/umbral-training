@@ -1,4 +1,4 @@
-import { ApiNotFoundError, apiFetch } from "@/lib/api/client";
+import { ApiNotFoundError, apiFetch, apiFile } from "@/lib/api/client";
 import type { AthleteWeek, WorkoutRepository } from "@/lib/domain/repositories";
 import type { TrainingGroup, WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 
@@ -97,6 +97,9 @@ export const apiWorkoutRepository: WorkoutRepository = {
     const { sentOn } = await apiFetch<{ sentOn: string }>("POST", path("weeks", weekStart, "send"));
     return sentOn;
   },
+
+  getWeekPdf: (athleteId, weekStart) => apiFile(athleteWeekPath(athleteId, weekStart, "pdf")),
+  getWeekPdfZip: (weekStart) => apiFile(path("weeks", weekStart, "pdfs")),
 
   resolvePaces: (planId, athleteIds) =>
     apiFetch("GET", `${path("plans", planId, "paces")}?${athleteQuery(athleteIds)}`),

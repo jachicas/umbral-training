@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentCoachId } from "@/lib/supabase/auth";
 import * as athletesService from "@/lib/services/athletes";
+import { RACE_REFERENCES } from "@/lib/domain/time";
 
 /** Errors keyed by field name so each input can render its own message. */
 export interface FormState {
@@ -47,15 +48,15 @@ function sportProfileFrom(formData: FormData): athletesService.SportProfileFormI
   };
 }
 
+/** The goal wizard sends its whole state as JSON in one hidden field. */
 function goalFrom(formData: FormData): athletesService.SaveGoalInput {
-  return {
-    type: String(formData.get("goalType") ?? "maintenance"),
-    raceName: String(formData.get("raceName") ?? ""),
-    raceDate: String(formData.get("raceDate") ?? ""),
-    modality: optionalString(formData, "modality"),
-    format: optionalString(formData, "format"),
-    targetPace: String(formData.get("targetPace") ?? ""),
-  };
+  try {
+    const goal = JSON.parse(String(formData.get("goal") ?? ""));
+    if (goal && typeof goal === "object" && typeof goal.type === "string") return goal;
+  } catch {
+    // Falls through to maintenance, like an untouched form.
+  }
+  return { type: "maintenance" };
 }
 
 export async function createAthleteAction(
@@ -170,12 +171,20 @@ export async function addRecordAction(
 ): Promise<FormState> {
   try {
     const coachId = await getCurrentCoachId();
-    await athletesService.addRaceRecord(athleteId, coachId, {
-      reference: String(formData.get("reference") ?? "5k"),
-      time: String(formData.get("time") ?? ""),
-      recordedOn: String(formData.get("recordedOn") ?? ""),
-      note: String(formData.get("note") ?? ""),
-    });
+    await athletesService.addRaceRecords(
+      athleteId,
+      coachId,
+      Object.fromEntries(
+        RACE_REFERENCES.map((r) => [
+          r,
+          {
+            time: String(formData.get(`time_${r}`) ?? ""),
+            recordedOn: String(formData.get(`recordedOn_${r}`) ?? ""),
+            note: String(formData.get(`note_${r}`) ?? ""),
+          },
+        ])
+      )
+    );
   } catch (error) {
     return fieldErrorState(error);
   }

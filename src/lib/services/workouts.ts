@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { ApiValidationError } from "@/lib/api/client";
 import { apiWorkoutRepository } from "@/lib/db/repositories/workouts-repo.api";
-import type { AthleteWeek, WorkoutRepository } from "@/lib/domain/repositories";
+import type { AthleteWeek, DownloadFile, WorkoutRepository } from "@/lib/domain/repositories";
 import type { RaceReference } from "@/lib/domain/types";
 import type {
   AthletePaces,
@@ -38,6 +38,14 @@ export async function getWeekSentOn(weekStart: string): Promise<string | null> {
 
 export async function markWeekSent(weekStart: string): Promise<string> {
   return getRepo().markWeekSent(weekStart);
+}
+
+export async function getWeekPdf(athleteId: string, weekStart: string): Promise<DownloadFile> {
+  return getRepo().getWeekPdf(athleteId, weekStart);
+}
+
+export async function getWeekPdfZip(weekStart: string): Promise<DownloadFile> {
+  return getRepo().getWeekPdfZip(weekStart);
 }
 
 export const listGroups = cache((): Promise<TrainingGroup[]> => getRepo().listGroups());

@@ -19,6 +19,12 @@ type Errors = Partial<Record<ValidationField, string>>;
 
 type FormAction = (prev: FormState, formData: FormData) => Promise<FormState>;
 
+/** For a body that draws its own buttons (`hideFooter`), like the goal wizard. */
+export interface FormDialogControls {
+  pending: boolean;
+  close: () => void;
+}
+
 const initialState: FormState = {};
 
 /**
@@ -36,6 +42,7 @@ export function FormDialog({
   submitLabel = "Guardar",
   pendingLabel = "Guardando…",
   maxWidthClass = "sm:max-w-[440px]",
+  hideFooter = false,
   children,
 }: {
   trigger: ReactElement;
@@ -45,7 +52,8 @@ export function FormDialog({
   submitLabel?: string;
   pendingLabel?: string;
   maxWidthClass?: string;
-  children: (errors: Errors) => ReactNode;
+  hideFooter?: boolean;
+  children: (errors: Errors, controls: FormDialogControls) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [openCount, setOpenCount] = useState(0);
@@ -66,6 +74,7 @@ export function FormDialog({
           action={action}
           submitLabel={submitLabel}
           pendingLabel={pendingLabel}
+          hideFooter={hideFooter}
           onClose={() => setOpen(false)}
         >
           {children}
@@ -81,6 +90,7 @@ function FormDialogBody({
   action,
   submitLabel,
   pendingLabel,
+  hideFooter,
   onClose,
   children,
 }: {
@@ -89,8 +99,9 @@ function FormDialogBody({
   action: FormAction;
   submitLabel: string;
   pendingLabel: string;
+  hideFooter: boolean;
   onClose: () => void;
-  children: (errors: Errors) => ReactNode;
+  children: (errors: Errors, controls: FormDialogControls) => ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(async (prev: FormState, formData: FormData) => {
     const next = await action(prev, formData);
@@ -107,18 +118,20 @@ function FormDialogBody({
         {description && <DialogDescription>{description}</DialogDescription>}
       </DialogHeader>
 
-      {children(errors)}
+      {children(errors, { pending, close: onClose })}
 
-      <FieldError message={errors.general} />
+      {!hideFooter && <FieldError message={errors.general} />}
 
-      <DialogFooter>
-        <Button type="button" variant="outline" className="h-10 rounded-[10px]" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={pending} className="h-10 rounded-[10px] font-bold">
-          {pending ? pendingLabel : submitLabel}
-        </Button>
-      </DialogFooter>
+      {!hideFooter && (
+        <DialogFooter>
+          <Button type="button" variant="outline" className="h-10 rounded-[10px]" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={pending} className="h-10 rounded-[10px] font-bold">
+            {pending ? pendingLabel : submitLabel}
+          </Button>
+        </DialogFooter>
+      )}
     </form>
   );
 }

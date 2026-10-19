@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { CreateAthleteForm } from "@/components/athletes/CreateAthleteForm";
+import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { listUpcomingRaces } from "@/lib/services/athletes";
 
 export const metadata: Metadata = { title: "Añadir atleta · Umbral Training" };
 
-export default function NewAthletePage() {
+export default async function NewAthletePage() {
+  const races = await listUpcomingRaces(await getCurrentCoachId());
+
   return (
     <div className="flex flex-col gap-5">
       <Link
@@ -23,7 +27,7 @@ export default function NewAthletePage() {
         </div>
       </div>
 
-      <CreateAthleteForm />
+      <CreateAthleteForm races={races} />
     </div>
   );
 }

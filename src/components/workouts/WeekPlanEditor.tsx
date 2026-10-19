@@ -37,9 +37,9 @@ function SessionCard({ planId, session, locked }: { planId: string; session: Wor
         opacity: pending ? 0.5 : 1,
       }}
     >
-      {/* Opens the library session it was copied from; editing it there doesn't change this week. */}
+      {/* Opens the library session it was copied from, which comes back to this week. */}
       <Link
-        href={session.librarySessionId ? `/workouts/library/${session.librarySessionId}` : "/workouts/library"}
+        href={session.librarySessionId ? `/workouts/library/${session.librarySessionId}?plan=${planId}` : "/workouts/library"}
         className="block pr-4"
         style={{ color: "var(--text)" }}
       >

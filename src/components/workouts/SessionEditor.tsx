@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Plus, Repeat, StickyNote, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Plus, Repeat, StickyNote, Trash2 } from "lucide-react";
 import type { Discipline, RaceReference } from "@/lib/domain/types";
 import type {
   LibrarySessionInput,
@@ -176,6 +176,10 @@ function errorsAt(errors: Record<string, string>, path: string, ownOnly = false)
     .filter(([key]) => key === path || key.startsWith(`${path}.`))
     .filter(([key]) => !ownOnly || !key.startsWith(`${path}.steps.`))
     .map(([, message]) => message);
+}
+
+function insertAfter<T>(list: T[], index: number, item: T): T[] {
+  return [...list.slice(0, index + 1), item, ...list.slice(index + 1)];
 }
 
 function move<T>(list: T[], index: number, by: -1 | 1): T[] {
@@ -436,6 +440,16 @@ export function SessionEditor({
 
   const updateNode = (index: number, node: NodeDraft) => setNodes((all) => all.map((n, i) => (i === index ? node : n)));
   const removeNode = (index: number) => setNodes((all) => all.filter((_, i) => i !== index));
+  // A copy goes right below the original, so a pyramid is one block duplicated and retouched.
+  const duplicateNode = (index: number) =>
+    setNodes((all) => {
+      const node = all[index];
+      const copy: NodeDraft =
+        node.type === "repeat"
+          ? { ...node, key: newKey(), steps: node.steps.map((s) => ({ ...s, key: newKey() })) }
+          : { ...node, key: newKey() };
+      return insertAfter(all, index, copy);
+    });
 
   function save() {
     const { input, errors: local } = toInput(name, discipline, nodes);
@@ -618,7 +632,14 @@ export function SessionEditor({
                 key={node.key}
                 step={node}
                 onChange={(step) => updateNode(i, step)}
-                controls={controls}
+                controls={
+                  <>
+                    <IconButton label="Duplicar paso" onClick={() => duplicateNode(i)}>
+                      <Copy size={15} />
+                    </IconButton>
+                    {controls}
+                  </>
+                }
                 errors={errorsAt(errors, path)}
               />
             );
@@ -642,7 +663,12 @@ export function SessionEditor({
                   style={fieldStyle}
                 />
                 veces
-                <div className="ml-auto flex items-center">{controls}</div>
+                <div className="ml-auto flex items-center">
+                  <IconButton label="Duplicar serie" onClick={() => duplicateNode(i)}>
+                    <Copy size={15} />
+                  </IconButton>
+                  {controls}
+                </div>
               </div>
               <Errors messages={errorsAt(errors, path, true)} />
               <div className="flex flex-col gap-2 pl-3">
@@ -654,6 +680,12 @@ export function SessionEditor({
                     errors={errorsAt(errors, `${path}.steps.${j}`)}
                     controls={
                       <>
+                        <IconButton
+                          label="Duplicar paso"
+                          onClick={() => updateNode(i, { ...node, steps: insertAfter(node.steps, j, { ...step, key: newKey() }) })}
+                        >
+                          <Copy size={15} />
+                        </IconButton>
                         <IconButton label="Subir" disabled={j === 0} onClick={() => updateNode(i, { ...node, steps: move(node.steps, j, -1) })}>
                           <ArrowUp size={15} />
                         </IconButton>

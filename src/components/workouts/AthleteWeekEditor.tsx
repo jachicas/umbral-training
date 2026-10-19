@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, FileDown, UserRound } from "lucide-react";
 import type { AthletePaces, PlanChange, WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
 import { addAthleteSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, EstimatedTag, ModifiedTag, SentBanner } from "./WeekParts";
+import { AddSessionButton, ModifiedTag, SentBanner } from "./WeekParts";
 import { WeekPreviewButton } from "./WeekPreviewDialog";
 import { DISCIPLINE_ICON } from "./discipline-icons";
 import { ChangesCard } from "./ChangesCard";
@@ -65,15 +65,35 @@ export function AthleteWeekEditor({
             {groupName && ` · ${groupName}`}
           </div>
         </div>
-        {plan && (
-          <WeekPreviewButton
-            athleteName={athlete.fullName}
-            weekLabel={weekLabel}
-            weekDates={weekDates}
-            plan={plan}
-            paces={paces}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Link
+            href={`/athletes/${athlete.id}`}
+            className="flex h-[40px] items-center gap-1.5 rounded-[10px] border px-4 text-[13px] font-bold"
+            style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+          >
+            <UserRound size={15} /> Ver atleta
+          </Link>
+          {plan && (
+            <>
+              <WeekPreviewButton
+                athleteId={athlete.id}
+                athleteName={athlete.fullName}
+                weekLabel={weekLabel}
+                weekDates={weekDates}
+                plan={plan}
+                paces={paces}
+              />
+              <a
+                href={`/workouts/pdf/${weekStart}/${athlete.id}`}
+                download
+                className="flex h-[40px] items-center gap-1.5 rounded-[10px] border px-4 text-[13px] font-bold"
+                style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+              >
+                <FileDown size={15} /> PDF
+              </a>
+            </>
+          )}
+        </div>
       </div>
 
       {sentOn && <SentBanner sentOn={sentOn} />}
@@ -161,9 +181,6 @@ export function AthleteWeekEditor({
                 </div>
               </div>
             ))}
-          </div>
-          <div className="mt-3 flex items-center gap-2 text-[12px]" style={{ color: "var(--text-3)" }}>
-            <EstimatedTag /> marca estimada a partir de otra distancia del atleta.
           </div>
         </div>
       )}

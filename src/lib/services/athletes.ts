@@ -1,5 +1,5 @@
 import { apiAthleteRepository } from "@/lib/db/repositories/athletes-repo.api";
-import type { AthleteRepository, GoalInput, SportProfileInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, RaceInput, SportProfileInput } from "@/lib/domain/repositories";
 import type {
   Athlete,
   AthleteDetail,
@@ -7,15 +7,18 @@ import type {
   Discipline,
   ExperienceLevel,
   Goal,
-  GoalModality,
   GoalType,
   Membership,
   MembershipMode,
+  Race,
+  RaceDistanceKey,
+  RaceDistances,
   RaceRecord,
   RaceReference,
+  RaceSport,
 } from "@/lib/domain/types";
 import { parseDuration } from "@/lib/domain/time";
-import { FieldValidationError, type ValidationField } from "./errors";
+import { FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
 
 export { FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
 
@@ -83,25 +86,69 @@ function buildSportProfile(input: SportProfileFormInput): SportProfileInput {
   };
 }
 
+/** A new race as typed in the goal wizard: every value a string, parsed here. */
+export interface RaceFormInput {
+  name?: string;
+  date?: string;
+  location?: string;
+  sport?: string;
+  sportLabel?: string;
+  format?: string;
+  distances?: Partial<Record<RaceDistanceKey, string>>;
+}
+
 export interface SaveGoalInput {
   type: string;
-  raceName?: string;
-  raceDate?: string;
-  modality?: string;
-  format?: string;
-  /** Free-form "m:ss" as typed by the coach; parsed here. */
+  /** A race from the catalog, or a new one in `race`. */
+  raceId?: string;
+  race?: RaceFormInput;
+  /** Free-form "m:ss" / "h:mm:ss" as typed by the coach; parsed here. */
   targetPace?: string;
+  targetTime?: string;
+}
+
+function buildRaceInput(input: RaceFormInput): RaceInput {
+  const distances = Object.fromEntries(
+    Object.entries(input.distances ?? {})
+      .map(([key, raw]) => [key, parseNumber(raw)])
+      .filter(([, value]) => value !== undefined)
+  ) as RaceDistances;
+
+  return {
+    name: input.name?.trim() ?? "",
+    date: input.date ?? "",
+    location: blankToUndefined(input.location),
+    sport: (input.sport ?? "") as RaceSport,
+    sportLabel: blankToUndefined(input.sportLabel),
+    format: blankToUndefined(input.format),
+    distances,
+  };
 }
 
 function buildGoalInput(input: SaveGoalInput): GoalInput {
   return {
     type: input.type as GoalType,
-    raceName: blankToUndefined(input.raceName),
-    raceDate: blankToUndefined(input.raceDate),
-    modality: blankToUndefined(input.modality) as GoalModality | undefined,
-    format: blankToUndefined(input.format),
+    raceId: blankToUndefined(input.raceId),
+    race: input.race && !input.raceId ? buildRaceInput(input.race) : undefined,
     targetPaceSecPerKm: parsePace(input.targetPace, "targetPace"),
+    targetTimeSeconds: parseTime(input.targetTime),
   };
+}
+
+/** "3:45:00" → seconds; a bare "45:00" reads as minutes and seconds. */
+function parseTime(raw: string | undefined): number | undefined {
+  const trimmed = blankToUndefined(raw);
+  if (trimmed === undefined) return undefined;
+  const parsed = parseDuration(trimmed);
+  if (parsed === null) {
+    throw new FieldValidationError("targetTime", "Usa el formato h:mm:ss (por ejemplo 3:45:00).");
+  }
+  return parsed;
+}
+
+/** Races a goal can point to: the coach's, from today on. */
+export async function listUpcomingRaces(coachId: string): Promise<Race[]> {
+  return getRepo().listUpcomingRaces(coachId);
 }
 
 export interface CreateAthleteInput extends SportProfileFormInput {
@@ -240,6 +287,47 @@ export async function addRaceRecord(
     recordedOn: input.recordedOn.trim(),
     note: blankToUndefined(input.note),
   });
+}
+
+export interface RecordEntry {
+  /** Free-form "mm:ss" / "h:mm:ss"; a blank one is skipped. */
+  time: string;
+  recordedOn: string;
+  note?: string;
+}
+
+/**
+ * Records every distance the coach filled in, each with its own date and
+ * note. All time formats are checked before saving anything; a rejection
+ * from the API names the distance it was about.
+ */
+export async function addRaceRecords(
+  athleteId: string,
+  coachId: string,
+  entries: Partial<Record<RaceReference, RecordEntry>>
+): Promise<void> {
+  const filled = (Object.entries(entries) as [RaceReference, RecordEntry][]).filter(([, e]) => e.time.trim() !== "");
+
+  if (filled.length === 0) {
+    throw new FieldValidationError("time", "No hay marcas nuevas: escribe o cambia el tiempo de alguna distancia.");
+  }
+  for (const [reference, e] of filled) {
+    if (parseDuration(e.time.trim()) === null) {
+      throw new FieldValidationError("time", `${reference.toUpperCase()}: usa el formato mm:ss o h:mm:ss (por ejemplo 21:30).`);
+    }
+  }
+
+  for (const [reference, e] of filled) {
+    try {
+      await addRaceRecord(athleteId, coachId, { reference, time: e.time, recordedOn: e.recordedOn, note: e.note });
+    } catch (error) {
+      if (error instanceof ValidationErrors) {
+        const field = error.errors.time ? "time" : "recordedOn";
+        throw new FieldValidationError(field, `${reference.toUpperCase()}: ${error.message}`);
+      }
+      throw error;
+    }
+  }
 }
 
 /** Marks the oldest owed month as paid. */

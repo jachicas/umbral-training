@@ -26,7 +26,7 @@ export default async function NewLibrarySessionPage({
       <SessionEditor
         session={null}
         cancelHref={back}
-        save={saveLibrarySessionAction.bind(null, null, addTo)}
+        save={saveLibrarySessionAction.bind(null, null, addTo, null)}
         saveLabel={addTo ? "Guardar y agregar al día" : "Guardar sesión"}
       />
     </div>

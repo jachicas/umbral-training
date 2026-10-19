@@ -2,9 +2,9 @@
 
 import { Pencil, Plus } from "lucide-react";
 import { saveGoalAction } from "@/app/athletes/actions";
-import type { Goal } from "@/lib/domain/types";
+import type { Goal, Race } from "@/lib/domain/types";
 import { FormDialog } from "./fields/FormDialog";
-import { GoalFields } from "./fields/GoalFields";
+import { GoalWizard } from "./fields/GoalWizard";
 
 /**
  * `defined` false renders a prompting CTA instead of a quiet pencil — that is
@@ -13,17 +13,20 @@ import { GoalFields } from "./fields/GoalFields";
 export function EditGoalDialog({
   athleteId,
   goal,
+  races,
   defined,
 }: {
   athleteId: string;
   goal: Goal | null;
+  races: Race[];
   defined: boolean;
 }) {
   return (
     <FormDialog
       title={defined ? "Editar objetivo" : "Definir objetivo"}
-      description="Mantenimiento, o una carrera con su fecha para calcular los días restantes."
       action={saveGoalAction.bind(null, athleteId)}
+      maxWidthClass="sm:max-w-[480px]"
+      hideFooter
       trigger={
         defined ? (
           <button
@@ -46,7 +49,15 @@ export function EditGoalDialog({
         )
       }
     >
-      {(errors) => <GoalFields goal={goal} errors={errors} />}
+      {(errors, { pending, close }) => (
+        <GoalWizard
+          goal={goal}
+          races={races}
+          errors={errors}
+          submit={{ pending, onCancel: close }}
+          startWithRace={!defined}
+        />
+      )}
     </FormDialog>
   );
 }

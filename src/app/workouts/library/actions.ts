@@ -18,10 +18,14 @@ export interface AddToWeek {
   dayIndex: number;
 }
 
-/** Bound by the page (`sessionId`, `addTo`); the editor passes the input. */
+/**
+ * Bound by the page (`sessionId`, `addTo`, `fromPlanId`); the editor passes the input.
+ * `fromPlanId` is the group's week the session was opened from, which it goes back to.
+ */
 export async function saveLibrarySessionAction(
   sessionId: string | null,
   addTo: AddToWeek | null,
+  fromPlanId: string | null,
   input: LibrarySessionInput
 ): Promise<SessionEditorState> {
   let destination: string;
@@ -35,7 +39,7 @@ export async function saveLibrarySessionAction(
       await workoutsService.addSession(addTo.planId, addTo.dayIndex, session.id);
       destination = `/workouts/plans/${addTo.planId}`;
     } else {
-      destination = "/workouts/library";
+      destination = fromPlanId ? `/workouts/plans/${fromPlanId}` : "/workouts/library";
     }
   } catch (error) {
     if (error instanceof workoutsService.LibrarySessionErrors) {
@@ -48,7 +52,10 @@ export async function saveLibrarySessionAction(
   redirect(destination);
 }
 
-export async function deleteLibrarySessionAction(sessionId: string): Promise<SessionEditorState> {
+export async function deleteLibrarySessionAction(
+  sessionId: string,
+  fromPlanId: string | null
+): Promise<SessionEditorState> {
   try {
     await workoutsService.deleteLibrarySession(sessionId);
   } catch (error) {
@@ -56,5 +63,5 @@ export async function deleteLibrarySessionAction(sessionId: string): Promise<Ses
   }
 
   revalidatePath("/workouts", "layout");
-  redirect("/workouts/library");
+  redirect(fromPlanId ? `/workouts/plans/${fromPlanId}` : "/workouts/library");
 }

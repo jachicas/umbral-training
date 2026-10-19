@@ -54,19 +54,39 @@ export interface RaceRecord {
 }
 
 export type GoalType = "race" | "maintenance";
-export type GoalModality = "running" | "triathlon";
-export type RunningFormat = "5k" | "10k" | "21k" | "42k" | "other";
-export type TriathlonFormat = "sprint" | "olympic" | "70.3" | "140.6" | "other";
+
+export type RaceSport = "road" | "trail" | "triathlon" | "duathlon" | "swim" | "cycling" | "hyrox" | "other";
+
+/** What a race measures depends on its sport (see `RACE_DISTANCE_FIELDS`). */
+export type RaceDistanceKey = "km" | "elevationM" | "swimKm" | "bikeKm" | "runKm" | "run1Km" | "run2Km" | "meters";
+export type RaceDistances = Partial<Record<RaceDistanceKey, number>>;
+
+/** A race in the coach's catalog: registered once, the goal of any number of athletes. */
+export interface Race {
+  id: string;
+  name: string;
+  date: string;
+  location?: string;
+  sport: RaceSport;
+  /** Only for `other`: what kind of race it is ("Aguas abiertas"). */
+  sportLabel?: string;
+  format?: string;
+  distances?: RaceDistances;
+  /** Athletes with it as their active goal (catalog listings only). */
+  athleteCount?: number;
+}
 
 export interface Goal {
   id: string;
   athleteId: string;
   type: GoalType;
+  race?: Race;
+  /** The race's name and date, kept flat for lists. */
   raceName?: string;
   raceDate?: string;
-  modality?: GoalModality;
-  format?: RunningFormat | TriathlonFormat;
+  /** Road and trail races aim for a pace; every other sport for a finish time. */
   targetPaceSecPerKm?: number;
+  targetTimeSeconds?: number;
   status: "active" | "archived" | "completed";
 }
 
