@@ -9,6 +9,8 @@ import type {
   GoalType,
   Membership,
   MembershipMode,
+  MembershipPayment,
+  PaymentMethod,
   Race,
   RaceDistances,
   RaceRecord,
@@ -25,6 +27,7 @@ import type {
   WorkoutSession,
 } from "./workouts";
 import type { Dashboard } from "./dashboard";
+import type { PaymentsOverview } from "./payments";
 
 /** A file to hand to the browser as a download. */
 export interface DownloadFile {
@@ -94,6 +97,8 @@ export interface AthleteRepository {
   listByCoach(coachId: string): Promise<Athlete[]>;
   /** Full detail (records/goal/membership) for every athlete — powers the list card grid. */
   listDetailsByCoach(coachId: string): Promise<AthleteDetail[]>;
+  /** Archived athletes, with the same detail, to find and restore them. */
+  listArchivedDetails(): Promise<AthleteDetail[]>;
   getDetail(athleteId: string, coachId: string): Promise<AthleteDetail | null>;
   /** Creates the athlete's athlete profile. `sendInviteNow` (with an email) starts it as "invited" instead of "draft". */
   createAthlete(
@@ -131,11 +136,35 @@ export interface AthleteRepository {
     coachId: string,
     input: RaceRecordInput
   ): Promise<RaceRecord>;
-  markCurrentPeriodPaid(
-    athleteId: string,
-    coachId: string,
-    input: { note?: string }
-  ): Promise<void>;
+  /** Takes the athlete off the lists; their fee stops accruing from this month (what they owed stays). */
+  archiveAthlete(athleteId: string): Promise<Athlete>;
+  /** Brings an archived athlete back; billing resumes this month. */
+  restoreAthlete(athleteId: string): Promise<Athlete>;
+}
+
+export interface MarkPaidInput {
+  /** "YYYY-MM-DD"; today when left out. */
+  paidOn?: string;
+  method?: PaymentMethod;
+  note?: string;
+}
+
+/**
+ * Port for the coach's collections, implemented by the HTTP adapter for the
+ * Laravel API (payments-repo.api.ts). The API owns every billing rule: which
+ * months are owed and at what amount, settling the oldest first, undoing only
+ * the latest. Each write returns the membership's new standing.
+ */
+export interface PaymentsRepository {
+  getOverview(): Promise<PaymentsOverview>;
+  /** Months settled (paid or waived), oldest first. */
+  listPayments(athleteId: string): Promise<MembershipPayment[]>;
+  /** Pays the oldest owed month. */
+  markPaid(athleteId: string, input: MarkPaidInput): Promise<Membership>;
+  /** Forgives the oldest owed month. */
+  waive(athleteId: string, note?: string): Promise<Membership>;
+  /** Undoes the latest settled month, which is owed again. */
+  undo(athleteId: string, paymentId: string): Promise<Membership>;
 }
 
 /** What one athlete follows in a week: their own copy, else their group's week. */

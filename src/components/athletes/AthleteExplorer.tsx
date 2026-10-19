@@ -24,7 +24,8 @@ const ACCESS_FILTERS: FilterOption<AccessFilter>[] = [
   { value: "linked", label: "Vinculado" },
 ];
 
-export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
+/** `archived`: the list of archived athletes, which only differs in its empty state. */
+export function AthleteExplorer({ athletes, archived = false }: { athletes: AthleteRowVM[]; archived?: boolean }) {
   const [pay, setPay] = useState<PayFilter>("all");
   const [access, setAccess] = useState<AccessFilter>("all");
 
@@ -44,6 +45,17 @@ export function AthleteExplorer({ athletes }: { athletes: AthleteRowVM[] }) {
   function clearFilters() {
     setPay("all");
     setAccess("all");
+  }
+
+  if (athletes.length === 0 && archived) {
+    return (
+      <div
+        className="rounded-[10px] border border-dashed px-4 py-16 text-center text-sm"
+        style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
+      >
+        No tienes atletas archivados.
+      </div>
+    );
   }
 
   if (athletes.length === 0) {

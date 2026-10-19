@@ -169,6 +169,10 @@ export async function listAthleteDetails(coachId: string): Promise<AthleteDetail
   return getRepo().listDetailsByCoach(coachId);
 }
 
+export async function listArchivedAthleteDetails(): Promise<AthleteDetail[]> {
+  return getRepo().listArchivedDetails();
+}
+
 export async function getAthleteDetail(
   athleteId: string,
   coachId: string
@@ -330,11 +334,10 @@ export async function addRaceRecords(
   }
 }
 
-/** Marks the oldest owed month as paid. */
-export async function markPeriodPaid(
-  athleteId: string,
-  coachId: string,
-  note?: string
-): Promise<void> {
-  await getRepo().markCurrentPeriodPaid(athleteId, coachId, { note });
+export async function archiveAthlete(athleteId: string): Promise<Athlete> {
+  return getRepo().archiveAthlete(athleteId);
+}
+
+export async function restoreAthlete(athleteId: string): Promise<Athlete> {
+  return getRepo().restoreAthlete(athleteId);
 }

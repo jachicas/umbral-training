@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_GROUPS, activeNavItem, navGroupLabel } from "./nav";
+import { NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
 import { THEME_STORAGE_KEY } from "./theme";
 import { signOutAction } from "@/app/login/actions";
 
@@ -31,7 +31,15 @@ const roundButtonClass =
   "glass flex size-11 flex-none items-center justify-center rounded-full text-[var(--text)] transition-[filter] hover:brightness-125";
 
 /** Rendered once by the root layout, so sidebar state survives navigation. */
-export function AppShell({ children, user }: { children: React.ReactNode; user: ShellUser | null }) {
+export function AppShell({
+  children,
+  user,
+  badges = {},
+}: {
+  children: React.ReactNode;
+  user: ShellUser | null;
+  badges?: NavBadges;
+}) {
   const pathname = usePathname();
   const activeItem = activeNavItem(pathname);
   const [collapsed, setCollapsed] = useState(false);
@@ -108,10 +116,22 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
                 {group.items.map((item) => {
                   const isActive = item.id === activeItem?.id;
                   const Icon = item.icon;
+                  const badge = badges[item.id];
                   const content = (
                     <>
-                      <Icon size={19} className="flex-none" />
+                      <span className="relative flex-none">
+                        <Icon size={19} />
+                        {/* Collapsed rail: the count rides on the icon. */}
+                        {badge && (
+                          <CountBadge
+                            badge={badge}
+                            active={isActive}
+                            className={cn("absolute -top-2 -right-2.5 md:hidden", !expanded && "md:flex")}
+                          />
+                        )}
+                      </span>
                       <span className={cn("truncate", hideWhenCollapsed)}>{item.label}</span>
+                      {badge && <CountBadge badge={badge} active={isActive} className={cn("ml-auto", hideWhenCollapsed)} />}
                       {item.soon && (
                         <span
                           className={cn(
@@ -145,7 +165,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
                     <Link
                       key={item.id}
                       href={item.href}
-                      title={item.label}
+                      title={badge ? `${item.label} · ${badge.label}` : item.label}
                       aria-current={isActive ? "page" : undefined}
                       // Colors stay in classes (not inline styles) so the hover states can win.
                       className={cn(
@@ -269,5 +289,23 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
         </div>
       </div>
     </div>
+  );
+}
+
+/** A round count on a nav item; white on the active (coral) item so it stays visible. */
+function CountBadge({ badge, active, className }: { badge: NavBadge; active: boolean; className?: string }) {
+  const color = badge.tone === "danger" ? "var(--danger)" : "var(--pend)";
+
+  return (
+    <span
+      aria-label={badge.label}
+      className={cn(
+        "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] leading-none font-bold tabular-nums",
+        className
+      )}
+      style={active ? { background: "#fff", color } : { background: color, color: "#fff" }}
+    >
+      {badge.count > 99 ? "99+" : badge.count}
+    </span>
   );
 }

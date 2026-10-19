@@ -159,8 +159,8 @@ export async function saveMembershipAction(
     return fieldErrorState(error);
   }
 
-  revalidatePath("/athletes");
-  revalidatePath(`/athletes/${athleteId}`);
+  // What the athlete owes changes: the payments page, the dashboard and the sidebar's count too.
+  revalidatePath("/", "layout");
   return { success: true };
 }
 
@@ -224,10 +224,30 @@ export async function cancelInviteAction(athleteId: string): Promise<InviteActio
   return {};
 }
 
-export async function markPeriodPaidAction(athleteId: string): Promise<void> {
-  const coachId = await getCurrentCoachId();
-  await athletesService.markPeriodPaid(athleteId, coachId);
-  // The list shows payment status too, so refresh it along with the detail.
-  revalidatePath("/athletes");
-  revalidatePath(`/athletes/${athleteId}`);
+/**
+ * Archiving changes who's listed and billed everywhere: athletes, payments,
+ * workouts, the dashboard and the sidebar's count (the root layout).
+ */
+function revalidateRoster() {
+  revalidatePath("/", "layout");
+}
+
+export async function archiveAthleteAction(athleteId: string): Promise<InviteActionResult> {
+  try {
+    await athletesService.archiveAthlete(athleteId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo archivar." };
+  }
+  revalidateRoster();
+  return {};
+}
+
+export async function restoreAthleteAction(athleteId: string): Promise<InviteActionResult> {
+  try {
+    await athletesService.restoreAthlete(athleteId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo restaurar." };
+  }
+  revalidateRoster();
+  return {};
 }

@@ -1,4 +1,4 @@
-import type { Membership, MembershipMode, PaymentPeriodStatus } from "./types";
+import type { AthleteStatus, Membership, MembershipMode, PaymentKind, PaymentMethod, PaymentPeriodStatus } from "./types";
 
 export interface PaymentStatusMeta {
   label: string;
@@ -11,7 +11,11 @@ export const PAYMENT_STATUS_META: Record<PaymentPeriodStatus, PaymentStatusMeta>
   pending: { label: "Pendiente", colorVar: "var(--pend)", bg: "rgba(217,119,6,.12)" },
   overdue: { label: "Vencido", colorVar: "var(--danger)", bg: "rgba(220,38,38,.12)" },
   waived: { label: "Gratis", colorVar: "var(--free)", bg: "rgba(124,58,237,.12)" },
+  paused: { label: "Pausado", colorVar: "var(--text-2)", bg: "var(--surface-3)" },
 };
+
+/** A manual fee whose current month the coach forgave reads "Perdonado", not "Gratis". */
+const FORGIVEN_META: PaymentStatusMeta = { ...PAYMENT_STATUS_META.waived, label: "Perdonado" };
 
 /** Shown instead of a period status until the coach agrees a price with the athlete. */
 export const UNCONFIGURED_PAYMENT_META: PaymentStatusMeta = {
@@ -36,6 +40,12 @@ export function paymentDisplayMeta(
   return configured ? PAYMENT_STATUS_META[status] : UNCONFIGURED_PAYMENT_META;
 }
 
+/** The pill for a membership as it stands today. */
+export function membershipDisplayMeta(membership: Membership): PaymentStatusMeta {
+  if (membership.currentPeriodStatus === "waived" && membership.mode !== "free") return FORGIVEN_META;
+  return paymentDisplayMeta(membership.currentPeriodStatus, isMembershipConfigured(membership));
+}
+
 /** "Pendientes" filter on the athlete list also covers overdue accounts. */
 export function isPendingOrOverdue(status: PaymentPeriodStatus): boolean {
   return status === "pending" || status === "overdue";
@@ -52,15 +62,80 @@ export function formatMonthlyAmount(membership: Membership): string {
   return `${membership.currency}${membership.amount}/mes`;
 }
 
-/** A manual, configured, unpaid membership is the only one the coach can mark as paid by hand. */
+/** Only a configured manual fee that owes a month can be settled by hand (paid or waived). */
 export function isPayActionable(membership: Membership): boolean {
   if (!isMembershipConfigured(membership)) return false;
-  return membership.mode === "manual" && membership.currentPeriodStatus !== "paid";
+  return membership.mode === "manual" && membership.periodsOwed > 0;
 }
 
-/** "Vence" while the month is owed, "Venció" once it's overdue, "Próximo pago" after paying it. */
+/** "Vence" while the month is owed, "Venció" once it's overdue, "Próximo pago" once it's settled. */
 export function dueLabel(membership: Membership): string {
   if (membership.currentPeriodStatus === "overdue") return "Venció";
-  if (membership.currentPeriodStatus === "paid") return "Próximo pago";
+  if (membership.periodsOwed === 0) return "Próximo pago";
   return "Vence";
+}
+
+const MONTHS_ES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+/** "2026-10" → "octubre". */
+export function monthName(period: string): string {
+  return MONTHS_ES[Number(period.split("-")[1]) - 1];
+}
+
+/** "$45", "$45.50". */
+export function formatMoney(amount: number, currency: string): string {
+  return `${currency}${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+}
+
+/** Totals per currency, "$160 · Q300"; "—" when there are none. */
+export function formatTotals(totals: MoneyTotal[]): string {
+  return totals.length ? totals.map((t) => formatMoney(t.amount, t.currency)).join(" · ") : "—";
+}
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  cash: "Efectivo",
+  transfer: "Transferencia",
+  other: "Otro",
+};
+
+export const PAYMENT_KIND_LABEL: Record<PaymentKind, string> = {
+  paid: "Pagado",
+  waived: "Perdonado",
+};
+
+export interface MoneyTotal {
+  currency: string;
+  amount: number;
+}
+
+/** The coach's collections, as the API sums them up. */
+export interface PaymentsOverview {
+  /** "YYYY-MM", the current month. */
+  month: string;
+  summary: {
+    owingCount: number;
+    overdueCount: number;
+    unconfiguredCount: number;
+    /** Every month owed, and the part of it from months that ended. */
+    owed: MoneyTotal[];
+    overdue: MoneyTotal[];
+    /** Paid this month (by payment date); waivers left out. */
+    collected: MoneyTotal[];
+    /** A month of fees from the active athletes billed now. */
+    expected: MoneyTotal[];
+  };
+  /** Active athletes, and archived ones who still owe, by name. */
+  athletes: PaymentsAthlete[];
+}
+
+export interface PaymentsAthlete {
+  athleteId: string;
+  fullName: string;
+  status: AthleteStatus;
+  groupId?: string;
+  lastPaidOn?: string;
+  membership: Membership;
 }

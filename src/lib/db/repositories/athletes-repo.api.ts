@@ -61,7 +61,7 @@ interface ApiRecord {
   note: string | null;
 }
 
-interface ApiMembership {
+export interface ApiMembership {
   id: string;
   athleteId: string;
   mode: MembershipMode;
@@ -69,6 +69,8 @@ interface ApiMembership {
   currency: string;
   currentPeriod: string;
   currentPeriodStatus: PaymentPeriodStatus;
+  periodsOwed: number;
+  amountOwed: number;
   paidOn: string | null;
   lastPaymentNote: string | null;
   dueOn: string | null;
@@ -103,7 +105,7 @@ const MONTHS_ES = [
 ];
 
 /** "2026-08" → "Agosto 2026". */
-function periodLabel(period: string): string {
+export function periodLabel(period: string): string {
   const [year, month] = period.split("-").map(Number);
   return `${MONTHS_ES[month - 1]} ${year}`;
 }
@@ -169,7 +171,7 @@ function toRecord(api: ApiRecord): RaceRecord {
   return { ...api, note: orUndefined(api.note) };
 }
 
-function toMembership(api: ApiMembership): Membership {
+export function toMembership(api: ApiMembership): Membership {
   return {
     id: api.id,
     athleteId: api.athleteId,
@@ -178,6 +180,8 @@ function toMembership(api: ApiMembership): Membership {
     currency: api.currency,
     currentPeriodLabel: periodLabel(api.currentPeriod),
     currentPeriodStatus: api.currentPeriodStatus,
+    periodsOwed: api.periodsOwed,
+    amountOwed: api.amountOwed,
     paidOn: orUndefined(api.paidOn),
     lastPaymentNote: orUndefined(api.lastPaymentNote),
     dueOn: orUndefined(api.dueOn),
@@ -244,6 +248,7 @@ const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   amount: "amount",
   timeSeconds: "time",
   recordedOn: "recordedOn",
+  paidOn: "paidOn",
 };
 
 function fieldFor(apiKey: string): ValidationField {
@@ -254,7 +259,7 @@ function fieldFor(apiKey: string): ValidationField {
 }
 
 /** Runs an API call, turning a 422 into field errors the forms can show. */
-async function call<T>(request: () => Promise<T>): Promise<T> {
+export async function call<T>(request: () => Promise<T>): Promise<T> {
   try {
     return await request();
   } catch (error) {
@@ -270,7 +275,7 @@ async function call<T>(request: () => Promise<T>): Promise<T> {
   }
 }
 
-const athletePath = (athleteId: string) => `/v1/athletes/${encodeURIComponent(athleteId)}`;
+export const athletePath = (athleteId: string) => `/v1/athletes/${encodeURIComponent(athleteId)}`;
 
 export const apiAthleteRepository: AthleteRepository = {
   async listByCoach() {
@@ -280,6 +285,11 @@ export const apiAthleteRepository: AthleteRepository = {
 
   async listDetailsByCoach() {
     const athletes = await call(() => apiFetch<ApiAthlete[]>("GET", "/v1/athletes"));
+    return athletes.map(toDetail);
+  },
+
+  async listArchivedDetails() {
+    const athletes = await call(() => apiFetch<ApiAthlete[]>("GET", "/v1/athletes?archived=1"));
     return athletes.map(toDetail);
   },
 
@@ -381,9 +391,11 @@ export const apiAthleteRepository: AthleteRepository = {
     return toRecord(record);
   },
 
-  async markCurrentPeriodPaid(athleteId, _coachId, input) {
-    await call(() =>
-      apiFetch<ApiMembership>("POST", `${athletePath(athleteId)}/membership/payments`, { note: input.note ?? null })
-    );
+  async archiveAthlete(athleteId) {
+    return toAthlete(await call(() => apiFetch<ApiAthlete>("POST", `${athletePath(athleteId)}/archive`)));
+  },
+
+  async restoreAthlete(athleteId) {
+    return toAthlete(await call(() => apiFetch<ApiAthlete>("DELETE", `${athletePath(athleteId)}/archive`)));
   },
 };

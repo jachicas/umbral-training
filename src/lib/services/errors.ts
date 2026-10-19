@@ -16,6 +16,7 @@ export type ValidationField =
   | "amount"
   | "time"
   | "recordedOn"
+  | "paidOn"
   | "runPace"
   | "swimPace"
   | "ftp"

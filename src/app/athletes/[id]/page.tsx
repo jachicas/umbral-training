@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Activity, ChevronLeft, ChevronRight, Check, Flag, Plus, Target } from "lucide-react";
 import { getCurrentCoachId } from "@/lib/supabase/auth";
 import { getAthleteDetail, listUpcomingRaces } from "@/lib/services/athletes";
-import { markPeriodPaidAction } from "../actions";
+import { listMembershipPayments } from "@/lib/services/payments";
 import {
   RACE_REFERENCES,
   formatDuration,
@@ -24,10 +24,11 @@ import { raceSummary } from "@/lib/domain/races";
 import {
   MEMBERSHIP_MODE_LABEL,
   dueLabel,
+  formatMoney,
   formatMonthlyAmount,
   isMembershipConfigured,
   isPayActionable,
-  paymentDisplayMeta,
+  membershipDisplayMeta,
 } from "@/lib/domain/payments";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
 import {
@@ -46,6 +47,9 @@ import { EditMembershipDialog } from "@/components/athletes/EditMembershipDialog
 import { EditSportProfileDialog } from "@/components/athletes/EditSportProfileDialog";
 import { AddRecordDialog } from "@/components/athletes/AddRecordDialog";
 import { Sparkline } from "@/components/athletes/Sparkline";
+import { ArchiveControl } from "@/components/athletes/ArchiveControl";
+import { SettleButtons } from "@/components/payments/SettleButtons";
+import { PaymentHistory } from "@/components/payments/PaymentHistory";
 
 export async function generateMetadata({
   params,
@@ -67,11 +71,13 @@ export default async function AtletaDetailPage({
   const coachId = await getCurrentCoachId();
   const [detail, races] = await Promise.all([getAthleteDetail(id, coachId), listUpcomingRaces(coachId)]);
   if (!detail) notFound();
+  const payments = await listMembershipPayments(id);
 
   const { athlete, records, activeGoal, membership, assignedWorkouts } = detail;
   const raceDefined = isRaceGoalDefined(activeGoal);
   const payConfigured = isMembershipConfigured(membership);
-  const payMeta = paymentDisplayMeta(membership.currentPeriodStatus, payConfigured);
+  const payMeta = membershipDisplayMeta(membership);
+  const archived = athlete.status === "archived";
   const objectiveSummary = goalSummaryLabel(activeGoal);
   const countdown = activeGoal ? raceCountdown(activeGoal) : null;
 
@@ -101,6 +107,14 @@ export default async function AtletaDetailPage({
               {payMeta.label}
             </span>
             <AccessStatusPill status={athlete.accessStatus} />
+            {archived && (
+              <span
+                className="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold"
+                style={{ background: "var(--surface-3)", color: "var(--text-2)" }}
+              >
+                Archivado
+              </span>
+            )}
           </div>
           <div className="mt-1 text-[13.5px]" style={{ color: "var(--text-2)" }}>
             {athlete.email ?? "Sin email"}
@@ -127,7 +141,8 @@ export default async function AtletaDetailPage({
             />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap items-start gap-2.5">
+          <ArchiveControl athleteId={athlete.id} fullName={athlete.fullName} archived={archived} />
           <EditAthleteDialog athlete={athlete} />
           <Link
             href="/workouts"
@@ -373,6 +388,20 @@ export default async function AtletaDetailPage({
                 </span>
                 <span className="text-[13.5px] font-bold">{membership.currentPeriodLabel}</span>
               </div>
+              {membership.periodsOwed > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px]" style={{ color: "var(--text-2)" }}>
+                    Debe
+                  </span>
+                  <span
+                    className="text-[13.5px] font-bold tabular-nums"
+                    style={membership.currentPeriodStatus === "overdue" ? { color: "var(--danger)" } : undefined}
+                  >
+                    {formatMoney(membership.amountOwed, membership.currency)}
+                    {membership.periodsOwed > 1 && ` · ${membership.periodsOwed} meses`}
+                  </span>
+                </div>
+              )}
               {membership.dueOn && (
                 <div className="flex items-center justify-between">
                   <span className="text-[13px]" style={{ color: "var(--text-2)" }}>
@@ -400,15 +429,13 @@ export default async function AtletaDetailPage({
               </div>
             )}
             {isPayActionable(membership) && (
-              <form action={markPeriodPaidAction.bind(null, athlete.id)}>
-                <button
-                  type="submit"
-                  className="mt-4 flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] text-[13.5px] font-bold text-white"
-                  style={{ background: "var(--coral)" }}
-                >
-                  <Check size={16} /> Marcar como pagado
-                </button>
-              </form>
+              <SettleButtons athleteId={athlete.id} athleteName={athlete.fullName} membership={membership} variant="card" />
+            )}
+            {(payments.length > 0 || (payConfigured && membership.mode !== "free")) && (
+              <div className="mt-5 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+                <div className="mb-1 text-[13px] font-bold">Historial de pagos</div>
+                <PaymentHistory athleteId={athlete.id} payments={payments} />
+              </div>
             )}
           </div>
 

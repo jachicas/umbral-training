@@ -91,7 +91,8 @@ export interface Goal {
 }
 
 export type MembershipMode = "manual" | "free" | "gateway";
-export type PaymentPeriodStatus = "pending" | "paid" | "overdue" | "waived";
+/** `paused`: the athlete is archived and owes nothing, so nothing is billed. */
+export type PaymentPeriodStatus = "pending" | "paid" | "overdue" | "waived" | "paused";
 
 export interface Membership {
   id: string;
@@ -101,10 +102,33 @@ export interface Membership {
   currency: string;
   currentPeriodLabel: string;
   currentPeriodStatus: PaymentPeriodStatus;
+  /** Months owed, the shown one included (computed by the API). */
+  periodsOwed: number;
+  /** What the owed months add up to, each at the amount it had (computed by the API). */
+  amountOwed: number;
   paidOn?: string;
   lastPaymentNote?: string;
   /** When the next fee is due (computed by the API); absent when nothing is billed. */
   dueOn?: string;
+}
+
+/** A month settled by the athlete paying, or by the coach waiving it. */
+export type PaymentKind = "paid" | "waived";
+export type PaymentMethod = "cash" | "transfer" | "other";
+
+export interface MembershipPayment {
+  id: string;
+  /** "YYYY-MM" */
+  period: string;
+  periodLabel: string;
+  kind: PaymentKind;
+  method?: PaymentMethod;
+  /** When it was paid, or waived. */
+  paidOn: string;
+  /** What was owed (or forgiven) for that month. */
+  amount: number;
+  currency: string;
+  note?: string;
 }
 
 export interface AssignedWorkout {

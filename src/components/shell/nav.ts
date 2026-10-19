@@ -12,6 +12,16 @@ export interface NavItem {
   soon?: boolean;
 }
 
+/** A count shown on a nav item, e.g. how many athletes owe their fee. */
+export interface NavBadge {
+  count: number;
+  /** "danger" when some of it is overdue. */
+  tone: "danger" | "warning";
+  label: string;
+}
+
+export type NavBadges = Partial<Record<NavId, NavBadge>>;
+
 export interface NavGroup {
   label: string;
   items: NavItem[];
@@ -29,7 +39,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Gestión",
     items: [
-      { id: "payments", label: "Pagos", icon: Wallet, soon: true },
+      { id: "payments", label: "Pagos", href: "/payments", icon: Wallet },
       { id: "settings", label: "Ajustes", icon: Settings, soon: true },
     ],
   },

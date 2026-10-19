@@ -292,7 +292,7 @@ export function DashboardView({ data }: { data: Dashboard }) {
 
         <div className="flex min-w-0 flex-col gap-4">
           <div className={cardClass} style={cardStyle}>
-            <CardTitle title="Por cobrar" />
+            <CardTitle title="Por cobrar" href="/payments" linkLabel="Ver pagos" />
             {data.payments.owing.length === 0 ? (
               <Empty>Nadie debe su cuota.</Empty>
             ) : (
