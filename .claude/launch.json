@@ -14,7 +14,7 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "cd ../umbral-training-api && php artisan serve --port=8000"
+        "cd ../umbral-training-api && composer dev"
       ],
       "port": 8000,
       "autoPort": false
