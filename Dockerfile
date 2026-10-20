@@ -4,11 +4,11 @@ FROM node:24-alpine AS base
 RUN corepack enable
 WORKDIR /app
 
-# Install dependencies (cached unless the lockfile changes)
+# Install dependencies (cached unless the lockfile changes). No BuildKit cache
+# mount: Railway only takes them with its service id baked into the id.
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # Build the app
 FROM base AS builder
