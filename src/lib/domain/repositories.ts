@@ -26,8 +26,10 @@ import type {
   WeekPlan,
   WorkoutSession,
 } from "./workouts";
+import type { CheckinInput, PortalCheckin, WeeklyCheckin } from "./checkins";
 import type { Dashboard } from "./dashboard";
-import type { PaymentsOverview } from "./payments";
+import type { PaymentReport, PaymentsOverview } from "./payments";
+import type { PortalHome, PortalPayments, PortalProfileInput, PortalWeek } from "./portal";
 
 /** A file to hand to the browser as a download. */
 export interface DownloadFile {
@@ -167,6 +169,12 @@ export interface PaymentsRepository {
   remind(athleteId: string): Promise<Membership>;
   /** Undoes the latest settled month, which is owed again. */
   undo(athleteId: string, paymentId: string): Promise<Membership>;
+  /** Reports waiting for review (oldest first), or the latest reviewed ones (newest first). */
+  listReports(status: "pending" | "reviewed"): Promise<PaymentReport[]>;
+  /** The money arrived: its months are settled as paid by transfer. */
+  confirmReport(reportId: string): Promise<PaymentReport>;
+  /** Sends it back to the athlete, with a reason they'll see. */
+  rejectReport(reportId: string, reason?: string): Promise<PaymentReport>;
 }
 
 /** What one athlete follows in a week: their own copy, else their group's week. */
@@ -242,7 +250,26 @@ export interface SettingsRepository {
   savePaymentInstructions(text: string): Promise<CoachSettings>;
 }
 
+/** The coach's view of an athlete's weekly check-ins. */
+export interface CheckinRepository {
+  /** Newest first (the last 12). */
+  listForAthlete(athleteId: string): Promise<WeeklyCheckin[]>;
+}
+
 /** The coach's day at a glance; the API computes it. */
 export interface DashboardRepository {
   getDashboard(): Promise<Dashboard>;
+}
+
+/** The signed-in athlete's own portal; every call is about them, so nothing takes an id. */
+export interface PortalRepository {
+  getHome(): Promise<PortalHome>;
+  getWeek(weekStart: string): Promise<PortalWeek>;
+  getWeekPdf(weekStart: string): Promise<DownloadFile>;
+  /** Saves (or changes, while it's open) the week's check-in; answers with it. */
+  saveCheckin(weekStart: string, input: CheckinInput): Promise<PortalCheckin>;
+  getPayments(): Promise<PortalPayments>;
+  updateProfile(input: PortalProfileInput): Promise<PortalHome>;
+  /** A transfer with its receipt (`months`, `paidOn`, `note?`, `receipt`); answers with the payments page. */
+  reportPayment(form: FormData): Promise<PortalPayments>;
 }

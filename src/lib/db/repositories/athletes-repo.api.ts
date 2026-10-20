@@ -40,7 +40,7 @@ interface ApiRace {
   athleteCount?: number;
 }
 
-interface ApiGoal {
+export interface ApiGoal {
   id: string;
   athleteId: string;
   type: GoalType;
@@ -52,7 +52,7 @@ interface ApiGoal {
   targetTimeSeconds: number | null;
 }
 
-interface ApiRecord {
+export interface ApiRecord {
   id: string;
   athleteId: string;
   reference: RaceReference;
@@ -98,7 +98,7 @@ interface ApiAthlete {
   createdAt: string;
 }
 
-const orUndefined = <T,>(value: T | null): T | undefined => (value === null ? undefined : value);
+export const orUndefined = <T,>(value: T | null): T | undefined => (value === null ? undefined : value);
 
 const MONTHS_ES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -140,7 +140,7 @@ function toAthlete(api: ApiAthlete): Athlete {
   };
 }
 
-function toGoal(api: ApiGoal): Goal {
+export function toGoal(api: ApiGoal): Goal {
   return {
     id: api.id,
     athleteId: api.athleteId,
@@ -168,7 +168,7 @@ function toRace(api: ApiRace): Race {
   };
 }
 
-function toRecord(api: ApiRecord): RaceRecord {
+export function toRecord(api: ApiRecord): RaceRecord {
   return { ...api, note: orUndefined(api.note) };
 }
 
@@ -229,6 +229,7 @@ function goalBody(goal: GoalInput) {
 const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   fullName: "fullName",
   email: "email",
+  phone: "phone",
   birthDate: "birthDate",
   weeklyAvailabilityDays: "weeklyDays",
   weeklyAvailabilityHours: "weeklyHours",
@@ -251,6 +252,15 @@ const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   timeSeconds: "time",
   recordedOn: "recordedOn",
   paidOn: "paidOn",
+  months: "months",
+  receipt: "receipt",
+  note: "note",
+  feeling: "feeling",
+  effort: "effort",
+  completion: "completion",
+  pain: "pain",
+  painNote: "painNote",
+  comment: "comment",
 };
 
 function fieldFor(apiKey: string): ValidationField {

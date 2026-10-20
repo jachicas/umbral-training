@@ -22,7 +22,9 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getShellUser();
-  const badges = user ? await navBadges() : {};
+  // Athletes' pages bring their own shell (src/app/portal).
+  const coach = user?.role === "coach" ? user : null;
+  const badges = coach ? await navBadges() : {};
 
   return (
     // The theme script may add `dark` to <html> before hydration.
@@ -31,7 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full">
-        <AppShell user={user} badges={badges}>
+        <AppShell user={coach} badges={badges}>
           {children}
         </AppShell>
       </body>
@@ -39,10 +41,23 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   );
 }
 
-/** "Pagos" shows how many athletes owe, red when someone is late. A failing API just hides it. */
+/**
+ * "Pagos" shows the payments athletes reported, waiting for the coach to
+ * confirm; else how many athletes owe, red when someone is late. A failing
+ * API just hides it.
+ */
 async function navBadges(): Promise<NavBadges> {
   try {
-    const { owing, overdue } = await getOwingCounts();
+    const { owing, overdue, pendingReports } = await getOwingCounts();
+    if (pendingReports > 0) {
+      return {
+        payments: {
+          count: pendingReports,
+          tone: "warning",
+          label: `${pendingReports} ${pendingReports === 1 ? "pago por confirmar" : "pagos por confirmar"}`,
+        },
+      };
+    }
     if (owing === 0) return {};
     return {
       payments: {

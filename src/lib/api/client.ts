@@ -59,6 +59,27 @@ export async function apiFetch<T>(method: Method, path: string, body?: unknown):
   }
 }
 
+/** POSTs a multipart form (a file upload) as the signed-in user. Errors are thrown like apiFetch's. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const response = await fetch(`${apiUrl()}${path}`, {
+    method: "POST",
+    // fetch sets the multipart Content-Type with its boundary.
+    headers: { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` },
+    body: form,
+    cache: "no-store",
+  });
+
+  if (response.ok) return ((await response.json()) as { data: T }).data;
+
+  const json = (await response.json().catch(() => ({}))) as { message?: string; errors?: Record<string, string[]> };
+  if (response.status === 401) redirect("/login");
+  if (response.status === 404) throw new ApiNotFoundError(json.message ?? "No encontrado.");
+  if (response.status === 422) throw new ApiValidationError(json.errors ?? {});
+  // 413: the web server in front of the API refused the file.
+  if (response.status === 413) throw new ApiValidationError({ receipt: ["El comprobante pesa demasiado."] });
+  throw new Error(json.message ?? `La API respondió ${response.status}.`);
+}
+
 /** GETs a file from the API as the signed-in user. Errors are thrown like apiFetch's. */
 export async function apiFile(path: string): Promise<ApiFile> {
   const response = await fetch(`${apiUrl()}${path}`, {

@@ -1,7 +1,8 @@
 import type { ShellUser } from "@/components/shell/AppShell";
+import { roleFromClaims } from "./role";
 import { createSupabaseServerClient } from "./server";
 
-/** Name and initials for the sidebar; null when signed out (the sign-in page). */
+/** Name, initials and role for the shell; null when signed out (the sign-in page). */
 export async function getShellUser(): Promise<ShellUser | null> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getClaims();
@@ -18,5 +19,5 @@ export async function getShellUser(): Promise<ShellUser | null> {
       .map((part) => part[0]!.toUpperCase())
       .join("") || "C";
 
-  return { name, initials };
+  return { name, initials, role: roleFromClaims(claims) };
 }

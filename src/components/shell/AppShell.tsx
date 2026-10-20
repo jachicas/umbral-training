@@ -6,26 +6,18 @@ import { usePathname } from "next/navigation";
 import { Bell, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
-import { THEME_STORAGE_KEY } from "./theme";
+import { toggleTheme } from "./theme";
 import { signOutAction } from "@/app/login/actions";
+import type { AccountRole } from "@/lib/domain/portal";
 
 /** Who is signed in, as shown in the sidebar. */
 export interface ShellUser {
   name: string;
   initials: string;
+  /** Athletes get the portal's own shell, not this one. */
+  role: AccountRole;
 }
 const BACKGROUND_IMAGE = "/backgrounds/tt-ride.jpg";
-
-/** The theme lives as a `dark` class on <html> (set before paint by the root
- *  layout), so the icon is swapped with CSS and no React state is needed. */
-function toggleTheme() {
-  const dark = document.documentElement.classList.toggle("dark");
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
-  } catch {
-    // Storage unavailable (private mode): theme just won't persist.
-  }
-}
 
 const roundButtonClass =
   "glass flex size-11 flex-none items-center justify-center rounded-full text-[var(--text)] transition-[filter] hover:brightness-125";

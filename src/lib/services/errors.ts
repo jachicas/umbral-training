@@ -2,6 +2,7 @@
 export type ValidationField =
   | "fullName"
   | "email"
+  | "phone"
   | "birthDate"
   | "race"
   | "raceName"
@@ -17,6 +18,9 @@ export type ValidationField =
   | "time"
   | "recordedOn"
   | "paidOn"
+  | "months"
+  | "receipt"
+  | "note"
   | "runPace"
   | "swimPace"
   | "ftp"
@@ -24,6 +28,12 @@ export type ValidationField =
   | "restHr"
   | "weeklyDays"
   | "weeklyHours"
+  | "feeling"
+  | "effort"
+  | "completion"
+  | "pain"
+  | "painNote"
+  | "comment"
   | "general";
 
 /** Input the web app couldn't even parse (e.g. "4:7x" as a pace), caught before calling the API. */

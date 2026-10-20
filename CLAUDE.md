@@ -10,7 +10,7 @@
 - **Backend:** Laravel API in the sibling repo `../umbral-training-api` (decided 2026-10-14), deployed to Railway. Its contract is `docs/api.md` there, and its plan `docs/roadmap.md`.
 - **Database & Auth:** Supabase (Postgres + Auth). The web app signs users in with Supabase Auth and calls the API server-side with the user's access token. The API owns the database and authorizes every request in code. RLS stays enabled on every table, with no policies, so the Data API can't reach them.
 - **Data access:** the web app does not query the database. Repository modules in `src/lib/db/repositories` (`athletes-repo.api.ts`, `workouts-repo.api.ts`) are the only place that talks to the API, through `src/lib/api/client.ts`. There are no mocks left: everything runs on the API.
-- **Auth:** `src/proxy.ts` refreshes the Supabase session and keeps signed-out visitors on `/login`. Sign-in and sign-out are Server Actions, and every Supabase/API setting is server-only (no `NEXT_PUBLIC_`).
+- **Auth:** `src/proxy.ts` refreshes the Supabase session, keeps signed-out visitors on `/login`, and keeps each role on its side: athletes (`app_metadata.role = "athlete"`, set by the API's invite) only in `/portal`, the coach out of it. Invite links land on `/auth/confirm`, then `/portal/welcome` to set a password. Sign-in and sign-out are Server Actions, and every Supabase/API setting is server-only (no `NEXT_PUBLIC_`).
 - **UI:** Tailwind CSS + shadcn/ui. Charts with Recharts or Tremor.
 - **Language / tooling:** TypeScript, `src/` directory, import alias `@/*`, pnpm.
 - **Deploy target:** Railway. Keep resource usage minimal.
@@ -28,7 +28,7 @@ The system is two parts: this Next.js web app and the Laravel API. The domain (a
 ## Guardrails — do NOT
 
 - Do not add services beyond the web app and the Laravel API.
-- Do not add Redis, BullMQ, or any queue until there is real async work. For scheduled tasks (e.g. weekly summary emails), use a cron.
+- Do not add Redis, BullMQ, or another queue. The API's async work (the week's emails) runs on its database queue, in the same container. For scheduled tasks (e.g. weekly summary emails), use a cron.
 - Do not put business rules inside Route Handlers, Server Actions, or React components — they belong in the backend (existing ones live in `src/lib/services` and `src/lib/domain` until they move).
 - Do not introduce DDD tactical patterns (aggregates, event sourcing, CQRS) unless a concrete, present problem demands it.
 
