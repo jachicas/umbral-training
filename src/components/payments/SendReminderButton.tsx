@@ -35,7 +35,7 @@ export function SendReminderButton({
 
   const sentToday = lastRemindedOn === todayISO();
   const disabled = !email || sentToday || pending;
-  const why = !email ? "Sin email: agrégalo en su ficha para mandarle avisos" : sentToday ? "Ya se le mandó un aviso hoy" : undefined;
+  const why = !email ? "Sin email" : sentToday ? "Ya se le mandó un aviso hoy" : undefined;
 
   function send() {
     startTransition(async () => {
@@ -49,7 +49,7 @@ export function SendReminderButton({
     <ConfirmDialog
       open={confirming}
       title={`¿Mandarle un recordatorio a ${athleteName}?`}
-      description={`Le llega a ${email} con lo que debe y cómo pagarte. Cuenta como su último aviso: el automático vuelve a salir en una semana si sigue debiendo.`}
+      description={email}
       confirmLabel={pending ? "Enviando…" : "Enviar"}
       tone="primary"
       pending={pending}

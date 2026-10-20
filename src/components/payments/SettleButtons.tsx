@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Check, HeartHandshake } from "lucide-react";
 import { markPaidAction, waiveAction } from "@/app/payments/actions";
 import { FormDialog } from "@/components/athletes/fields/FormDialog";
-import { formatMoney } from "@/lib/domain/payments";
 import type { Membership } from "@/lib/domain/types";
 import { NoteField, PaymentFields } from "./PaymentFields";
 import { SendReminderButton } from "./SendReminderButton";
@@ -12,8 +11,8 @@ import { SendReminderButton } from "./SendReminderButton";
 /** What settling the shown month leaves: "Queda debiendo 2 meses." */
 function owedAfter(membership: Membership): string {
   const left = membership.periodsOwed - 1;
-  if (left === 0) return "Con esto queda al día.";
-  return `Después queda debiendo ${left === 1 ? "1 mes" : `${left} meses`}.`;
+  if (left === 0) return "Queda al día.";
+  return `Queda debiendo ${left === 1 ? "1 mes" : `${left} meses`}.`;
 }
 
 /**
@@ -35,7 +34,6 @@ export function SettleButtons({
   variant: "card" | "row";
 }) {
   const period = membership.currentPeriodLabel;
-  const owed = membership.periodsOwed > 1 ? ` Debe ${membership.periodsOwed} meses (${formatMoney(membership.amountOwed, membership.currency)}).` : "";
 
   const payTrigger =
     variant === "card" ? (
@@ -92,7 +90,7 @@ export function SettleButtons({
     <div className={variant === "card" ? "mt-4 flex gap-2" : "flex items-center justify-end gap-1.5"}>
       <FormDialog
         title={`Registrar pago · ${period}`}
-        description={`${athleteName} paga ${period}, el mes más antiguo que debe.${owed} ${owedAfter(membership)}`}
+        description={owedAfter(membership)}
         action={markPaidAction.bind(null, athleteId)}
         submitLabel="Registrar pago"
         trigger={payTrigger}
@@ -101,7 +99,7 @@ export function SettleButtons({
       </FormDialog>
       <FormDialog
         title={`Perdonar ${period}`}
-        description={`${athleteName} no paga ${period}: el mes queda saldado sin cobro. ${owedAfter(membership)}`}
+        description={owedAfter(membership)}
         action={waiveAction.bind(null, athleteId)}
         submitLabel="Perdonar mes"
         pendingLabel="Perdonando…"

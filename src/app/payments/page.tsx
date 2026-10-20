@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/services/settings";
 import { monthName } from "@/lib/domain/payments";
 import { PaymentsView } from "@/components/payments/PaymentsView";
 import { PaymentInstructionsCard } from "@/components/payments/PaymentInstructionsCard";
+import { ReceiptsBanner } from "@/components/payments/ReceiptsBanner";
 
 export const metadata: Metadata = { title: "Pagos · Umbral Training" };
 
@@ -24,6 +25,8 @@ export default async function PaymentsPage() {
           su cuota
         </div>
       </div>
+
+      <ReceiptsBanner pending={overview.summary.pendingReportsCount} />
 
       <PaymentsView overview={overview} />
 

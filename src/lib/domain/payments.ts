@@ -111,6 +111,50 @@ export interface MoneyTotal {
   amount: number;
 }
 
+export type PaymentReportStatus = "pending" | "confirmed" | "rejected";
+
+/** A transfer the athlete reported from the portal, with a receipt; it settles nothing until the coach confirms it. */
+export interface PaymentReport {
+  id: string;
+  athleteId: string;
+  /** Only in the coach's list. */
+  athleteName?: string;
+  /** "YYYY-MM", oldest first. */
+  periods: { period: string; amount: number }[];
+  amount: number;
+  currency: string;
+  paidOn: string;
+  note?: string;
+  status: PaymentReportStatus;
+  rejectionReason?: string;
+  createdAt: string;
+  /** When the coach confirmed or rejected it. */
+  reviewedAt?: string;
+  receiptMime: string;
+  /** Only in the coach's list: a signed link that works for an hour. */
+  receiptUrl?: string;
+}
+
+/** "2026-10" → "Octubre 2026". */
+export function periodTitle(period: string): string {
+  const name = monthName(period);
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${period.slice(0, 4)}`;
+}
+
+/** "Agosto y septiembre 2026", "Agosto 2026", or "Diciembre 2026 y enero 2027". */
+export function periodsLabel(periods: { period: string }[]): string {
+  if (periods.length === 0) return "";
+  const first = periods[0].period;
+  const last = periods[periods.length - 1].period;
+  if (periods.length === 1) return periodTitle(first);
+  const join = periods.length === 2 ? " y " : " a ";
+  if (first.slice(0, 4) === last.slice(0, 4)) {
+    const a = monthName(first);
+    return `${a.charAt(0).toUpperCase()}${a.slice(1)}${join}${monthName(last)} ${last.slice(0, 4)}`;
+  }
+  return `${periodTitle(first)}${join}${periodTitle(last).toLowerCase()}`;
+}
+
 /** The coach's collections, as the API sums them up. */
 export interface PaymentsOverview {
   /** "YYYY-MM", the current month. */
@@ -119,6 +163,8 @@ export interface PaymentsOverview {
     owingCount: number;
     overdueCount: number;
     unconfiguredCount: number;
+    /** Payments athletes reported, waiting for the coach. */
+    pendingReportsCount: number;
     /** Every month owed, and the part of it from months that ended. */
     owed: MoneyTotal[];
     overdue: MoneyTotal[];

@@ -1,5 +1,5 @@
 import { apiPaymentsRepository } from "@/lib/db/repositories/payments-repo.api";
-import type { PaymentsOverview } from "@/lib/domain/payments";
+import type { PaymentReport, PaymentsOverview } from "@/lib/domain/payments";
 import type { PaymentsRepository } from "@/lib/domain/repositories";
 import type { Membership, MembershipPayment, PaymentMethod } from "@/lib/domain/types";
 
@@ -19,10 +19,10 @@ export async function getPaymentsOverview(): Promise<PaymentsOverview> {
   return getRepo().getOverview();
 }
 
-/** How many athletes owe their fee, and how many of them are late: the sidebar's alert. */
-export async function getOwingCounts(): Promise<{ owing: number; overdue: number }> {
+/** How many athletes owe their fee, how many are late, and how many payments wait to be confirmed: the sidebar's alert. */
+export async function getOwingCounts(): Promise<{ owing: number; overdue: number; pendingReports: number }> {
   const { summary } = await getRepo().getOverview();
-  return { owing: summary.owingCount, overdue: summary.overdueCount };
+  return { owing: summary.owingCount, overdue: summary.overdueCount, pendingReports: summary.pendingReportsCount };
 }
 
 export async function listMembershipPayments(athleteId: string): Promise<MembershipPayment[]> {
@@ -54,6 +54,20 @@ export async function waivePeriod(athleteId: string, note?: string): Promise<Mem
 /** Emails the athlete a fee reminder now. */
 export async function sendReminder(athleteId: string): Promise<Membership> {
   return getRepo().remind(athleteId);
+}
+
+/** Receipts athletes sent: waiting for review, or already confirmed or rejected. */
+export async function listReports(status: "pending" | "reviewed"): Promise<PaymentReport[]> {
+  return getRepo().listReports(status);
+}
+
+/** The money arrived: the reported months are settled as paid. */
+export async function confirmReport(reportId: string): Promise<PaymentReport> {
+  return getRepo().confirmReport(reportId);
+}
+
+export async function rejectReport(reportId: string, reason?: string): Promise<PaymentReport> {
+  return getRepo().rejectReport(reportId, blankToUndefined(reason));
 }
 
 /** Undoes the latest settled month. */

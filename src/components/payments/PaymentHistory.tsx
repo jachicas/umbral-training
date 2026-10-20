@@ -120,8 +120,8 @@ export function PaymentHistory({ athleteId, payments }: { athleteId: string; pay
           title={`¿Deshacer ${latest.periodLabel}?`}
           description={
             latest.kind === "paid"
-              ? `Se borra el pago de ${formatMoney(latest.amount, latest.currency)} y el mes vuelve a quedar pendiente.`
-              : "El mes deja de estar perdonado y vuelve a quedar pendiente."
+              ? `Se borra el pago de ${formatMoney(latest.amount, latest.currency)}.`
+              : "El mes vuelve a quedar pendiente."
           }
           confirmLabel="Deshacer"
           pending={pending}

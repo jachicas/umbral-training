@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
-import type { PaymentsAthlete, PaymentsOverview } from "@/lib/domain/payments";
+import type { PaymentReport, PaymentsAthlete, PaymentsOverview } from "@/lib/domain/payments";
 import type { PaymentsRepository } from "@/lib/domain/repositories";
 import type { AthleteStatus, MembershipPayment, PaymentKind, PaymentMethod } from "@/lib/domain/types";
 import { type ApiMembership, athletePath, call, periodLabel, toMembership } from "./athletes-repo.api";
@@ -50,6 +50,34 @@ function toPayment(api: ApiMembershipPayment): MembershipPayment {
   };
 }
 
+export interface ApiPaymentReport {
+  id: string;
+  athleteId: string;
+  athleteName?: string;
+  periods: { period: string; amount: number }[];
+  amount: number;
+  currency: string;
+  paidOn: string;
+  note: string | null;
+  status: PaymentReport["status"];
+  rejectionReason: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+  receiptMime: string;
+  receiptUrl?: string;
+}
+
+export function toReport(api: ApiPaymentReport): PaymentReport {
+  return {
+    ...api,
+    note: api.note ?? undefined,
+    rejectionReason: api.rejectionReason ?? undefined,
+    reviewedAt: api.reviewedAt ?? undefined,
+  };
+}
+
+const reportPath = (reportId: string, action: string) => `/v1/payment-reports/${encodeURIComponent(reportId)}/${action}`;
+
 const membershipPath = (athleteId: string) => `${athletePath(athleteId)}/membership`;
 
 export const apiPaymentsRepository: PaymentsRepository = {
@@ -91,5 +119,17 @@ export const apiPaymentsRepository: PaymentsRepository = {
       apiFetch<ApiMembership>("DELETE", `${membershipPath(athleteId)}/payments/${encodeURIComponent(paymentId)}`)
     );
     return toMembership(membership);
+  },
+
+  async listReports(status) {
+    return (await apiFetch<ApiPaymentReport[]>("GET", `/v1/payment-reports?status=${status}`)).map(toReport);
+  },
+
+  async confirmReport(reportId) {
+    return toReport(await call(() => apiFetch<ApiPaymentReport>("POST", reportPath(reportId, "confirm"))));
+  },
+
+  async rejectReport(reportId, reason) {
+    return toReport(await call(() => apiFetch<ApiPaymentReport>("POST", reportPath(reportId, "reject"), { reason: reason ?? null })));
   },
 };

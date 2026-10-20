@@ -77,3 +77,27 @@ export async function savePaymentInstructionsAction(_prev: FormState, formData: 
   revalidatePath("/payments");
   return { success: true };
 }
+
+/** The money arrived: the months the athlete reported are settled as paid. */
+export async function confirmReportAction(reportId: string): Promise<{ error?: string }> {
+  try {
+    await paymentsService.confirmReport(reportId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo confirmar." };
+  }
+
+  revalidateFees();
+  return {};
+}
+
+/** Sends the report back to the athlete with the reason. */
+export async function rejectReportAction(reportId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  try {
+    await paymentsService.rejectReport(reportId, String(formData.get("reason") ?? ""));
+  } catch (error) {
+    return errorState(error);
+  }
+
+  revalidateFees();
+  return { success: true };
+}
