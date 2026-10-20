@@ -1,4 +1,5 @@
 import type { Discipline, PaymentPeriodStatus, RaceDistances, RaceSport } from "./types";
+import type { CheckinOverview } from "./checkins";
 
 /*
  * The coach's day at a glance, as the API computes it (GET /v1/dashboard in
@@ -62,6 +63,8 @@ export interface Dashboard {
     owing: DashboardOwing[];
   };
   races: { upcomingCount: number; next: DashboardRace[] };
+  /** The newest week's check-ins (last week's until Saturday); null when nobody was asked. */
+  checkins: CheckinOverview | null;
   week: DashboardDay[];
   /** Today's and tomorrow's, by day then athlete. */
   upcomingSessions: DashboardSession[];

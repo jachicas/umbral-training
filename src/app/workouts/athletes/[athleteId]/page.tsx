@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentCoachId } from "@/lib/supabase/auth";
 import { getAthleteDetail } from "@/lib/services/athletes";
+import { listAthleteCheckins } from "@/lib/services/checkins";
+import { addDaysISO } from "@/lib/domain/time";
 import {
   getAthleteWeek,
   getWeekSentOn,
@@ -29,13 +31,15 @@ export default async function AthleteWeekPage({
   const detail = await getAthleteDetail(athleteId, coachId);
   if (!detail) notFound();
 
-  const [{ plan, groupId, changes }, groups, library, weekPlans, sentOn] = await Promise.all([
+  const [{ plan, groupId, changes }, groups, library, weekPlans, sentOn, checkins] = await Promise.all([
     getAthleteWeek(athleteId, monday),
     listGroups(),
     listSessionLibrary(),
     listWeekPlans(monday),
     getWeekSentOn(monday),
+    listAthleteCheckins(athleteId),
   ]);
+  const previousWeek = addDaysISO(monday, -7);
   const group = groups.find((g) => g.id === groupId);
   const paces = plan ? ((await resolvePaces(plan.id, [athleteId]))[athleteId] ?? {}) : {};
   const groupPlan = group
@@ -54,6 +58,7 @@ export default async function AthleteWeekPage({
       weekDates={dates}
       weekLabel={`Semana ${weekRangeLabel(dates)}`}
       library={library}
+      previousCheckin={checkins.find((c) => c.weekStart === previousWeek)}
     />
   );
 }

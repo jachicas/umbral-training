@@ -5,6 +5,7 @@ import { DISCIPLINE_META, DISCIPLINE_ORDER } from "@/lib/domain/discipline";
 import { raceSummary } from "@/lib/domain/races";
 import { formatDateEs, mondayOfISO } from "@/lib/domain/time";
 import { DISCIPLINE_ICON } from "@/components/workouts/discipline-icons";
+import { CheckinsCard } from "@/components/checkins/CheckinsCard";
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -147,6 +148,8 @@ export function DashboardView({ data }: { data: Dashboard }) {
           note={data.weekSentOn ? `el ${formatDateEs(data.weekSentOn)}` : undefined}
         />
       </div>
+
+      {data.checkins && <CheckinsCard overview={data.checkins} className={cardClass} style={cardStyle} />}
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div className={cardClass} style={cardStyle}>

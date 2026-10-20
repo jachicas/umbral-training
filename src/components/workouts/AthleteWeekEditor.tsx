@@ -11,7 +11,10 @@ import { AddSessionButton, ModifiedTag, SentBanner } from "./WeekParts";
 import { WeekPreviewButton } from "./WeekPreviewDialog";
 import { DISCIPLINE_ICON } from "./discipline-icons";
 import { ChangesCard } from "./ChangesCard";
-import { dayLabel } from "./format";
+import { dayLabel, weekRangeLabel } from "./format";
+import type { WeeklyCheckin } from "@/lib/domain/checkins";
+import { weekDatesISO } from "@/lib/domain/time";
+import { CheckinSummary } from "@/components/checkins/CheckinSummary";
 
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
 const cardStyle = { background: "var(--surface)", borderColor: "var(--border)" };
@@ -31,6 +34,7 @@ export function AthleteWeekEditor({
   weekDates,
   weekLabel,
   library,
+  previousCheckin,
 }: {
   athlete: { id: string; fullName: string; avatarColor: string };
   groupName: string | null;
@@ -44,6 +48,8 @@ export function AthleteWeekEditor({
   weekDates: string[];
   weekLabel: string;
   library: WorkoutSession[];
+  /** How the week before went, by the athlete's own check-in. */
+  previousCheckin?: WeeklyCheckin;
 }) {
   const weekStart = weekDates[0];
   const changedSessions = new Set(changes.filter((c) => c.kind !== "removed").map((c) => c.sessionId));
@@ -98,6 +104,18 @@ export function AthleteWeekEditor({
 
       {sentOn && <SentBanner sentOn={sentOn} />}
 
+      {previousCheckin && (
+        <div className={cardClass} style={cardStyle}>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <div className="text-[14px] font-bold">Cómo le fue la semana anterior</div>
+            <Link href={`/athletes/${athlete.id}#checkins`} className="text-[12.5px] font-semibold" style={{ color: "var(--coral)" }}>
+              Check-in del {weekRangeLabel(weekDatesISO(previousCheckin.weekStart))}
+            </Link>
+          </div>
+          <CheckinSummary checkin={previousCheckin} />
+        </div>
+      )}
+
       {changes.length > 0 && <ChangesCard changes={changes} weekDates={weekDates} />}
 
 
@@ -113,7 +131,7 @@ export function AthleteWeekEditor({
               </>
             ) : (
               <>
-                Este atleta no está en ningún grupo.{" "}
+                Sin grupo.{" "}
                 <Link href="/workouts/groups" className="font-semibold" style={{ color: "var(--coral)" }}>
                   Asignarle un grupo
                 </Link>

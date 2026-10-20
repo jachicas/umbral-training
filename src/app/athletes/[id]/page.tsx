@@ -5,6 +5,8 @@ import { Activity, ChevronLeft, ChevronRight, Check, Flag, Plus, Target } from "
 import { getCurrentCoachId } from "@/lib/supabase/auth";
 import { getAthleteDetail, listUpcomingRaces } from "@/lib/services/athletes";
 import { listMembershipPayments } from "@/lib/services/payments";
+import { listAthleteCheckins } from "@/lib/services/checkins";
+import { AthleteCheckins } from "@/components/checkins/AthleteCheckins";
 import {
   RACE_REFERENCES,
   formatDuration,
@@ -71,7 +73,7 @@ export default async function AtletaDetailPage({
   const coachId = await getCurrentCoachId();
   const [detail, races] = await Promise.all([getAthleteDetail(id, coachId), listUpcomingRaces(coachId)]);
   if (!detail) notFound();
-  const payments = await listMembershipPayments(id);
+  const [payments, checkins] = await Promise.all([listMembershipPayments(id), listAthleteCheckins(id)]);
 
   const { athlete, records, activeGoal, membership, assignedWorkouts } = detail;
   const raceDefined = isRaceGoalDefined(activeGoal);
@@ -219,6 +221,8 @@ export default async function AtletaDetailPage({
               })}
             </div>
           </div>
+
+          <AthleteCheckins checkins={checkins} />
 
           {/* assigned workouts */}
           <div
@@ -419,7 +423,7 @@ export default async function AtletaDetailPage({
             {!payConfigured && (
               <div className="mt-4 flex flex-col gap-2.5">
                 <p className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
-                  Aún no has acordado una cuota con este atleta.
+                  Sin cuota.
                 </p>
                 <EditMembershipDialog
                   athleteId={athlete.id}
