@@ -27,9 +27,6 @@ export default async function EditLibrarySessionPage({
   return (
     <div className="flex flex-col gap-4">
       <BackLink href={back}>{fromPlanId ? "Semana" : "Biblioteca"}</BackLink>
-      <div className="text-[12.5px]" style={{ color: "var(--text-3)" }}>
-        Los cambios llegan a las semanas que aún no envías. Las semanas enviadas no cambian, ni la versión que ajustaste para un atleta.
-      </div>
       <SessionEditor
         session={session}
         cancelHref={back}
@@ -38,7 +35,6 @@ export default async function EditLibrarySessionPage({
         remove={{
           label: "Borrar",
           title: `¿Borrar «${session.name}» de tu biblioteca?`,
-          description: "Las semanas que ya la tienen conservan su copia.",
           run: deleteLibrarySessionAction.bind(null, session.id, fromPlanId),
         }}
       />

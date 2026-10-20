@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -131,9 +130,6 @@ export function InviteAccessControl({
         <DialogContent className="rounded-[18px] sm:max-w-[380px]">
           <DialogHeader>
             <DialogTitle>Añade un email para invitar</DialogTitle>
-            <DialogDescription>
-              Necesitas un email para enviarle la invitación de acceso.
-            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`invite-email-${athleteId}`}>Email</Label>

@@ -53,7 +53,7 @@ export function PlanCard({
           className="rounded-[12px] border border-dashed py-5 text-center text-[13px]"
           style={{ borderColor: "var(--border-2)", color: "var(--text-3)" }}
         >
-          Esta semana todavía no está armada.
+          Sin armar
         </div>
       )}
     </div>

@@ -63,7 +63,6 @@ function SessionCard({ planId, session, locked }: { planId: string; session: Wor
       <ConfirmDialog
         open={confirming}
         title={`¿Quitar «${session.name}» de la semana del grupo?`}
-        description="Lo pierden los atletas que siguen la semana del grupo; quien ya tiene su propia semana la conserva."
         confirmLabel="Quitar"
         pending={pending}
         onCancel={() => setConfirming(false)}
@@ -150,9 +149,6 @@ export function WeekPlanEditor({
       {/* ---------------- athletes ---------------- */}
       <div className={cardClass} style={cardStyle}>
         <div className="mb-1 text-[14px] font-bold">Atletas del grupo</div>
-        <div className="text-[12.5px]" style={{ color: "var(--text-3)" }}>
-          Abre la semana de cada uno para ver sus ritmos y ajustarle lo que haga falta.
-        </div>
 
         {athletes.length === 0 ? (
           <div className="py-10 text-center text-[13px]" style={{ color: "var(--text-3)" }}>

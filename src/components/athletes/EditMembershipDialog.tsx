@@ -18,7 +18,6 @@ export function EditMembershipDialog({
   return (
     <FormDialog
       title={configured ? "Editar membresía" : "Configurar membresía"}
-      description="Define si el atleta paga cuota y cuánto."
       action={saveMembershipAction.bind(null, athleteId)}
       trigger={
         configured ? (

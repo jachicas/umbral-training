@@ -55,7 +55,7 @@ export function SportProfileFields({ athlete, errors }: { athlete?: Athlete | nu
           onChange={setDisciplines}
         />
         <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-          Opcional — puedes añadirlas más adelante.
+          Opcional
         </p>
       </div>
 

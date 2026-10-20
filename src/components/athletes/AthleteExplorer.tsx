@@ -66,9 +66,6 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
       >
         <div>
           <p className="text-[15px] font-bold">Aún no tienes atletas</p>
-          <p className="mt-1 text-sm" style={{ color: "var(--text-2)" }}>
-            Añade tu primer atleta para empezar a planificar sus entrenos.
-          </p>
         </div>
         <AddAthleteButton />
       </div>

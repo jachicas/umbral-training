@@ -79,7 +79,6 @@ export function SendWeek({
         <div>
           <h1 className="m-0 text-[24px] font-bold tracking-[-.4px]">Enviar semana {weekLabel}</h1>
           <div className="mt-1" style={{ color: "var(--text-2)" }}>
-            Al enviarla, cada atleta con email recibe su PDF. También puedes copiar su mensaje para WhatsApp ·{" "}
             <b style={{ color: "var(--text)" }}>
               {copied.length}/{messages.length}
             </b>{" "}
@@ -122,8 +121,8 @@ export function SendWeek({
         title={`Enviar semana ${weekLabel}`}
         description={
           (withEmail > 0
-            ? `Le llega su PDF por email a ${withEmail} de ${messages.length} ${messages.length === 1 ? "atleta" : "atletas"}.`
-            : "Ningún atleta tiene email: no sale ningún correo.") + " Después la semana ya no se puede cambiar."
+            ? `PDF por email a ${withEmail} de ${messages.length} ${messages.length === 1 ? "atleta" : "atletas"}.`
+            : "Ningún atleta tiene email.") + " Después ya no se puede cambiar."
         }
         confirmLabel={sending ? "Enviando…" : "Enviar"}
         tone="primary"
@@ -199,7 +198,7 @@ export function SendWeek({
                   <button
                     type="button"
                     disabled
-                    title="Pronto: un link de solo lectura para el atleta"
+                    title="Pronto"
                     className="flex h-10 cursor-not-allowed items-center gap-1.5 rounded-[10px] border px-3.5 text-[13px] font-bold"
                     style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text-3)" }}
                   >
@@ -229,7 +228,7 @@ export function SendWeek({
 
               {copyError && (
                 <div className="mb-3 text-[12.5px] font-semibold" style={{ color: "var(--danger)" }}>
-                  No se pudo copiar. Selecciona el texto y cópialo a mano.
+                  No se pudo copiar.
                 </div>
               )}
 

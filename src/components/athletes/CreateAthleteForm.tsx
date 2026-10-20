@@ -57,14 +57,11 @@ export function CreateAthleteForm({ races }: { races: Race[] }) {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div className="flex min-w-0 flex-col gap-4">
-          <SectionCard title="Datos del atleta" description="Identidad y contacto.">
+          <SectionCard title="Datos del atleta">
             <AthleteIdentityFields errors={errors} onEmailChange={setEmail} />
           </SectionCard>
 
-          <SectionCard
-            title="Perfil deportivo"
-            description="Disciplinas, nivel y umbrales — todo opcional, se puede completar más adelante."
-          >
+          <SectionCard title="Perfil deportivo">
             <SportProfileFields errors={errors} />
           </SectionCard>
         </div>
@@ -74,10 +71,7 @@ export function CreateAthleteForm({ races }: { races: Race[] }) {
             <GoalWizard races={races} errors={errors} />
           </SectionCard>
 
-          <SectionCard
-            title="Acceso"
-            description="Puedes invitarle ahora o hacerlo más adelante desde su ficha."
-          >
+          <SectionCard title="Acceso">
             <label
               className="flex items-center gap-2 text-sm font-medium"
               style={{ opacity: hasEmail ? 1 : 0.6, cursor: hasEmail ? "pointer" : "not-allowed" }}
@@ -94,7 +88,7 @@ export function CreateAthleteForm({ races }: { races: Race[] }) {
             </label>
             {!hasEmail && (
               <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-                Añade un email en &ldquo;Datos del atleta&rdquo; para poder invitarle.
+                Requiere email.
               </p>
             )}
           </SectionCard>

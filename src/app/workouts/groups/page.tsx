@@ -30,13 +30,12 @@ export default async function GroupsPage() {
     <div className="flex flex-col gap-5">
       <WorkoutsHeader
         active="groups"
-        subtitle="Cada grupo recibe la misma semana; cada atleta, con sus propios ritmos"
         actions={<NewGroupForm />}
       />
 
       {groups.length === 0 && (
         <div className="rounded-[14px] border border-dashed px-5 py-4 text-[13px]" style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}>
-          Todavía no tienes grupos. Crea el primero (por ejemplo «Fondo · 21k y maratón») y asígnale atletas: cada grupo recibe su propia semana.
+          Sin grupos todavía.
         </div>
       )}
 
@@ -59,11 +58,6 @@ export default async function GroupsPage() {
             <div className="text-[12px]" style={{ color: "var(--text-3)" }}>
               {countLabel(col.members.length, "atleta", "atletas")}
             </div>
-            {col.id === null && (
-              <div className="mt-1 text-[12px]" style={{ color: "var(--text-3)" }}>
-                No reciben semana hasta que estén en un grupo.
-              </div>
-            )}
             <div className="mt-3 flex flex-col gap-1">
               {col.members.map((d) => (
                 <div key={d.athlete.id} className="flex items-center gap-2.5 rounded-[10px] px-1.5 py-1.5">

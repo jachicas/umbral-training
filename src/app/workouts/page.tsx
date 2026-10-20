@@ -84,7 +84,7 @@ export default async function WorkoutsWeekPage({
             className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-dashed px-5 py-4 text-[13px]"
             style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}
           >
-            <span>Cada semana se arma por grupo. Crea tus grupos y asígnales atletas para empezar.</span>
+            <span>Sin grupos todavía.</span>
             <Link href="/workouts/groups" className="font-semibold hover:underline" style={{ color: "var(--coral)" }}>
               Ir a Grupos
             </Link>

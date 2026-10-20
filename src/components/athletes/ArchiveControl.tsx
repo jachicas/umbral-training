@@ -52,7 +52,7 @@ export function ArchiveControl({ athleteId, fullName, archived }: { athleteId: s
       <ConfirmDialog
         open={confirming}
         title={`¿Archivar a ${fullName}?`}
-        description="Deja de aparecer en Atletas, en su grupo y en las semanas. Su cuota deja de correr desde este mes; lo que ya debe se mantiene. Puedes restaurarlo cuando vuelva."
+        description="Su cuota deja de correr; lo que ya debe se mantiene."
         confirmLabel="Archivar"
         pending={pending}
         onConfirm={() => run(archiveAthleteAction)}

@@ -49,9 +49,6 @@ export default async function AthleteSessionPage({
   return (
     <div className="flex flex-col gap-4">
       <BackLink href={back}>Semana de {name}</BackLink>
-      <div className="text-[12.5px]" style={{ color: "var(--text-3)" }}>
-        Los cambios solo aplican a la semana de {name}; la del grupo y la biblioteca no cambian.
-      </div>
       <SessionEditor
         session={session}
         cancelHref={back}
@@ -61,7 +58,6 @@ export default async function AthleteSessionPage({
         remove={{
           label: "Quitar de su semana",
           title: `¿Quitar «${session.name}» de la semana de ${firstName}?`,
-          description: "Solo cambia su semana; la del grupo sigue igual.",
           run: removeAthleteSessionFromEditorAction.bind(null, athleteId, monday, session.id),
         }}
       />

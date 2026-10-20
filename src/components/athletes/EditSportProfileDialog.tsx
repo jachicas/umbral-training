@@ -10,7 +10,6 @@ export function EditSportProfileDialog({ athlete }: { athlete: Athlete }) {
   return (
     <FormDialog
       title="Editar perfil deportivo"
-      description="Disciplinas, nivel, disponibilidad y umbrales de entrenamiento."
       action={saveSportProfileAction.bind(null, athlete.id)}
       trigger={
         <button

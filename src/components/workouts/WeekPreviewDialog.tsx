@@ -139,7 +139,7 @@ export function WeekPreviewButton({
               className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] px-3.5 py-2.5 text-[12.5px]"
               style={{ background: "var(--surface-2)", color: "var(--text-2)" }}
             >
-              <span>Sin marcas todavía: los ritmos se calculan cuando tenga al menos un tiempo (1k, 5k, 10k o 21k).</span>
+              <span>Sin marcas: sin ritmos.</span>
               <Link href={`/athletes/${athleteId}`} className="font-bold" style={{ color: "var(--coral)" }}>
                 Agregar marca
               </Link>

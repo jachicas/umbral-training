@@ -10,7 +10,6 @@ export function EditAthleteDialog({ athlete }: { athlete: Athlete }) {
   return (
     <FormDialog
       title="Editar atleta"
-      description="Datos de contacto y biográficos básicos."
       action={updateAthleteAction.bind(null, athlete.id)}
       trigger={
         <button
@@ -36,8 +35,8 @@ export function EditAthleteDialog({ athlete }: { athlete: Athlete }) {
           errors={errors}
           emailHint={
             athlete.accessStatus === "draft"
-              ? "Necesario solo si vas a invitarle."
-              : "Ya invitado: el email no puede quedar vacío."
+              ? "Opcional"
+              : "Obligatorio"
           }
         />
       )}

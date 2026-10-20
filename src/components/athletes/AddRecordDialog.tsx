@@ -26,7 +26,6 @@ export function AddRecordDialog({ athleteId, latest }: { athleteId: string; late
   return (
     <FormDialog
       title="Añadir marcas"
-      description="Cada distancia muestra su marca actual. Cambia las que quieras y se guardan todas juntas; las que dejes igual no se repiten."
       action={addRecordAction.bind(null, athleteId)}
       submitLabel="Guardar marcas"
       pendingLabel="Guardando…"

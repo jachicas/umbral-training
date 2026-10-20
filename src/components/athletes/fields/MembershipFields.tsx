@@ -49,7 +49,7 @@ export function MembershipFields({
 
       {mode === "free" ? (
         <p className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
-          Este atleta no paga cuota. Su periodo aparecerá como <b>Gratis</b>.
+          Sin cuota.
         </p>
       ) : (
         <div className="flex gap-2.5">

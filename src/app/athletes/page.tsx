@@ -50,7 +50,7 @@ export default async function AthletesPage({
           <div className="mt-1" style={{ color: "var(--text-2)" }}>
             <b style={{ color: "var(--text)" }}>{athletes.length}</b>{" "}
             {archived
-              ? `${athletes.length === 1 ? "archivado" : "archivados"} · abre uno para restaurarlo`
+              ? athletes.length === 1 ? "archivado" : "archivados"
               : athletes.length === 1 ? "activo" : "activos"}
           </div>
         </div>

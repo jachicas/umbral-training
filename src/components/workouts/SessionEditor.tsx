@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -371,7 +370,7 @@ function StepRow({
 export interface SessionEditorRemove {
   label: string;
   title: string;
-  description: string;
+  description?: string;
   /** Redirects on success, or resolves without an error and the editor goes back to `cancelHref`. */
   run: () => Promise<SessionEditorState>;
 }
@@ -508,7 +507,7 @@ export function SessionEditor({
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <input
             aria-label="Nombre de la sesión"
-            placeholder="Nombre de la sesión (p. ej. Series 400)"
+            placeholder="Nombre de la sesión"
             value={name}
             maxLength={80}
             onChange={(e) => setName(e.target.value)}
@@ -611,7 +610,7 @@ export function SessionEditor({
                   <StickyNote size={15} className="mt-2 flex-none" style={{ color: "var(--text-3)" }} />
                   <textarea
                     aria-label="Nota"
-                    placeholder="Estiramiento 10 min, ejercicios de técnica…"
+                    placeholder="Nota"
                     value={node.text}
                     maxLength={300}
                     rows={2}
@@ -773,7 +772,6 @@ export function SessionEditor({
         <DialogContent className="rounded-[18px] sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Tienes cambios sin guardar</DialogTitle>
-            <DialogDescription>Si sales ahora, se pierden los cambios de esta sesión.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" className="h-10 rounded-[10px]" onClick={() => setLeaveTo(null)}>

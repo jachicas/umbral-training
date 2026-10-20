@@ -23,7 +23,7 @@ export function AthleteIdentityFields({
   defaultBirthDate = "",
   defaultSex,
   errors,
-  emailHint = "Necesario solo si vas a invitarle.",
+  emailHint = "Opcional",
   onEmailChange,
 }: {
   defaultFullName?: string;
@@ -87,7 +87,7 @@ export function AthleteIdentityFields({
           onChange={(e) => setPhone(e.target.value)}
         />
         <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-          Opcional — para hablar por WhatsApp.
+          Opcional
         </p>
       </div>
 

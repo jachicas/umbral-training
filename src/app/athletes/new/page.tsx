@@ -20,12 +20,7 @@ export default async function NewAthletePage() {
         <ChevronLeft size={16} /> Atletas
       </Link>
 
-      <div>
-        <h1 className="m-0 text-[24px] font-bold tracking-[-.4px]">Añadir atleta</h1>
-        <div className="mt-1" style={{ color: "var(--text-2)" }}>
-          Crea la ficha para empezar a planificar. Podrás invitarle a acceder cuando quieras.
-        </div>
-      </div>
+      <h1 className="m-0 text-[24px] font-bold tracking-[-.4px]">Añadir atleta</h1>
 
       <CreateAthleteForm races={races} />
     </div>

@@ -17,7 +17,7 @@ export function WorkoutsHeader({
   actions,
 }: {
   active: WorkoutsTab;
-  subtitle: React.ReactNode;
+  subtitle?: React.ReactNode;
   actions: React.ReactNode;
 }) {
   return (
@@ -25,9 +25,11 @@ export function WorkoutsHeader({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="m-0 text-[24px] font-bold tracking-[-.4px]">Entrenos</h1>
-          <div className="mt-1" style={{ color: "var(--text-2)" }}>
-            {subtitle}
-          </div>
+          {subtitle && (
+            <div className="mt-1" style={{ color: "var(--text-2)" }}>
+              {subtitle}
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap gap-2.5">{actions}</div>
       </div>

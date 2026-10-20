@@ -15,7 +15,7 @@ export default async function LibraryPage() {
     <div className="flex flex-col gap-5">
       <WorkoutsHeader
         active="library"
-        subtitle={`${countLabel(library.length, "sesión guardada", "sesiones guardadas")} para armar tus semanas`}
+        subtitle={countLabel(library.length, "sesión guardada", "sesiones guardadas")}
         actions={
           <PrimaryAction href="/workouts/library/new">
             <Plus size={15} /> Nueva sesión
@@ -25,7 +25,7 @@ export default async function LibraryPage() {
 
       {library.length === 0 && (
         <div className="rounded-[14px] border border-dashed px-5 py-4 text-[13px]" style={{ borderColor: "var(--border-2)", color: "var(--text-2)" }}>
-          Tu biblioteca está vacía. Crea una sesión (series, rodajes, técnica…) y úsala en cualquier semana.
+          Tu biblioteca está vacía.
         </div>
       )}
 
