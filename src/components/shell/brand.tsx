@@ -75,7 +75,7 @@ export function BrandStyle({ palette }: { palette: ClubPalette | undefined }) {
 /** The club's mark in a shell: its logo, or Umbral's "U" on the primary color. */
 export function BrandMark({ brand, className }: { brand: ShellBrand; className: string }) {
   if (brand.logoUrl) {
-    // A public Supabase Storage link; next/image would need the host configured.
+    // A public storage link; next/image would need the host configured.
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={brand.logoUrl} alt="" className={`${className} object-contain`} />;
   }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { getAthleteDetail } from "@/lib/services/athletes";
 import { listAthleteCheckins } from "@/lib/services/checkins";
 import { addDaysISO } from "@/lib/domain/time";

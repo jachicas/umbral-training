@@ -1,50 +1,33 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { roleFromClaims } from "@/lib/supabase/role";
+import { HOME, ROLE_COOKIE, SESSION_COOKIE, roleFrom } from "@/lib/session";
 import { VIEW_CLUB_COOKIE, isClubId } from "@/lib/viewing";
 
 const SIGN_IN_PATH = "/login";
-/** Where an invite (or any Supabase email link) lands; it signs the visitor in. */
-const CONFIRM_PATH = "/auth/confirm";
+/** Open with or without a session: an invite's or a reset's link, asking for one, and clearing an expired session. */
+const PUBLIC_PATHS = ["/welcome", "/forgot-password", "/reset-password", "/auth/expired"];
 const PORTAL_PATH = "/portal";
 const ADMIN_PATH = "/admin";
 
 const within = (pathname: string, root: string) => pathname === root || pathname.startsWith(root + "/");
 
 /**
- * Refreshes the Supabase session on every page request (Server Components
- * can't write cookies), keeps signed-out visitors on the sign-in page, and
- * keeps each role on its side: athletes in /portal, the super admin in
- * /admin (and the coach's pages while reading a club), the coach in
- * neither. The API still authorizes every call.
+ * Keeps signed-out visitors on the sign-in page, and each role on its side:
+ * athletes in /portal, the super admin in /admin (and the coach's pages
+ * while reading a club), the coach in neither. The session is the API's
+ * token in a cookie; the role cookie only routes pages. The API still
+ * authorizes every call, and a token it no longer takes ends at
+ * /auth/expired.
  */
-export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet, headers) => {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
-      },
-    },
-  });
-
-  // Verifies the JWT (and refreshes it when needed) — don't trust getSession() here.
-  const { data } = await supabase.auth.getClaims();
-  const signedIn = Boolean(data?.claims.sub);
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (PUBLIC_PATHS.some((path) => within(pathname, path))) return NextResponse.next();
 
-  if (pathname === CONFIRM_PATH) return response;
+  const role = request.cookies.has(SESSION_COOKIE) ? roleFrom(request.cookies.get(ROLE_COOKIE)?.value) : undefined;
 
-  if (!signedIn) {
-    return pathname === SIGN_IN_PATH ? response : redirectKeepingCookies(new URL(SIGN_IN_PATH, request.url), response);
+  if (!role) {
+    return pathname === SIGN_IN_PATH ? NextResponse.next() : NextResponse.redirect(new URL(SIGN_IN_PATH, request.url));
   }
 
-  const role = roleFromClaims(data?.claims);
   const viewingClub = role === "admin" && isClubId(request.cookies.get(VIEW_CLUB_COOKIE)?.value);
   const inPortal = within(pathname, PORTAL_PATH);
   const inAdmin = within(pathname, ADMIN_PATH);
@@ -54,25 +37,18 @@ export async function proxy(request: NextRequest) {
     admin: inAdmin || (viewingClub && !inPortal),
     coach: !inPortal && !inAdmin,
   }[role];
-  const home = { athlete: PORTAL_PATH, admin: viewingClub ? "/" : ADMIN_PATH, coach: "/" }[role];
+  const home = role === "admin" && viewingClub ? "/" : HOME[role];
 
   if (pathname === SIGN_IN_PATH || !allowed) {
-    return redirectKeepingCookies(new URL(home, request.url), response);
+    return NextResponse.redirect(new URL(home, request.url));
   }
   // Back in /admin, the super admin is no longer reading a club.
   if (inAdmin && viewingClub) {
-    const redirect = redirectKeepingCookies(request.nextUrl, response);
+    const redirect = NextResponse.redirect(request.nextUrl);
     redirect.cookies.delete(VIEW_CLUB_COOKIE);
     return redirect;
   }
-  return response;
-}
-
-/** A redirect must carry any refreshed session cookies, or the user is signed out. */
-function redirectKeepingCookies(url: URL, from: NextResponse) {
-  const redirect = NextResponse.redirect(url);
-  from.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
-  return redirect;
+  return NextResponse.next();
 }
 
 export const config = {

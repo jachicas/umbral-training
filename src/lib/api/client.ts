@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getAccessToken } from "@/lib/supabase/auth";
-import { apiUrl } from "@/lib/supabase/env";
+import { getAccessToken } from "@/lib/auth/session";
+import { apiUrl } from "./env";
 import { getViewedClubId } from "./viewing";
 
 /** 422 from the API: Spanish messages keyed by the API's request field ("goal.raceDate"). */
@@ -59,7 +59,8 @@ export async function apiFetch<T>(method: Method, path: string, body?: unknown):
 
   switch (response.status) {
     case 401:
-      redirect("/login");
+      // The token expired or was revoked: clear the session, then sign in.
+      redirect("/auth/expired");
     case 404:
       throw new ApiNotFoundError(json.message ?? "No encontrado.");
     case 422:
@@ -83,7 +84,7 @@ export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
   if (response.ok) return ((await response.json()) as { data: T }).data;
 
   const json = (await response.json().catch(() => ({}))) as { message?: string; errors?: Record<string, string[]> };
-  if (response.status === 401) redirect("/login");
+  if (response.status === 401) redirect("/auth/expired");
   if (response.status === 404) throw new ApiNotFoundError(json.message ?? "No encontrado.");
   if (response.status === 422) throw new ApiValidationError(json.errors ?? {});
   // 413: the web server in front of the API refused the file.
@@ -100,7 +101,7 @@ export async function apiFile(path: string): Promise<ApiFile> {
 
   if (!response.ok) {
     const json = (await response.json().catch(() => ({}))) as { message?: string; errors?: Record<string, string[]> };
-    if (response.status === 401) redirect("/login");
+    if (response.status === 401) redirect("/auth/expired");
     if (response.status === 404) throw new ApiNotFoundError(json.message ?? "No encontrado.");
     if (response.status === 422) throw new ApiValidationError(json.errors ?? {});
     throw new Error(json.message ?? `La API respondió ${response.status}.`);
@@ -111,4 +112,28 @@ export async function apiFile(path: string): Promise<ApiFile> {
     contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
     disposition: response.headers.get("Content-Disposition") ?? "attachment",
   };
+}
+
+/**
+ * Calls the API with no session: signing in, invites, password resets.
+ * Errors are thrown like apiFetch's; a 429 (too many tries) carries the
+ * API's message.
+ */
+export async function apiPublic<T>(method: Method, path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${apiUrl()}${path}`, {
+    method,
+    headers: { Accept: "application/json", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  if (response.ok) {
+    if (response.status === 204) return undefined as T;
+    return ((await response.json()) as { data: T }).data;
+  }
+
+  const json = (await response.json().catch(() => ({}))) as { message?: string; errors?: Record<string, string[]> };
+  if (response.status === 404) throw new ApiNotFoundError(json.message ?? "No encontrado.");
+  if (response.status === 422) throw new ApiValidationError(json.errors ?? {});
+  throw new Error(json.message ?? `La API respondió ${response.status}.`);
 }

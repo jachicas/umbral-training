@@ -54,8 +54,9 @@ export interface NewClubInput extends ClubInput {
 /** Who is signed in, as the API sees it: the coach's and athletes' club comes with its brand. */
 export interface Me {
   id: string;
-  email?: string;
-  role: AccountRole | null;
+  email: string;
+  fullName: string;
+  role: AccountRole;
   club?: Club;
 }
 

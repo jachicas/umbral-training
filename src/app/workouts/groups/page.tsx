@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listAthleteDetails } from "@/lib/services/athletes";
 import { listGroups } from "@/lib/services/workouts";
 import { WorkoutsHeader } from "@/components/workouts/WorkoutsHeader";

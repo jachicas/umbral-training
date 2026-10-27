@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { getAthleteDetail } from "@/lib/services/athletes";
 import { getAthleteWeek, getWeekSentOn, resolvePaces } from "@/lib/services/workouts";
 import { BackLink } from "@/components/workouts/WorkoutsHeader";

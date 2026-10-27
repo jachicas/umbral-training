@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listAthleteDetails } from "@/lib/services/athletes";
 import {
   getAthleteWeekChanges,

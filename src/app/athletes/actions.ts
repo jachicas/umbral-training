@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import * as athletesService from "@/lib/services/athletes";
 import { RACE_REFERENCES } from "@/lib/domain/time";
 

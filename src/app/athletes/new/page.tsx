@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { CreateAthleteForm } from "@/components/athletes/CreateAthleteForm";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listUpcomingRaces } from "@/lib/services/athletes";
 
 export const metadata: Metadata = { title: "Añadir atleta · Umbral Training" };

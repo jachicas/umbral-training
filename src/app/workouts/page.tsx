@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Copy, Lock, Plus, Send } from "lucide-react";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listAthleteDetails } from "@/lib/services/athletes";
 import { getWeekSentOn, listGroups, listWeekPlans } from "@/lib/services/workouts";
 import { addDaysISO, formatDateEs } from "@/lib/domain/time";

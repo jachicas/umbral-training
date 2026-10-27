@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Archive, Users } from "lucide-react";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listArchivedAthleteDetails, listAthleteDetails } from "@/lib/services/athletes";
 import { isRaceGoal } from "@/lib/domain/goals";
 import { isMembershipConfigured } from "@/lib/domain/payments";

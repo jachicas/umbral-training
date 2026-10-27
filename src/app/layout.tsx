@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/shell/AppShell";
 import { BrandStyle, shellBrand } from "@/components/shell/brand";
 import { SuspendedNotice } from "@/components/shell/SuspendedNotice";
-import { getShellUser } from "@/lib/supabase/shell-user";
+import { getCurrentUser, getShellUser } from "@/lib/auth/current-user";
 import { getViewedClubId } from "@/lib/api/viewing";
-import { getClub, getMyClub } from "@/lib/services/clubs";
+import { getClub } from "@/lib/services/clubs";
 import { getOwingCounts } from "@/lib/services/payments";
 import type { Club } from "@/lib/domain/clubs";
 import type { NavBadges } from "@/components/shell/nav";
@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getShellUser();
   // The coach's and athletes' own club; or the one the super admin reads (never on /admin: the proxy clears it there).
   const viewedClubId = user?.role === "admin" ? await getViewedClubId() : undefined;
-  const club = user?.role === "admin" ? await viewedClub(viewedClubId) : user ? await getMyClub() : undefined;
+  const club = user?.role === "admin" ? await viewedClub(viewedClubId) : (await getCurrentUser())?.club;
   const suspended = user?.role !== "admin" && club?.suspendedAt !== undefined;
   // Athletes' pages bring their own shell (src/app/portal).
   const shellUser = user?.role === "athlete" ? null : user;

@@ -9,7 +9,7 @@ export function ClubMark({ club, size = 44 }: { club: Club; size?: number }) {
   const style = { width: size, height: size };
 
   if (club.logoUrl) {
-    // A public Supabase Storage link; next/image would need the host configured.
+    // A public storage link; next/image would need the host configured.
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={club.logoUrl} alt="" className="flex-none rounded-[12px] object-contain" style={style} />;
   }

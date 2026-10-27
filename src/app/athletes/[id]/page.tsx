@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Activity, ChevronLeft, ChevronRight, Check, Flag, Plus, Target } from "lucide-react";
-import { getCurrentCoachId } from "@/lib/supabase/auth";
+import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { getAthleteDetail, listUpcomingRaces } from "@/lib/services/athletes";
 import { listMembershipPayments } from "@/lib/services/payments";
 import { listAthleteCheckins } from "@/lib/services/checkins";

@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { apiClubRepository } from "@/lib/db/repositories/clubs-repo.api";
 import type { Club, ClubInput, Me, NewClubInput } from "@/lib/domain/clubs";
 
@@ -14,16 +13,3 @@ export const resendCoachInvite = (id: string): Promise<Club> => apiClubRepositor
 export const suspendClub = (id: string): Promise<Club> => apiClubRepository.suspend(id);
 export const reactivateClub = (id: string): Promise<Club> => apiClubRepository.reactivate(id);
 export const getMe = (): Promise<Me> => apiClubRepository.me();
-
-/**
- * The signed-in coach's or athlete's club, with its brand; once per request
- * (the root layout and the portal's both need it). Undefined when the API
- * can't say: the pages then keep Umbral's look.
- */
-export const getMyClub = cache(async (): Promise<Club | undefined> => {
-  try {
-    return (await apiClubRepository.me()).club;
-  } catch {
-    return undefined;
-  }
-});

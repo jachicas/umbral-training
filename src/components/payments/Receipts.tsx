@@ -104,7 +104,7 @@ function Thumb({ report }: { report: PaymentReport }) {
       className="relative flex size-16 flex-none cursor-zoom-in items-center justify-center overflow-hidden rounded-[11px] border"
     >
       {report.receiptUrl && isDrawable(report.receiptMime) ? (
-        // eslint-disable-next-line @next/next/no-img-element -- a signed Supabase Storage link
+        // eslint-disable-next-line @next/next/no-img-element -- a signed storage link
         <img src={report.receiptUrl} alt={`Comprobante de ${report.athleteName}`} className="size-full object-cover" />
       ) : (
         <FileText size={24} />
@@ -159,7 +159,7 @@ function ReceiptViewer({
             style={{ background: "rgba(0,0,0,.35)" }}
           >
             {!url ? null : isDrawable(report.receiptMime) ? (
-              // eslint-disable-next-line @next/next/no-img-element -- a signed Supabase Storage link
+              // eslint-disable-next-line @next/next/no-img-element -- a signed storage link
               <img src={url} alt={`Comprobante de ${report.athleteName}`} className="max-h-[72vh] w-auto max-w-full object-contain" />
             ) : report.receiptMime === "application/pdf" ? (
               <iframe src={url} title={`Comprobante de ${report.athleteName}`} className="h-[72vh] w-full bg-white" />

@@ -1,13 +1,12 @@
 import { PortalShell } from "@/components/portal/PortalShell";
 import { shellBrand } from "@/components/shell/brand";
-import { getMyClub } from "@/lib/services/clubs";
-import { getShellUser } from "@/lib/supabase/shell-user";
+import { getCurrentUser, getShellUser } from "@/lib/auth/current-user";
 
 export default async function PortalLayout({ children }: LayoutProps<"/portal">) {
-  const [user, club] = await Promise.all([getShellUser(), getMyClub()]);
+  const [user, me] = await Promise.all([getShellUser(), getCurrentUser()]);
 
   return (
-    <PortalShell name={user?.name ?? ""} initials={user?.initials ?? ""} brand={shellBrand(club)}>
+    <PortalShell name={user?.name ?? ""} initials={user?.initials ?? ""} brand={shellBrand(me?.club)}>
       {children}
     </PortalShell>
   );

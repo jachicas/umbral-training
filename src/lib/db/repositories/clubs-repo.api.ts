@@ -18,8 +18,9 @@ interface ApiClub {
 
 interface ApiMe {
   id: string;
-  email: string | null;
-  role: AccountRole | null;
+  email: string;
+  fullName: string;
+  role: AccountRole;
   club: ApiClub | null;
 }
 
@@ -38,7 +39,7 @@ const toClub = (api: ApiClub): Club => ({
   createdAt: api.createdAt ?? undefined,
 });
 
-/** "email" is the coach's here: Supabase already has a login with it. */
+/** "email" is the coach's here: another login already has it. */
 const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   name: "name",
   "coach.fullName": "coachName",
@@ -94,6 +95,6 @@ export const apiClubRepository: ClubRepository = {
 
   async me() {
     const api = await apiFetch<ApiMe>("GET", "/v1/me");
-    return { id: api.id, email: api.email ?? undefined, role: api.role, club: api.club ? toClub(api.club) : undefined };
+    return { id: api.id, email: api.email, fullName: api.fullName, role: api.role, club: api.club ? toClub(api.club) : undefined };
   },
 };

@@ -1,14 +1,43 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { roleFromClaims } from "@/lib/supabase/role";
-import { VIEW_CLUB_COOKIE } from "@/lib/viewing";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ApiValidationError, apiFetch, apiPublic } from "@/lib/api/client";
+import { endSession, hasSession, startSession } from "@/lib/auth/session";
+import type { AccountRole } from "@/lib/domain/portal";
+import { HOME } from "@/lib/session";
+
+/** What signing in, an invite's first password and a reset answer with. */
+interface ApiSession {
+  token: string;
+  user: { id: string; email: string; fullName: string; role: AccountRole };
+}
 
 export interface SignInState {
   error?: string;
   email?: string;
+}
+
+export interface PasswordState {
+  error?: string;
+}
+
+export interface ForgotState {
+  error?: string;
+  sent?: boolean;
+}
+
+const MIN_PASSWORD_LENGTH = 8;
+
+/** The API's first message (a 422's, or a 429's), for a form's error line. */
+function messageOf(error: unknown): string {
+  if (error instanceof ApiValidationError) return error.message;
+  return error instanceof Error ? error.message : "Algo salió mal. Intenta de nuevo.";
+}
+
+/** Keeps the session in cookies, then goes to the role's home. */
+async function enter(session: ApiSession): Promise<never> {
+  await startSession(session.token, session.user.role);
+  redirect(HOME[session.user.role]);
 }
 
 export async function signInAction(_prev: SignInState, formData: FormData): Promise<SignInState> {
@@ -19,57 +48,69 @@ export async function signInAction(_prev: SignInState, formData: FormData): Prom
     return { error: "Escribe tu email y tu contraseña.", email };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    return { error: "Email o contraseña incorrectos.", email };
+  let session: ApiSession;
+  try {
+    session = await apiPublic<ApiSession>("POST", "/v1/auth/login", { email, password });
+  } catch (error) {
+    return { error: messageOf(error), email };
   }
 
-  // Straight to each role's home: a redirect the proxy rewrites mid-action keeps the old URL.
-  const { data } = await supabase.auth.getClaims();
-  redirect(HOME[roleFromClaims(data?.claims)]);
+  return enter(session);
 }
 
-const HOME = { coach: "/", athlete: "/portal", admin: "/admin" } as const;
-
+/** Ends this session at the API too, so the token stops working there. A club the super admin was reading ends with it. */
 export async function signOutAction(): Promise<void> {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  // The super admin may have been reading a club: that ends with the session.
-  (await cookies()).delete(VIEW_CLUB_COOKIE);
+  if (await hasSession()) {
+    await apiFetch("POST", "/v1/auth/logout").catch(() => undefined);
+  }
+  await endSession();
   redirect("/login");
 }
 
-export interface PasswordState {
-  error?: string;
+/** Checked here first, so a typo doesn't use up a try at the API. */
+function passwordError(formData: FormData): string | undefined {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < MIN_PASSWORD_LENGTH) return `Usa al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  if (password !== String(formData.get("confirm") ?? "")) return "Las contraseñas no coinciden.";
+  return undefined;
 }
 
-const MIN_PASSWORD_LENGTH = 8;
+async function setPassword(path: string, formData: FormData): Promise<PasswordState> {
+  const error = passwordError(formData);
+  if (error) return { error };
 
-/** The first password, right after the invite link signed them in: an athlete goes on to the portal, a coach to their panel. */
-export async function setPasswordAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
-  const password = String(formData.get("password") ?? "");
-  const confirm = String(formData.get("confirm") ?? "");
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return { error: `Usa al menos ${MIN_PASSWORD_LENGTH} caracteres.` };
-  }
-  if (password !== confirm) {
-    return { error: "Las contraseñas no coinciden." };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) {
-    return {
-      error:
-        error.code === "weak_password"
-          ? "Esa contraseña es muy fácil de adivinar. Prueba con otra."
-          : "No se pudo guardar la contraseña. Intenta de nuevo.",
-    };
+  let session: ApiSession;
+  try {
+    session = await apiPublic<ApiSession>("POST", path, {
+      token: String(formData.get("token") ?? ""),
+      password: String(formData.get("password") ?? ""),
+    });
+  } catch (apiError) {
+    return { error: messageOf(apiError) };
   }
 
-  const { data } = await supabase.auth.getClaims();
-  redirect(HOME[roleFromClaims(data?.claims)]);
+  return enter(session);
+}
+
+/** An invite's first password: the athlete goes on to the portal, a coach or the super admin to their panel. */
+export async function acceptInviteAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
+  return setPassword("/v1/auth/invites/accept", formData);
+}
+
+export async function resetPasswordAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
+  return setPassword("/v1/auth/password/reset", formData);
+}
+
+/** The API answers the same whether or not the email has an account. */
+export async function forgotPasswordAction(_prev: ForgotState, formData: FormData): Promise<ForgotState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: "Escribe tu email." };
+
+  try {
+    await apiPublic("POST", "/v1/auth/password/forgot", { email });
+  } catch (error) {
+    return { error: messageOf(error) };
+  }
+
+  return { sent: true };
 }
