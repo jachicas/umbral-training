@@ -39,7 +39,7 @@ export function SettleButtons({
     variant === "card" ? (
       <button
         type="button"
-        className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[10px] text-[13.5px] font-bold text-white"
+        className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[10px] text-[13.5px] font-bold text-[var(--on-coral)]"
         style={{ background: "var(--coral)" }}
       >
         <Check size={16} /> Marcar como pagado
@@ -47,7 +47,7 @@ export function SettleButtons({
     ) : (
       <button
         type="button"
-        className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] font-bold text-white"
+        className="inline-flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[12.5px] font-bold text-[var(--on-coral)]"
         style={{ background: "var(--coral)" }}
       >
         <Check size={14} /> Cobrar

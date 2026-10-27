@@ -214,7 +214,7 @@ function Toggle<T extends string>({
           aria-pressed={o.id === value}
           onClick={() => onChange(o.id)}
           className="rounded-[7px] px-2.5 py-1 text-[12px] font-bold"
-          style={o.id === value ? { background: "var(--coral)", color: "#fff" } : { color: "var(--text-2)" }}
+          style={o.id === value ? { background: "var(--coral)", color: "var(--on-coral)" } : { color: "var(--text-2)" }}
         >
           {o.label}
         </button>
@@ -542,7 +542,7 @@ export function SessionEditor({
             type="button"
             onClick={save}
             disabled={pending}
-            className="flex h-[42px] items-center rounded-[10px] px-5 text-[13.5px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
+            className="flex h-[42px] items-center rounded-[10px] px-5 text-[13.5px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
             style={{ background: "var(--coral)" }}
           >
             {pending ? "Guardando…" : saveLabel}

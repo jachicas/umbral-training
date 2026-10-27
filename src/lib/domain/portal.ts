@@ -16,8 +16,8 @@ import type { PortalCheckin } from "./checkins";
 
 /* The athlete's own portal, as the API serves it (/v1/portal). Read-only but for the profile basics. */
 
-/** Who a signed-in account is: the coach's panel, or an athlete's portal. */
-export type AccountRole = "coach" | "athlete";
+/** Who a signed-in account is: the coach's panel, an athlete's portal, or the super admin's clubs. */
+export type AccountRole = "coach" | "athlete" | "admin";
 
 export interface PortalAthlete {
   id: string;

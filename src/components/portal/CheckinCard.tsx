@@ -320,7 +320,7 @@ function Choice({
     <label
       className={cn(
         "flex cursor-pointer items-center justify-center rounded-[12px] border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[var(--coral)]/50",
-        checked && solid && "border-transparent text-white",
+        checked && solid && "border-transparent text-[var(--on-coral)]",
         checked && !solid && "ring-2 ring-[var(--coral)]",
         className
       )}

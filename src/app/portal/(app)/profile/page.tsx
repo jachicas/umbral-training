@@ -44,7 +44,7 @@ export default async function PortalProfilePage() {
         </div>
         <a
           href={`mailto:${coach.email}`}
-          className="inline-flex h-10 flex-none items-center gap-2 rounded-[10px] px-4 text-[13.5px] font-bold text-white"
+          className="inline-flex h-10 flex-none items-center gap-2 rounded-[10px] px-4 text-[13.5px] font-bold text-[var(--on-coral)]"
           style={{ background: "var(--coral)" }}
         >
           <Mail size={15} /> Escribirle

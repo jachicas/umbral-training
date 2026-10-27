@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import { Activity, LayoutGrid, Settings, Users, Wallet } from "lucide-react";
+import { Activity, Building2, LayoutGrid, Settings, Users, Wallet } from "lucide-react";
 
-export type NavId = "dashboard" | "athletes" | "workouts" | "payments" | "settings";
+export type NavId = "dashboard" | "athletes" | "workouts" | "payments" | "settings" | "clubs";
 
 export interface NavItem {
   id: NavId;
@@ -45,18 +45,26 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items);
+/** The super admin's own pages (/admin). */
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Administración",
+    items: [{ id: "clubs", label: "Clubs", href: "/admin", icon: Building2 }],
+  },
+];
 
 /** Nav item that owns the given pathname ("/" only matches exactly). */
-export function activeNavItem(pathname: string): NavItem | undefined {
-  return NAV_ITEMS.find(
-    (item) =>
-      item.href &&
-      (item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"))
-  );
+export function activeNavItem(pathname: string, groups: NavGroup[] = NAV_GROUPS): NavItem | undefined {
+  return groups
+    .flatMap((group) => group.items)
+    .find(
+      (item) =>
+        item.href &&
+        (item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(item.href + "/"))
+    );
 }
 
 /** Group label that contains the given nav item, for the header breadcrumb. */
-export function navGroupLabel(id: NavId): string | undefined {
-  return NAV_GROUPS.find((group) => group.items.some((item) => item.id === id))?.label;
+export function navGroupLabel(id: NavId, groups: NavGroup[] = NAV_GROUPS): string | undefined {
+  return groups.find((group) => group.items.some((item) => item.id === id))?.label;
 }

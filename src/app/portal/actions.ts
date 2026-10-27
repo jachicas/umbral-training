@@ -1,42 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { FieldValidationError, ValidationErrors, type ValidationField } from "@/lib/services/errors";
 import * as portalService from "@/lib/services/portal";
-
-export interface PasswordState {
-  error?: string;
-}
-
-const MIN_PASSWORD_LENGTH = 8;
-
-/** The athlete's first password, right after the invite link signed them in. */
-export async function setPasswordAction(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
-  const password = String(formData.get("password") ?? "");
-  const confirm = String(formData.get("confirm") ?? "");
-
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return { error: `Usa al menos ${MIN_PASSWORD_LENGTH} caracteres.` };
-  }
-  if (password !== confirm) {
-    return { error: "Las contraseñas no coinciden." };
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) {
-    return {
-      error:
-        error.code === "weak_password"
-          ? "Esa contraseña es muy fácil de adivinar. Prueba con otra."
-          : "No se pudo guardar la contraseña. Intenta de nuevo.",
-    };
-  }
-
-  redirect("/portal");
-}
 
 export interface ProfileState {
   errors?: Partial<Record<ValidationField, string>>;

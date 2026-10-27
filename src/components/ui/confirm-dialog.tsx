@@ -45,8 +45,8 @@ export function ConfirmDialog({
           <Button
             type="button"
             disabled={pending}
-            className="h-10 rounded-[10px] font-bold text-white"
-            style={{ background: tone === "danger" ? "var(--danger)" : "var(--coral)" }}
+            className="h-10 rounded-[10px] font-bold"
+            style={tone === "danger" ? { background: "var(--danger)", color: "#fff" } : { background: "var(--coral)", color: "var(--on-coral)" }}
             onClick={onConfirm}
           >
             {confirmLabel}

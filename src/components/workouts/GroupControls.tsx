@@ -49,7 +49,7 @@ export function NewGroupForm() {
         <button
           type="submit"
           disabled={pending || !name.trim()}
-          className="flex h-9 items-center gap-1.5 rounded-[10px] px-3.5 text-[13px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
+          className="flex h-9 items-center gap-1.5 rounded-[10px] px-3.5 text-[13px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
           style={{ background: "var(--coral)" }}
         >
           <Plus size={14} /> Crear

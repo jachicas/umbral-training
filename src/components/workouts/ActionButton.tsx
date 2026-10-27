@@ -32,7 +32,7 @@ export function ActionButton({
         }
         className={cn(
           "flex h-[38px] items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold transition-[filter] hover:brightness-110 disabled:opacity-60",
-          variant === "primary" ? "text-white shadow-[var(--shadow)]" : "border",
+          variant === "primary" ? "text-[var(--on-coral)] shadow-[var(--shadow)]" : "border",
           className
         )}
         style={

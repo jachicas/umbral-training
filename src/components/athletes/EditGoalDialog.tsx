@@ -41,7 +41,7 @@ export function EditGoalDialog({
         ) : (
           <button
             type="button"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-bold text-white"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-[13px] font-bold text-[var(--on-coral)]"
             style={{ background: "var(--coral)" }}
           >
             <Plus size={15} /> Definir carrera

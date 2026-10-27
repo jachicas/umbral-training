@@ -100,7 +100,7 @@ export function SendWeek({
                 <button
                   type="button"
                   onClick={() => setConfirming(true)}
-                  className="flex h-[38px] items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+                  className="flex h-[38px] items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
                   style={{ background: "var(--coral)" }}
                 >
                   <Send size={14} /> Enviar semana
@@ -207,8 +207,12 @@ export function SendWeek({
                   <button
                     type="button"
                     onClick={() => copy(active)}
-                    className="flex h-10 items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
-                    style={{ background: copied.includes(active.athleteId) ? "var(--ok)" : "var(--coral)" }}
+                    className="flex h-10 items-center gap-1.5 rounded-[10px] px-4 text-[13px] font-bold shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+                    style={
+                      copied.includes(active.athleteId)
+                        ? { background: "var(--ok)", color: "#fff" }
+                        : { background: "var(--coral)", color: "var(--on-coral)" }
+                    }
                   >
                     {copied.includes(active.athleteId) ? <Check size={14} strokeWidth={3} /> : <Copy size={14} />}
                     {copied.includes(active.athleteId) ? "Copiado" : "Copiar mensaje"}

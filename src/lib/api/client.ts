@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAccessToken } from "@/lib/supabase/auth";
 import { apiUrl } from "@/lib/supabase/env";
+import { getViewedClubId } from "./viewing";
 
 /** 422 from the API: Spanish messages keyed by the API's request field ("goal.raceDate"). */
 export class ApiValidationError extends Error {
@@ -22,6 +23,17 @@ export interface ApiFile {
 }
 
 /**
+ * The signed-in user's token, and the club the super admin is reading, if
+ * any (the API ignores it for anyone else).
+ */
+async function authHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` };
+  const clubId = await getViewedClubId();
+  if (clubId) headers["X-Club-Id"] = clubId;
+  return headers;
+}
+
+/**
  * Calls the Laravel API as the signed-in user and returns the response's
  * `data`. Server-side only: the token never reaches the browser.
  */
@@ -29,8 +41,7 @@ export async function apiFetch<T>(method: Method, path: string, body?: unknown):
   const response = await fetch(`${apiUrl()}${path}`, {
     method,
     headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${await getAccessToken()}`,
+      ...(await authHeaders()),
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -64,7 +75,7 @@ export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
   const response = await fetch(`${apiUrl()}${path}`, {
     method: "POST",
     // fetch sets the multipart Content-Type with its boundary.
-    headers: { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` },
+    headers: await authHeaders(),
     body: form,
     cache: "no-store",
   });
@@ -83,7 +94,7 @@ export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
 /** GETs a file from the API as the signed-in user. Errors are thrown like apiFetch's. */
 export async function apiFile(path: string): Promise<ApiFile> {
   const response = await fetch(`${apiUrl()}${path}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` },
+    headers: await authHeaders(),
     cache: "no-store",
   });
 

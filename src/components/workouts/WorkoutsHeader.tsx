@@ -45,7 +45,7 @@ export function WorkoutsHeader({
             aria-current={tab.id === active ? "page" : undefined}
             className={cn(
               "rounded-[9px] px-4 py-1.5 text-[13px] font-bold transition-colors",
-              tab.id === active ? "text-white shadow-[var(--shadow)]" : "hover:text-[var(--text)]"
+              tab.id === active ? "text-[var(--on-coral)] shadow-[var(--shadow)]" : "hover:text-[var(--text)]"
             )}
             style={
               tab.id === active
@@ -68,7 +68,7 @@ export function PrimaryAction({ href, children }: { href: string; children: Reac
   return (
     <Link
       href={href}
-      className={cn(actionBase, "text-white shadow-[var(--shadow)]")}
+      className={cn(actionBase, "text-[var(--on-coral)] shadow-[var(--shadow)]")}
       style={{ background: "var(--coral)" }}
     >
       {children}

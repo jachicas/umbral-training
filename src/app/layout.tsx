@@ -3,8 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/shell/AppShell";
+import { BrandStyle, shellBrand } from "@/components/shell/brand";
+import { SuspendedNotice } from "@/components/shell/SuspendedNotice";
 import { getShellUser } from "@/lib/supabase/shell-user";
+import { getViewedClubId } from "@/lib/api/viewing";
+import { getClub, getMyClub } from "@/lib/services/clubs";
 import { getOwingCounts } from "@/lib/services/payments";
+import type { Club } from "@/lib/domain/clubs";
 import type { NavBadges } from "@/components/shell/nav";
 import { THEME_INIT_SCRIPT } from "@/components/shell/theme";
 
@@ -22,23 +27,46 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getShellUser();
+  // The coach's and athletes' own club; or the one the super admin reads (never on /admin: the proxy clears it there).
+  const viewedClubId = user?.role === "admin" ? await getViewedClubId() : undefined;
+  const club = user?.role === "admin" ? await viewedClub(viewedClubId) : user ? await getMyClub() : undefined;
+  const suspended = user?.role !== "admin" && club?.suspendedAt !== undefined;
   // Athletes' pages bring their own shell (src/app/portal).
-  const coach = user?.role === "coach" ? user : null;
-  const badges = coach ? await navBadges() : {};
+  const shellUser = user?.role === "athlete" ? null : user;
+  const badges = user?.role === "coach" || (user?.role === "admin" && club) ? await navBadges() : {};
 
   return (
     // The theme script may add `dark` to <html> before hydration.
     <html lang="es" className={cn("h-full", "antialiased", inter.variable, "font-sans")} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <BrandStyle palette={club?.palette} />
       </head>
       <body className="min-h-full">
-        <AppShell user={coach} badges={badges}>
-          {children}
-        </AppShell>
+        {suspended && club ? (
+          <SuspendedNotice clubName={club.name} />
+        ) : (
+          <AppShell
+            user={shellUser}
+            brand={shellBrand(club)}
+            viewing={user?.role === "admin" && club ? { name: club.name } : undefined}
+            badges={badges}
+          >
+            {children}
+          </AppShell>
+        )}
       </body>
     </html>
   );
+}
+
+async function viewedClub(clubId: string | undefined): Promise<Club | undefined> {
+  if (!clubId) return undefined;
+  try {
+    return await getClub(clubId);
+  } catch {
+    return undefined;
+  }
 }
 
 /**

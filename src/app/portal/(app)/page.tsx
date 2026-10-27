@@ -58,7 +58,7 @@ export default async function PortalTodayPage() {
             // Links are coral app-wide; on glass, the text reads better plain.
             className="glass flex items-center gap-2.5 rounded-full py-1.5 pr-4 pl-1.5 text-[13.5px] text-[var(--text)] transition-[filter] hover:text-[var(--text)] hover:brightness-110"
           >
-            <span className="flex size-8 items-center justify-center rounded-full text-white" style={{ background: "var(--coral)" }}>
+            <span className="flex size-8 items-center justify-center rounded-full text-[var(--on-coral)]" style={{ background: "var(--coral)" }}>
               <Flag size={15} />
             </span>
             <span style={{ color: "var(--text-2)" }}>
@@ -78,7 +78,7 @@ export default async function PortalTodayPage() {
         >
           <PortalCard className="flex items-center gap-3 ring-2 ring-[var(--coral)] transition-[filter] hover:brightness-110">
             <span
-              className="flex size-10 flex-none items-center justify-center rounded-full text-white"
+              className="flex size-10 flex-none items-center justify-center rounded-full text-[var(--on-coral)]"
               style={{ background: "var(--coral)" }}
             >
               <MessageCircleHeart size={19} />

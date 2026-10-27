@@ -129,6 +129,8 @@
   --coral-hover: #c8462d;
   --coral-tint: rgba(225, 87, 60, 0.12);
   --coral-tint-2: rgba(225, 87, 60, 0.18);
+  /* Text on --coral: white on Umbral's, whatever reads on a club's color. */
+  --on-coral: #ffffff;
   --swim: #0891b2;
   --bike: #d9840a;
   --run: #e1573c;
@@ -157,7 +159,7 @@
   --popover: var(--glass-strong);
   --popover-foreground: var(--text);
   --primary: var(--coral);
-  --primary-foreground: #ffffff;
+  --primary-foreground: var(--on-coral);
   --secondary: var(--surface-2);
   --secondary-foreground: var(--text);
   --muted: var(--surface-2);
@@ -176,7 +178,7 @@
   --sidebar: var(--surface);
   --sidebar-foreground: var(--text);
   --sidebar-primary: var(--coral);
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: var(--on-coral);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--border);
@@ -216,7 +218,7 @@
   --popover: var(--glass-strong);
   --popover-foreground: var(--text);
   --primary: var(--coral);
-  --primary-foreground: #ffffff;
+  --primary-foreground: var(--on-coral);
   --secondary: var(--surface-2);
   --secondary-foreground: var(--text);
   --muted: var(--surface-2);
@@ -234,7 +236,7 @@
   --sidebar: var(--surface);
   --sidebar-foreground: var(--text);
   --sidebar-primary: var(--coral);
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: var(--on-coral);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
   --sidebar-border: var(--border);
@@ -251,4 +253,21 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ---------- a club's sidebar ----------
+   When the club set a sidebar color (src/components/shell/brand.tsx), the
+   shells' sidebar takes it instead of the glass, and the text tokens inside
+   it turn to whatever reads on it. Unlayered, so it beats the glass utility. */
+.club-sidebar {
+  background: var(--club-sidebar);
+  border-color: transparent;
+  color: var(--club-sidebar-fg);
+  --text: var(--club-sidebar-fg);
+  --text-2: color-mix(in srgb, var(--club-sidebar-fg) 72%, transparent);
+  --text-3: color-mix(in srgb, var(--club-sidebar-fg) 50%, transparent);
+  --surface-2: color-mix(in srgb, var(--club-sidebar-fg) 7%, transparent);
+  --surface-3: color-mix(in srgb, var(--club-sidebar-fg) 12%, transparent);
+  --border: color-mix(in srgb, var(--club-sidebar-fg) 12%, transparent);
+  --border-2: color-mix(in srgb, var(--club-sidebar-fg) 18%, transparent);
 }

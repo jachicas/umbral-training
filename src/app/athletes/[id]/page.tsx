@@ -148,7 +148,7 @@ export default async function AtletaDetailPage({
           <EditAthleteDialog athlete={athlete} />
           <Link
             href="/workouts"
-            className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold text-white shadow-[var(--shadow)]"
+            className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)]"
             style={{ background: "var(--coral)" }}
           >
             <Plus size={16} /> Asignar entreno

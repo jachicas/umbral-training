@@ -34,6 +34,13 @@ export type ValidationField =
   | "pain"
   | "painNote"
   | "comment"
+  | "name"
+  | "coachName"
+  | "coachEmail"
+  | "primaryColor"
+  | "accentColor"
+  | "sidebarColor"
+  | "logo"
   | "general";
 
 /** Input the web app couldn't even parse (e.g. "4:7x" as a pace), caught before calling the API. */

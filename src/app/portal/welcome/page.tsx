@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { SetPasswordForm } from "./SetPasswordForm";
+import { SetPasswordForm } from "@/components/auth/SetPasswordForm";
 
 export const metadata: Metadata = {
   title: "Crea tu contraseña · Umbral Training",

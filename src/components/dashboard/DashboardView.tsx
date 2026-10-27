@@ -114,7 +114,7 @@ export function DashboardView({ data }: { data: Dashboard }) {
         </div>
         <Link
           href={`/workouts?week=${data.weekStart}`}
-          className="flex h-11 items-center gap-2 rounded-[10px] px-5 text-[14px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+          className="flex h-11 items-center gap-2 rounded-[10px] px-5 text-[14px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
           style={{ background: "var(--coral)" }}
         >
           <CalendarDays size={17} /> Armar semana

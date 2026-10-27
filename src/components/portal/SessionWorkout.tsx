@@ -147,7 +147,7 @@ function RepeatBlock({ session, repeat, paces }: { session: WorkoutSession; repe
     >
       <div className="flex items-center gap-2.5 px-1">
         <span
-          className="flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-[14px] font-extrabold text-white tabular-nums"
+          className="flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-[14px] font-extrabold text-[var(--on-coral)] tabular-nums"
           style={{ background: "var(--coral)" }}
         >
           {repeat.times}×

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/athletes/fields/FieldError";
 import { PasswordInput } from "@/components/auth/PasswordInput";
-import { setPasswordAction, type PasswordState } from "../actions";
+import { setPasswordAction, type PasswordState } from "@/app/login/actions";
 
 const initialState: PasswordState = {};
 

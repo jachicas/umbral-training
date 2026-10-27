@@ -27,7 +27,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
         <section className="flex flex-col px-4 py-5 md:px-8 md:py-7">
           <div className="flex items-center gap-2.5">
             <div
-              className="flex size-9 flex-none items-center justify-center rounded-[11px] text-[17px] font-extrabold tracking-tight text-white"
+              className="flex size-9 flex-none items-center justify-center rounded-[11px] text-[17px] font-extrabold tracking-tight text-[var(--on-coral)]"
               style={{ background: "var(--coral)" }}
             >
               U

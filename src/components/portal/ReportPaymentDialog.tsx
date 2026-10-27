@@ -95,7 +95,7 @@ export function ReportPaymentDialog({ payable, today }: { payable: PayableMonth[
           setOpenedWith(state);
           setOpen(true);
         }}
-        className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-bold text-white shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+        className="inline-flex h-11 items-center gap-2 rounded-full px-5 text-[14px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
         style={{ background: "var(--coral)" }}
       >
         <Send size={16} /> Reportar pago

@@ -41,7 +41,7 @@ export function Segmented<T extends string>({
             className="flex h-8 min-w-[92px] flex-1 items-center justify-center rounded-lg border text-[12.5px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             style={
               active
-                ? { background: "var(--coral)", color: "#fff", borderColor: "transparent" }
+                ? { background: "var(--coral)", color: "var(--on-coral)", borderColor: "transparent" }
                 : { borderColor: "var(--border)", color: "var(--text-2)", background: "transparent" }
             }
           >

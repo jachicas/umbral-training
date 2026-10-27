@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { Bell, Eye, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
+import { ADMIN_NAV_GROUPS, NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
+import { BrandMark, type ShellBrand } from "./brand";
 import { toggleTheme } from "./theme";
 import { signOutAction } from "@/app/login/actions";
+import { stopViewingClubAction } from "@/app/admin/actions";
 import type { AccountRole } from "@/lib/domain/portal";
 
 /** Who is signed in, as shown in the sidebar. */
@@ -22,24 +24,35 @@ const BACKGROUND_IMAGE = "/backgrounds/tt-ride.jpg";
 const roundButtonClass =
   "glass flex size-11 flex-none items-center justify-center rounded-full text-[var(--text)] transition-[filter] hover:brightness-125";
 
-/** Rendered once by the root layout, so sidebar state survives navigation. */
+/**
+ * Rendered once by the root layout, so sidebar state survives navigation.
+ * The coach's panel, in their club's brand; the super admin's /admin; and
+ * the coach's panel again while the super admin reads a club (`viewing`).
+ */
 export function AppShell({
   children,
   user,
+  brand,
+  viewing,
   badges = {},
 }: {
   children: React.ReactNode;
   user: ShellUser | null;
+  brand: ShellBrand;
+  /** The club the super admin is reading, read-only. */
+  viewing?: { name: string };
   badges?: NavBadges;
 }) {
   const pathname = usePathname();
-  const activeItem = activeNavItem(pathname);
+  const adminPages = user?.role === "admin" && (pathname === "/admin" || pathname.startsWith("/admin/"));
+  const navGroups = adminPages ? ADMIN_NAV_GROUPS : NAV_GROUPS;
+  const activeItem = activeNavItem(pathname, navGroups);
   const [collapsed, setCollapsed] = useState(false);
   const expanded = !collapsed;
   const hideWhenCollapsed = cn("max-md:hidden", !expanded && "md:hidden");
 
-  // Signed out (the sign-in page): no navigation to show.
-  if (!user) return <>{children}</>;
+  // Signed out (the sign-in page) or an invited coach's first password: no navigation to show.
+  if (!user || pathname === "/welcome") return <>{children}</>;
 
   return (
     <div className="relative h-dvh w-full overflow-hidden" style={{ color: "var(--text)" }}>
@@ -62,31 +75,27 @@ export function AppShell({
             phone screen, so we skip a full off-canvas drawer for this
             coach-only admin surface (PRD deprioritizes mobile polish here). */}
         <aside
-          className="glass flex h-full w-[74px] flex-none flex-col gap-1 rounded-[26px] px-3 py-4 transition-[width] duration-150 md:w-[var(--sidebar-w)]"
+          className={cn(
+            "glass flex h-full w-[74px] flex-none flex-col gap-1 rounded-[26px] px-3 py-4 transition-[width] duration-150 md:w-[var(--sidebar-w)]",
+            brand.sidebar && !adminPages && "club-sidebar"
+          )}
           style={{ "--sidebar-w": expanded ? "256px" : "74px" } as React.CSSProperties}
         >
           <div
             className="mb-3 flex items-center gap-3 rounded-2xl border p-2 md:p-2.5"
             style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
           >
-            <div
-              className="flex size-[34px] flex-none items-center justify-center rounded-[11px] text-[17px] font-extrabold tracking-tight text-white"
-              style={{ background: "var(--coral)" }}
-            >
-              U
-            </div>
+            <BrandMark brand={brand} className="size-[34px] flex-none rounded-[11px] text-[17px]" />
             <div className={cn("min-w-0", hideWhenCollapsed)}>
-              <div className="whitespace-nowrap text-[14.5px] font-bold tracking-tight">
-                Umbral Training
-              </div>
+              <div className="truncate whitespace-nowrap text-[14.5px] font-bold tracking-tight">{brand.name}</div>
               <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
-                Panel de coach
+                {adminPages ? "Super admin" : "Panel de coach"}
               </div>
             </div>
           </div>
 
           <nav className="-mx-1 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1">
-            {NAV_GROUPS.map((group, groupIndex) => (
+            {navGroups.map((group, groupIndex) => (
               <div key={group.label} className="flex flex-col gap-1">
                 <div
                   className={cn(
@@ -163,7 +172,7 @@ export function AppShell({
                       className={cn(
                         itemClass,
                         isActive
-                          ? "bg-[var(--coral)] font-semibold text-white hover:bg-[var(--coral-hover)] hover:text-white"
+                          ? "bg-[var(--coral)] font-semibold text-[var(--on-coral)] hover:bg-[var(--coral-hover)] hover:text-[var(--on-coral)]"
                           : "text-[var(--text-2)] hover:bg-[var(--surface-3)] hover:text-[var(--text)]"
                       )}
                     >
@@ -180,15 +189,15 @@ export function AppShell({
             style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
           >
             <div
-              className="flex size-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white"
-              style={{ background: "var(--gym)" }}
+              className="flex size-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold"
+              style={{ background: "var(--club-accent, var(--gym))", color: "var(--on-club-accent, #fff)" }}
             >
               {user.initials}
             </div>
             <div className={cn("min-w-0 flex-1", hideWhenCollapsed)}>
               <div className="truncate text-[13px] font-semibold">{user.name}</div>
               <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
-                Coach
+                {user.role === "admin" ? "Super admin" : "Coach"}
               </div>
             </div>
             <form action={signOutAction} className={hideWhenCollapsed}>
@@ -207,6 +216,7 @@ export function AppShell({
 
         {/* ---------------- content ---------------- */}
         <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-4">
+          {viewing && !adminPages && <ViewingBar name={viewing.name} />}
           <header className="flex items-center gap-2.5 md:gap-4 md:pt-1">
             <button
               type="button"
@@ -221,14 +231,19 @@ export function AppShell({
             {activeItem && (
               <div className="min-w-0 flex-none leading-tight max-lg:hidden">
                 <div className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
-                  {navGroupLabel(activeItem.id)} <span className="px-1 opacity-60">/</span>{" "}
+                  {navGroupLabel(activeItem.id, navGroups)} <span className="px-1 opacity-60">/</span>{" "}
                   {activeItem.label}
                 </div>
                 <div className="text-[19px] font-bold tracking-tight">{activeItem.label}</div>
               </div>
             )}
 
-            <label className="glass ml-0 flex h-11 min-w-0 max-w-[540px] flex-1 cursor-text items-center gap-2.5 rounded-full px-4 lg:ml-6">
+            <label
+              className={cn(
+                "glass ml-0 flex h-11 min-w-0 max-w-[540px] flex-1 cursor-text items-center gap-2.5 rounded-full px-4 lg:ml-6",
+                adminPages && "invisible"
+              )}
+            >
               <Search size={17} className="flex-none" style={{ color: "var(--text-3)" }} />
               <input
                 placeholder="Buscar atletas, entrenos, carreras…"
@@ -280,6 +295,32 @@ export function AppShell({
           </main>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** While the super admin reads a club as its coach: whose panel it is, and the way out. */
+function ViewingBar({ name }: { name: string }) {
+  return (
+    <div
+      className="flex items-center gap-3 rounded-full border px-4 py-2 text-[13px]"
+      style={{ background: "var(--coral-tint)", borderColor: "var(--coral)" }}
+    >
+      <Eye size={16} className="flex-none" style={{ color: "var(--coral)" }} />
+      <span className="min-w-0 truncate">
+        <span style={{ color: "var(--text-2)" }}>Viendo</span> <b>{name}</b>
+        <span className="px-1.5 opacity-60">·</span>
+        <span style={{ color: "var(--text-2)" }}>Solo lectura</span>
+      </span>
+      <form action={stopViewingClubAction} className="ml-auto">
+        <button
+          type="submit"
+          className="rounded-full px-3 py-1 text-[12.5px] font-bold transition-[filter] hover:brightness-110"
+          style={{ background: "var(--coral)", color: "var(--on-coral)" }}
+        >
+          Salir
+        </button>
+      </form>
     </div>
   );
 }

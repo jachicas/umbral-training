@@ -28,7 +28,7 @@ export function DayCard({
       <div className="text-[15px] font-bold">{dayLabel(date)}</div>
       {isToday && (
         <span
-          className="rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-[.04em] uppercase text-white"
+          className="rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-[.04em] uppercase text-[var(--on-coral)]"
           style={{ background: "var(--coral)" }}
         >
           Hoy
