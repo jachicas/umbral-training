@@ -6,6 +6,8 @@ import { raceSummary } from "@/lib/domain/races";
 import { formatDateEs, mondayOfISO } from "@/lib/domain/time";
 import { DISCIPLINE_ICON } from "@/components/workouts/discipline-icons";
 import { CheckinsCard } from "@/components/checkins/CheckinsCard";
+import type { GuestChange } from "@/lib/domain/guest-changes";
+import { GuestChangesCard } from "./GuestChangesCard";
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -90,7 +92,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 /** The coach's day, from the API's summary: nothing is computed here but labels. */
-export function DashboardView({ data }: { data: Dashboard }) {
+export function DashboardView({ data, guestChanges }: { data: Dashboard; guestChanges: GuestChange[] }) {
   const firstName = data.coachName.trim().split(/\s+/)[0];
   const todaySessions = data.upcomingSessions.filter((s) => s.date === data.today);
   const tomorrowSessions = data.upcomingSessions.filter((s) => s.date !== data.today);
@@ -120,6 +122,8 @@ export function DashboardView({ data }: { data: Dashboard }) {
           <CalendarDays size={17} /> Armar semana
         </Link>
       </div>
+
+      <GuestChangesCard changes={guestChanges} className={cardClass} style={cardStyle} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi

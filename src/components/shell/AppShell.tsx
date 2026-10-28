@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Eye, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { Bell, LogIn, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV_GROUPS, NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
 import { BrandMark, type ShellBrand } from "./brand";
@@ -27,7 +27,7 @@ const roundButtonClass =
 /**
  * Rendered once by the root layout, so sidebar state survives navigation.
  * The coach's panel, in their club's brand; the super admin's /admin; and
- * the coach's panel again while the super admin reads a club (`viewing`).
+ * the coach's panel again while the super admin is a club's guest (`viewing`).
  */
 export function AppShell({
   children,
@@ -39,7 +39,7 @@ export function AppShell({
   children: React.ReactNode;
   user: ShellUser | null;
   brand: ShellBrand;
-  /** The club the super admin is reading, read-only. */
+  /** The club the super admin entered as a guest. */
   viewing?: { name: string };
   badges?: NavBadges;
 }) {
@@ -316,18 +316,16 @@ export function AppShell({
   );
 }
 
-/** While the super admin reads a club as its coach: whose panel it is, and the way out. */
+/** While the super admin is a club's guest: whose panel it is, and the way out. */
 function ViewingBar({ name }: { name: string }) {
   return (
     <div
       className="flex items-center gap-3 rounded-full border px-4 py-2 text-[13px]"
       style={{ background: "var(--coral-tint)", borderColor: "var(--coral)" }}
     >
-      <Eye size={16} className="flex-none" style={{ color: "var(--coral)" }} />
+      <LogIn size={16} className="flex-none" style={{ color: "var(--coral)" }} />
       <span className="min-w-0 truncate">
-        <span style={{ color: "var(--text-2)" }}>Viendo</span> <b>{name}</b>
-        <span className="px-1.5 opacity-60">·</span>
-        <span style={{ color: "var(--text-2)" }}>Solo lectura</span>
+        <span style={{ color: "var(--text-2)" }}>Invitado en</span> <b>{name}</b>
       </span>
       <form action={stopViewingClubAction} className="ml-auto">
         <button

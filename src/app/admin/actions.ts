@@ -108,7 +108,7 @@ export async function reactivateClubAction(clubId: string): Promise<ClubActionSt
   return clubAction(() => clubsService.reactivateClub(clubId));
 }
 
-/** Opens the coach's panel as that club's coach, read-only (the API answers GETs only). */
+/** Enters the coach's panel as that club's guest: the API acts as its coach and records each change for them. */
 export async function viewClubAction(clubId: string): Promise<void> {
   if (!isClubId(clubId)) return;
   (await cookies()).set(VIEW_CLUB_COOKIE, clubId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
