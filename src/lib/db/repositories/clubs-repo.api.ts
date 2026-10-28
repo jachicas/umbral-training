@@ -1,6 +1,6 @@
 import { ApiValidationError, apiFetch, apiUpload } from "@/lib/api/client";
 import type { AccountRole } from "@/lib/domain/portal";
-import type { Club, ClubPalette, ClubRepository, CoachAccessStatus, Swatch } from "@/lib/domain/clubs";
+import type { Club, ClubPalette, ClubRepository, CoachAccessStatus, GuestSession, Swatch } from "@/lib/domain/clubs";
 import { ValidationErrors, type ValidationField } from "@/lib/services/errors";
 
 /* The API's /v1/admin/clubs and /v1/me shapes (docs/api.md in ../umbral-training-api): null where the domain uses undefined. */
@@ -22,6 +22,7 @@ interface ApiMe {
   fullName: string;
   role: AccountRole;
   club: ApiClub | null;
+  guest: { id: string; fullName: string } | null;
 }
 
 const toClub = (api: ApiClub): Club => ({
@@ -93,8 +94,19 @@ export const apiClubRepository: ClubRepository = {
   suspend: (id) => send("POST", `${clubPath(id)}/suspension`),
   reactivate: (id) => send("DELETE", `${clubPath(id)}/suspension`),
 
+  async startGuestSession(id) {
+    return apiFetch<GuestSession>("POST", `${clubPath(id)}/guest-session`);
+  },
+
   async me() {
     const api = await apiFetch<ApiMe>("GET", "/v1/me");
-    return { id: api.id, email: api.email, fullName: api.fullName, role: api.role, club: api.club ? toClub(api.club) : undefined };
+    return {
+      id: api.id,
+      email: api.email,
+      fullName: api.fullName,
+      role: api.role,
+      club: api.club ? toClub(api.club) : undefined,
+      guest: api.guest ?? undefined,
+    };
   },
 };

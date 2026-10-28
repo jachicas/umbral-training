@@ -9,7 +9,7 @@ import { ADMIN_NAV_GROUPS, NAV_GROUPS, activeNavItem, navGroupLabel, type NavBad
 import { BrandMark, type ShellBrand } from "./brand";
 import { toggleTheme } from "./theme";
 import { signOutAction } from "@/app/login/actions";
-import { stopViewingClubAction } from "@/app/admin/actions";
+import { leaveClubAction } from "@/app/admin/actions";
 import type { AccountRole } from "@/lib/domain/portal";
 
 /** Who is signed in, as shown in the sidebar. */
@@ -217,17 +217,20 @@ export function AppShell({
                 {user.role === "admin" ? "Super admin" : "Coach"}
               </div>
             </div>
-            <form action={signOutAction} className={hideWhenCollapsed}>
-              <button
-                type="submit"
-                aria-label="Cerrar sesión"
-                title="Cerrar sesión"
-                className="flex size-8 items-center justify-center rounded-full transition-[filter] hover:brightness-125"
-                style={{ color: "var(--text-2)" }}
-              >
-                <LogOut className="size-4" />
-              </button>
-            </form>
+            {/* A guest leaves from the bar on top, back to their own session. */}
+            {!viewing && (
+              <form action={signOutAction} className={hideWhenCollapsed}>
+                <button
+                  type="submit"
+                  aria-label="Cerrar sesión"
+                  title="Cerrar sesión"
+                  className="flex size-8 items-center justify-center rounded-full transition-[filter] hover:brightness-125"
+                  style={{ color: "var(--text-2)" }}
+                >
+                  <LogOut className="size-4" />
+                </button>
+              </form>
+            )}
           </div>
         </aside>
 
@@ -327,7 +330,7 @@ function ViewingBar({ name }: { name: string }) {
       <span className="min-w-0 truncate">
         <span style={{ color: "var(--text-2)" }}>Invitado en</span> <b>{name}</b>
       </span>
-      <form action={stopViewingClubAction} className="ml-auto">
+      <form action={leaveClubAction} className="ml-auto">
         <button
           type="submit"
           className="rounded-full px-3 py-1 text-[12.5px] font-bold transition-[filter] hover:brightness-110"

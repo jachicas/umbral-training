@@ -58,6 +58,15 @@ export interface Me {
   fullName: string;
   role: AccountRole;
   club?: Club;
+  /** The super admin holding a guest session of this coach. */
+  guest?: { id: string; fullName: string };
+}
+
+/** A session token of a club's coach, held by the super admin: they enter the club as a guest. */
+export interface GuestSession {
+  token: string;
+  /** ISO 8601. */
+  expiresAt: string;
 }
 
 export interface ClubRepository {
@@ -72,5 +81,6 @@ export interface ClubRepository {
   resendCoachInvite(id: string): Promise<Club>;
   suspend(id: string): Promise<Club>;
   reactivate(id: string): Promise<Club>;
+  startGuestSession(id: string): Promise<GuestSession>;
   me(): Promise<Me>;
 }

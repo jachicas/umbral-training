@@ -6,10 +6,7 @@ import { AppShell } from "@/components/shell/AppShell";
 import { BrandStyle, shellBrand } from "@/components/shell/brand";
 import { SuspendedNotice } from "@/components/shell/SuspendedNotice";
 import { getCurrentUser, getShellUser } from "@/lib/auth/current-user";
-import { getViewedClubId } from "@/lib/api/viewing";
-import { getClub } from "@/lib/services/clubs";
 import { getOwingCounts } from "@/lib/services/payments";
-import type { Club } from "@/lib/domain/clubs";
 import type { NavBadges } from "@/components/shell/nav";
 import { THEME_INIT_SCRIPT } from "@/components/shell/theme";
 
@@ -26,14 +23,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const user = await getShellUser();
-  // The coach's and athletes' own club; or the one the super admin reads (never on /admin: the proxy clears it there).
-  const viewedClubId = user?.role === "admin" ? await getViewedClubId() : undefined;
-  const club = user?.role === "admin" ? await viewedClub(viewedClubId) : (await getCurrentUser())?.club;
-  const suspended = user?.role !== "admin" && club?.suspendedAt !== undefined;
+  const [user, me] = await Promise.all([getShellUser(), getCurrentUser()]);
+  // The coach's and athletes' own club; with a guest session, the super admin is its coach.
+  const club = me?.club;
+  const suspended = club?.suspendedAt !== undefined && !me?.guest;
   // Athletes' pages bring their own shell (src/app/portal).
   const shellUser = user?.role === "athlete" ? null : user;
-  const badges = user?.role === "coach" || (user?.role === "admin" && club) ? await navBadges() : {};
+  const badges = user?.role === "coach" ? await navBadges() : {};
 
   return (
     // The theme script may add `dark` to <html> before hydration.
@@ -49,7 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <AppShell
             user={shellUser}
             brand={shellBrand(club)}
-            viewing={user?.role === "admin" && club ? { name: club.name } : undefined}
+            viewing={me?.guest && club ? { name: club.name } : undefined}
             badges={badges}
           >
             {children}
@@ -58,15 +54,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </body>
     </html>
   );
-}
-
-async function viewedClub(clubId: string | undefined): Promise<Club | undefined> {
-  if (!clubId) return undefined;
-  try {
-    return await getClub(clubId);
-  } catch {
-    return undefined;
-  }
 }
 
 /**

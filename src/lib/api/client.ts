@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAccessToken } from "@/lib/auth/session";
 import { apiUrl } from "./env";
-import { getViewedClubId } from "./viewing";
 
 /** 422 from the API: Spanish messages keyed by the API's request field ("goal.raceDate"). */
 export class ApiValidationError extends Error {
@@ -22,15 +21,9 @@ export interface ApiFile {
   disposition: string;
 }
 
-/**
- * The signed-in user's token, and the club the super admin entered as a
- * guest, if any (the API ignores it for anyone else).
- */
+/** The signed-in user's token: a guest session's is the coach's. */
 async function authHeaders(): Promise<Record<string, string>> {
-  const headers: Record<string, string> = { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` };
-  const clubId = await getViewedClubId();
-  if (clubId) headers["X-Club-Id"] = clubId;
-  return headers;
+  return { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` };
 }
 
 /**

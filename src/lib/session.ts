@@ -9,6 +9,8 @@ import type { AccountRole } from "@/lib/domain/portal";
 
 export const SESSION_COOKIE = "umbral_session";
 export const ROLE_COOKIE = "umbral_role";
+/** The super admin's own token, kept aside while they hold a guest session of a club's coach. */
+export const ADMIN_SESSION_COOKIE = "umbral_admin_session";
 
 /** As long as the API's token lasts. */
 export const SESSION_DAYS = 30;

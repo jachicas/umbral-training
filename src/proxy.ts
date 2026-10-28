@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { HOME, ROLE_COOKIE, SESSION_COOKIE, roleFrom } from "@/lib/session";
-import { VIEW_CLUB_COOKIE, isClubId } from "@/lib/viewing";
 
 const SIGN_IN_PATH = "/login";
 /** Open with or without a session: an invite's or a reset's link, asking for one, and clearing an expired session. */
@@ -12,9 +11,9 @@ const within = (pathname: string, root: string) => pathname === root || pathname
 
 /**
  * Keeps signed-out visitors on the sign-in page, and each role on its side:
- * athletes in /portal, the super admin in /admin (and the coach's pages
- * while a club's guest), the coach in neither. The session is the API's
- * token in a cookie; the role cookie only routes pages. The API still
+ * athletes in /portal, the super admin in /admin, the coach (and the super
+ * admin with a guest session of a coach) in neither. The session is the
+ * API's token in a cookie; the role cookie only routes pages. The API still
  * authorizes every call, and a token it no longer takes ends at
  * /auth/expired.
  */
@@ -28,25 +27,17 @@ export function proxy(request: NextRequest) {
     return pathname === SIGN_IN_PATH ? NextResponse.next() : NextResponse.redirect(new URL(SIGN_IN_PATH, request.url));
   }
 
-  const viewingClub = role === "admin" && isClubId(request.cookies.get(VIEW_CLUB_COOKIE)?.value);
   const inPortal = within(pathname, PORTAL_PATH);
   const inAdmin = within(pathname, ADMIN_PATH);
 
   const allowed = {
     athlete: inPortal,
-    admin: inAdmin || (viewingClub && !inPortal),
+    admin: inAdmin,
     coach: !inPortal && !inAdmin,
   }[role];
-  const home = role === "admin" && viewingClub ? "/" : HOME[role];
 
   if (pathname === SIGN_IN_PATH || !allowed) {
-    return NextResponse.redirect(new URL(home, request.url));
-  }
-  // Back in /admin, the super admin is no longer a club's guest.
-  if (inAdmin && viewingClub) {
-    const redirect = NextResponse.redirect(request.nextUrl);
-    redirect.cookies.delete(VIEW_CLUB_COOKIE);
-    return redirect;
+    return NextResponse.redirect(new URL(HOME[role], request.url));
   }
   return NextResponse.next();
 }
