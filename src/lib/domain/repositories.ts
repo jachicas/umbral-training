@@ -28,6 +28,7 @@ import type {
 } from "./workouts";
 import type { CheckinInput, PortalCheckin, WeeklyCheckin } from "./checkins";
 import type { Dashboard } from "./dashboard";
+import type { GuestChange } from "./guest-changes";
 import type { PaymentReport, PaymentsOverview } from "./payments";
 import type { PortalHome, PortalPayments, PortalProfileInput, PortalWeek } from "./portal";
 
@@ -259,6 +260,13 @@ export interface CheckinRepository {
 /** The coach's day at a glance; the API computes it. */
 export interface DashboardRepository {
   getDashboard(): Promise<Dashboard>;
+}
+
+/** What the super admin changed as a guest; only the coach reads it. */
+export interface GuestChangeRepository {
+  /** The unseen ones, newest first. */
+  listUnseen(): Promise<GuestChange[]>;
+  markSeen(): Promise<void>;
 }
 
 /** The signed-in athlete's own portal; every call is about them, so nothing takes an id. */

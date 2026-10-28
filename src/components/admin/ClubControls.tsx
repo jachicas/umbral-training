@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { Eye, ImageUp, Mail, Pause, Play, Trash2 } from "lucide-react";
+import { ImageUp, LogIn, Mail, Pause, Play, Trash2 } from "lucide-react";
 import {
   reactivateClubAction,
   removeLogoAction,
@@ -28,7 +28,7 @@ function useClubAction() {
   return { pending, error, run };
 }
 
-/** Opens the coach's panel as this club's coach, read-only. */
+/** Enters the coach's panel as this club's guest: what changes there, its coach sees. */
 export function ViewClubButton({ clubId }: { clubId: string }) {
   return (
     <form action={viewClubAction.bind(null, clubId)}>
@@ -37,7 +37,7 @@ export function ViewClubButton({ clubId }: { clubId: string }) {
         className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
         style={{ background: "var(--coral)", color: "var(--on-coral)" }}
       >
-        <Eye size={16} /> Ver club
+        <LogIn size={16} /> Entrar como invitado
       </button>
     </form>
   );

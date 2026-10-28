@@ -1,8 +1,9 @@
 /**
- * The club the super admin is reading as its coach (/admin → "Ver club"):
- * its id, in an httpOnly cookie. While it's set, every API call carries it
- * as `X-Club-Id` and the API answers GETs only. Kept apart from
- * next/headers so the proxy can read the name too.
+ * The club the super admin entered as a guest (/admin → "Entrar como
+ * invitado"): its id, in an httpOnly cookie. While it's set, every API call
+ * carries it as `X-Club-Id`, and the API acts as that club's coach and
+ * records each change for them. Kept apart from next/headers so the proxy
+ * can read the name too.
  */
 export const VIEW_CLUB_COOKIE = "umbral_view_club";
 

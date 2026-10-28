@@ -23,8 +23,8 @@ export interface ApiFile {
 }
 
 /**
- * The signed-in user's token, and the club the super admin is reading, if
- * any (the API ignores it for anyone else).
+ * The signed-in user's token, and the club the super admin entered as a
+ * guest, if any (the API ignores it for anyone else).
  */
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { Accept: "application/json", Authorization: `Bearer ${await getAccessToken()}` };
