@@ -72,7 +72,7 @@ export function BrandStyle({ palette }: { palette: ClubPalette | undefined }) {
   return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
 }
 
-/** The club's mark in a shell: its logo, or Umbral's "U" on the primary color. */
+/** The club's mark in a shell: its logo, or Umbral's on its dark tile. */
 export function BrandMark({ brand, className }: { brand: ShellBrand; className: string }) {
   if (brand.logoUrl) {
     // A public storage link; next/image would need the host configured.
@@ -80,11 +80,40 @@ export function BrandMark({ brand, className }: { brand: ShellBrand; className: 
     return <img src={brand.logoUrl} alt="" className={`${className} object-contain`} />;
   }
   return (
-    <div
-      className={`${className} flex items-center justify-center font-extrabold tracking-tight`}
-      style={{ background: "var(--coral)", color: "var(--on-coral)" }}
-    >
-      U
+    <div className={`${className} flex items-center justify-center`} style={{ background: "#1f1d1a" }}>
+      <UmbralMark className="size-[68%]" color="#ece6da" />
     </div>
+  );
+}
+
+const SEAM = "65,101 77,106 89,97 101,106 113,96 125,101 145,93 145,99 125,107 113,102 101,112 89,103 77,112 65,107";
+
+/**
+ * Umbral's mark: a U broken across its middle and mended in gold (kintsugi),
+ * the seam rising left to right, over the threshold. Its branches only from
+ * 64px up; smaller, they blur (public/brand has the files, app/icon.svg the
+ * favicon).
+ */
+export function UmbralMark({
+  className,
+  color = "#1f1d1a",
+  branches = false,
+}: {
+  className?: string;
+  color?: string;
+  branches?: boolean;
+}) {
+  return (
+    <svg viewBox="53 52 104 104" className={className} aria-hidden="true">
+      <path d="M80 55V118A25 25 0 0 0 130 118V55" fill="none" stroke={color} strokeWidth="20" />
+      <polygon points={SEAM} fill="#c9a23a" />
+      {branches && (
+        <g fill="none" stroke="#c9a23a" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="82,110 86,121 79,131 86,140" strokeWidth="2.5" />
+          <polyline points="86,121 75,126" strokeWidth="1.8" />
+          <polyline points="128,104 125,114 132,122" strokeWidth="2" />
+        </g>
+      )}
+    </svg>
   );
 }
