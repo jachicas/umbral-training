@@ -50,6 +50,7 @@ export function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const expanded = !collapsed;
   const hideWhenCollapsed = cn("max-md:hidden", !expanded && "md:hidden");
+  const stackedBrand = expanded && Boolean(brand.logoUrl);
 
   // Signed out (the sign-in page) or an invited coach's first password: no navigation to show.
   if (!user || pathname === "/welcome") return <>{children}</>;
@@ -81,14 +82,29 @@ export function AppShell({
           )}
           style={{ "--sidebar-w": expanded ? "256px" : "74px" } as React.CSSProperties}
         >
+          {/* Expanded, a club's logo sits above its name, big enough to read,
+              and the name gets the full width (two lines at most). */}
           <div
-            className="mb-3 flex items-center gap-3 rounded-2xl border p-2 md:p-2.5"
+            className={cn(
+              "mb-3 flex items-center gap-3 rounded-2xl border p-2 md:p-2.5",
+              stackedBrand && "md:flex-col md:items-start md:gap-3.5 md:p-4"
+            )}
             style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
           >
-            <BrandMark brand={brand} className="size-[34px] flex-none rounded-[11px] text-[17px]" />
+            <BrandMark
+              brand={brand}
+              className={cn("size-[34px] flex-none rounded-[11px] text-[17px]", stackedBrand && "md:size-16")}
+            />
             <div className={cn("min-w-0", hideWhenCollapsed)}>
-              <div className="truncate whitespace-nowrap text-[14.5px] font-bold tracking-tight">{brand.name}</div>
-              <div className="text-[11.5px]" style={{ color: "var(--text-2)" }}>
+              <div
+                className={cn(
+                  "truncate whitespace-nowrap text-[14.5px] font-bold tracking-tight",
+                  stackedBrand && "md:line-clamp-2 md:text-[16px] md:leading-snug md:whitespace-normal"
+                )}
+              >
+                {brand.name}
+              </div>
+              <div className={cn("text-[11.5px]", stackedBrand && "md:mt-0.5 md:text-[12.5px]")} style={{ color: "var(--text-2)" }}>
                 {adminPages ? "Super admin" : "Panel de coach"}
               </div>
             </div>
