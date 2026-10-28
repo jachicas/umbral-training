@@ -83,13 +83,14 @@ export function AppShell({
           style={{ "--sidebar-w": expanded ? "256px" : "74px" } as React.CSSProperties}
         >
           {/* Expanded, a club's logo sits above its name, big enough to read,
-              and the name gets the full width (two lines at most). */}
+              and the name gets the full width (two lines at most), straight
+              on the sidebar, lined up with the nav's icons. */}
           <div
             className={cn(
-              "mb-3 flex items-center gap-3 rounded-2xl border p-2 md:p-2.5",
-              stackedBrand && "md:flex-col md:items-start md:gap-3.5 md:p-4"
+              "mb-3 flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-2 md:p-2.5",
+              stackedBrand &&
+                "md:flex-col md:items-start md:gap-3.5 md:rounded-none md:border-x-0 md:border-t-0 md:border-[var(--border-2)] md:bg-transparent md:px-3 md:pt-1 md:pb-5"
             )}
-            style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
           >
             <BrandMark
               brand={brand}
