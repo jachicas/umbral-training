@@ -8,7 +8,7 @@ import {
   resendCoachInviteAction,
   suspendClubAction,
   uploadLogoAction,
-  viewClubAction,
+  enterClubAction,
   type ClubActionState,
 } from "@/app/admin/actions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -30,16 +30,21 @@ function useClubAction() {
 
 /** Enters the coach's panel as this club's guest: what changes there, its coach sees. */
 export function ViewClubButton({ clubId }: { clubId: string }) {
+  const { pending, error, run } = useClubAction();
+
   return (
-    <form action={viewClubAction.bind(null, clubId)}>
+    <div className="flex flex-col items-end gap-1.5">
       <button
-        type="submit"
-        className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+        type="button"
+        disabled={pending}
+        onClick={() => run(() => enterClubAction(clubId))}
+        className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold shadow-[var(--shadow)] transition-[filter] hover:brightness-110 disabled:opacity-60"
         style={{ background: "var(--coral)", color: "var(--on-coral)" }}
       >
-        <LogIn size={16} /> Entrar como invitado
+        <LogIn size={16} /> {pending ? "Entrando…" : "Entrar como invitado"}
       </button>
-    </form>
+      <FieldError message={error} />
+    </div>
   );
 }
 

@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { PaletteInput, PaletteKey } from "@/lib/domain/clubs";
 import * as clubsService from "@/lib/services/clubs";
 import { ValidationErrors, type ValidationField } from "@/lib/services/errors";
-import { VIEW_CLUB_COOKIE, isClubId } from "@/lib/viewing";
+import { apiFetch } from "@/lib/api/client";
+import { endGuestSession, startGuestSession } from "@/lib/auth/session";
 
 export interface ClubFormState {
   errors?: Partial<Record<ValidationField, string>>;
@@ -108,14 +108,23 @@ export async function reactivateClubAction(clubId: string): Promise<ClubActionSt
   return clubAction(() => clubsService.reactivateClub(clubId));
 }
 
-/** Enters the coach's panel as that club's guest: the API acts as its coach and records each change for them. */
-export async function viewClubAction(clubId: string): Promise<void> {
-  if (!isClubId(clubId)) return;
-  (await cookies()).set(VIEW_CLUB_COOKIE, clubId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+/**
+ * Enters the club as its coach, with a guest session the API gives the
+ * super admin: everything the coach can do, each change recorded for them.
+ */
+export async function enterClubAction(clubId: string): Promise<ClubActionState> {
+  try {
+    const session = await clubsService.startGuestSession(clubId);
+    await startGuestSession(session.token, session.expiresAt);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Algo salió mal." };
+  }
   redirect("/");
 }
 
-export async function stopViewingClubAction(): Promise<void> {
-  (await cookies()).delete(VIEW_CLUB_COOKIE);
+/** Ends the guest session at the API too, then it's the super admin's own again. */
+export async function leaveClubAction(): Promise<void> {
+  await apiFetch("POST", "/v1/auth/logout").catch(() => undefined);
+  await endGuestSession();
   redirect("/admin");
 }

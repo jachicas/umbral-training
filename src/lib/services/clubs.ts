@@ -1,5 +1,5 @@
 import { apiClubRepository } from "@/lib/db/repositories/clubs-repo.api";
-import type { Club, ClubInput, Me, NewClubInput } from "@/lib/domain/clubs";
+import type { Club, ClubInput, GuestSession, Me, NewClubInput } from "@/lib/domain/clubs";
 
 /* The API keeps and validates the clubs; this is a pass-through for the pages. */
 
@@ -12,4 +12,5 @@ export const removeClubLogo = (id: string): Promise<Club> => apiClubRepository.r
 export const resendCoachInvite = (id: string): Promise<Club> => apiClubRepository.resendCoachInvite(id);
 export const suspendClub = (id: string): Promise<Club> => apiClubRepository.suspend(id);
 export const reactivateClub = (id: string): Promise<Club> => apiClubRepository.reactivate(id);
+export const startGuestSession = (id: string): Promise<GuestSession> => apiClubRepository.startGuestSession(id);
 export const getMe = (): Promise<Me> => apiClubRepository.me();
