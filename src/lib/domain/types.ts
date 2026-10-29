@@ -144,7 +144,10 @@ export interface AssignedWorkout {
 export interface AthleteDetail {
   athlete: Athlete;
   records: RaceRecord[];
+  /** The goal they train for now: the next race, or the last one run while none is ahead. */
   activeGoal: Goal | null;
+  /** The races they have lined up, soonest first. */
+  goals: Goal[];
   membership: Membership;
   assignedWorkouts: AssignedWorkout[];
 }

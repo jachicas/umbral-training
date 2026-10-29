@@ -59,6 +59,9 @@ export interface GoalInput {
   targetTimeSeconds?: number;
 }
 
+/** One race in an athlete's line-up: always a race, so no type. */
+export type RaceGoalInput = Omit<GoalInput, "type">;
+
 export interface MembershipInput {
   mode: MembershipMode;
   amount?: number;
@@ -127,8 +130,11 @@ export interface AthleteRepository {
   ): Promise<Athlete>;
   /** The coach's races from today on, by date — what a goal can point to. */
   listUpcomingRaces(coachId: string): Promise<Race[]>;
-  /** Replaces the athlete's active goal (there is only ever one). */
-  upsertActiveGoal(athleteId: string, coachId: string, input: GoalInput): Promise<Goal>;
+  /** Lines up one more race for the athlete (ends maintenance). */
+  addRaceGoal(athleteId: string, coachId: string, input: RaceGoalInput): Promise<Goal>;
+  updateRaceGoal(athleteId: string, coachId: string, goalId: string, input: RaceGoalInput): Promise<Goal>;
+  /** Takes a race off the line-up; with none left, they're on maintenance. */
+  removeRaceGoal(athleteId: string, coachId: string, goalId: string): Promise<void>;
   updateMembership(
     athleteId: string,
     coachId: string,

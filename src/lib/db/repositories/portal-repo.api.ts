@@ -36,6 +36,7 @@ interface ApiPortalHome {
   athlete: ApiPortalAthlete;
   coach: { fullName: string; email: string };
   goal: ApiGoal | null;
+  goals: ApiGoal[];
   records: ApiRecord[];
   referencePaces: Partial<Record<RaceReference, ResolvedPace>>;
   pendingCheckin: { weekStart: string; closesOn: string } | null;
@@ -104,6 +105,7 @@ const toHome = (api: ApiPortalHome): PortalHome => ({
   athlete: toAthlete(api.athlete),
   coach: api.coach,
   goal: api.goal ? toGoal(api.goal) : null,
+  goals: api.goals.map(toGoal),
   records: api.records.map(toRecord),
   referencePaces: api.referencePaces,
   pendingCheckin: orUndefined(api.pendingCheckin),

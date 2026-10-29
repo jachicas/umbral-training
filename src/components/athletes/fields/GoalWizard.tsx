@@ -24,6 +24,7 @@ type Errors = Partial<Record<ValidationField, string>>;
 type Step = "type" | "race" | "details";
 
 const STEPS: Step[] = ["type", "race", "details"];
+const RACE_STEPS: Step[] = ["race", "details"];
 const DETAIL_FIELDS: ValidationField[] = [
   "raceName",
   "raceDate",
@@ -70,23 +71,25 @@ function stepForErrors(errors: Errors): Step | null {
  *
  * `submit` draws Cancel/Save on the last step (the edit dialog); without it
  * the surrounding form has its own button (creating an athlete).
+ *
+ * `raceOnly` skips the type step: one race in the athlete's line-up, opening
+ * on its details when it has a race already.
  */
 export function GoalWizard({
   goal,
   races,
   errors,
   submit,
-  startWithRace = false,
+  raceOnly = false,
 }: {
   goal?: Goal | null;
   races: Race[];
   errors: Errors;
   submit?: { pending: boolean; onCancel: () => void };
-  /** Opens on the race step ("Definir carrera"). */
-  startWithRace?: boolean;
+  raceOnly?: boolean;
 }) {
-  const [type, setType] = useState<GoalType>(startWithRace ? "race" : (goal?.type ?? "maintenance"));
-  const [step, setStep] = useState<Step>(startWithRace ? "race" : "type");
+  const [type, setType] = useState<GoalType>(raceOnly ? "race" : (goal?.type ?? "maintenance"));
+  const [step, setStep] = useState<Step>(raceOnly ? (goal?.race ? "details" : "race") : "type");
   const [raceId, setRaceId] = useState<string | null>(goal?.race?.id ?? null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<NewRace>(blankRace);
@@ -144,7 +147,8 @@ export function GoalWizard({
     setStep("details");
   }
 
-  const index = STEPS.indexOf(step);
+  const steps = raceOnly ? RACE_STEPS : STEPS;
+  const index = steps.indexOf(step);
   const last = type === "maintenance" ? step === "type" : step === "details";
 
   return (
@@ -153,7 +157,7 @@ export function GoalWizard({
 
       {type === "race" && (
         <div className="flex gap-1" aria-hidden>
-          {STEPS.map((s, i) => (
+          {steps.map((s, i) => (
             <span
               key={s}
               className="h-[3px] flex-1 rounded-full"
@@ -221,7 +225,7 @@ export function GoalWizard({
         {index > 0 ? (
           <button
             type="button"
-            onClick={() => setStep(STEPS[index - 1])}
+            onClick={() => setStep(steps[index - 1])}
             className="inline-flex items-center gap-1 text-[13px] font-semibold"
             style={{ color: "var(--text-2)" }}
           >
@@ -243,7 +247,7 @@ export function GoalWizard({
               className="h-10 rounded-[10px] font-bold"
               // The race step moves on by picking a race; this continues with the current one.
               disabled={step === "race" && !chosen && !creating}
-              onClick={() => setStep(STEPS[index + 1])}
+              onClick={() => setStep(steps[index + 1])}
             >
               Siguiente
             </Button>
@@ -377,7 +381,7 @@ function RaceStep({
         ))}
         {races.length === 0 && (
           <p className="px-1 py-2 text-[12.5px]" style={{ color: "var(--text-3)" }}>
-            Aún no tienes carreras registradas.
+            Sin carreras por elegir.
           </p>
         )}
         {races.length > 0 && matches.length === 0 && (

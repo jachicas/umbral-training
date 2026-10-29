@@ -1,6 +1,6 @@
 import { ApiNotFoundError, ApiValidationError, apiFetch } from "@/lib/api/client";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
-import type { AthleteRepository, GoalInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, RaceGoalInput } from "@/lib/domain/repositories";
 import type {
   AccessStatus,
   Athlete,
@@ -93,6 +93,7 @@ interface ApiAthlete {
   weeklyAvailabilityHours: number | null;
   thresholds: Record<keyof AthleteThresholds, number | null> | null;
   activeGoal: ApiGoal | null;
+  goals: ApiGoal[];
   records: ApiRecord[];
   membership: ApiMembership;
   createdAt: string;
@@ -195,6 +196,7 @@ function toDetail(api: ApiAthlete): AthleteDetail {
     athlete: toAthlete(api),
     records: api.records.map(toRecord),
     activeGoal: api.activeGoal ? toGoal(api.activeGoal) : null,
+    goals: api.goals.map(toGoal),
     membership: toMembership(api.membership),
     // Comes from the workouts module once it moves to the API.
     assignedWorkouts: [],
@@ -206,8 +208,11 @@ function toDetail(api: ApiAthlete): AthleteDetail {
 /* ------------------------------------------------------------------ */
 
 function goalBody(goal: GoalInput) {
+  return { type: goal.type, ...raceGoalBody(goal) };
+}
+
+function raceGoalBody(goal: RaceGoalInput) {
   return {
-    type: goal.type,
     raceId: goal.raceId ?? null,
     race: goal.race
       ? {
@@ -376,8 +381,17 @@ export const apiAthleteRepository: AthleteRepository = {
     return races.map(toRace);
   },
 
-  async upsertActiveGoal(athleteId, _coachId, input) {
-    return toGoal(await call(() => apiFetch<ApiGoal>("PUT", `${athletePath(athleteId)}/goal`, goalBody(input))));
+  async addRaceGoal(athleteId, _coachId, input) {
+    return toGoal(await call(() => apiFetch<ApiGoal>("POST", `${athletePath(athleteId)}/goals`, raceGoalBody(input))));
+  },
+
+  async updateRaceGoal(athleteId, _coachId, goalId, input) {
+    const path = `${athletePath(athleteId)}/goals/${encodeURIComponent(goalId)}`;
+    return toGoal(await call(() => apiFetch<ApiGoal>("PUT", path, raceGoalBody(input))));
+  },
+
+  async removeRaceGoal(athleteId, _coachId, goalId) {
+    await call(() => apiFetch<void>("DELETE", `${athletePath(athleteId)}/goals/${encodeURIComponent(goalId)}`));
   },
 
   async updateMembership(athleteId, _coachId, input) {

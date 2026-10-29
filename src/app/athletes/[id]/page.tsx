@@ -23,6 +23,7 @@ import {
   goalSummaryLabel,
 } from "@/lib/domain/goals";
 import { raceSummary } from "@/lib/domain/races";
+import type { Goal, Race } from "@/lib/domain/types";
 import {
   MEMBERSHIP_MODE_LABEL,
   dueLabel,
@@ -44,7 +45,7 @@ import { DisciplineChip } from "@/components/athletes/DisciplineChip";
 import { AccessStatusPill } from "@/components/athletes/AccessStatusPill";
 import { InviteAccessControl } from "@/components/athletes/InviteAccessControl";
 import { EditAthleteDialog } from "@/components/athletes/EditAthleteDialog";
-import { EditGoalDialog } from "@/components/athletes/EditGoalDialog";
+import { RaceGoalDialog, RemoveRaceGoalButton } from "@/components/athletes/RaceGoalDialog";
 import { EditMembershipDialog } from "@/components/athletes/EditMembershipDialog";
 import { EditSportProfileDialog } from "@/components/athletes/EditSportProfileDialog";
 import { AddRecordDialog } from "@/components/athletes/AddRecordDialog";
@@ -75,8 +76,14 @@ export default async function AtletaDetailPage({
   if (!detail) notFound();
   const [payments, checkins] = await Promise.all([listMembershipPayments(id), listAthleteCheckins(id)]);
 
-  const { athlete, records, activeGoal, membership, assignedWorkouts } = detail;
+  const { athlete, records, activeGoal, goals, membership, assignedWorkouts } = detail;
   const raceDefined = isRaceGoalDefined(activeGoal);
+  // Past the current race: the ones still ahead, then those already run.
+  const otherGoals = goals.filter((g) => g.id !== activeGoal?.id);
+  const runGoals = otherGoals.filter((g) => raceCountdown(g)?.status === "past");
+  const nextGoals = otherGoals.filter((g) => !runGoals.includes(g));
+  // A race is in the line-up once.
+  const racesToAdd = races.filter((r) => !goals.some((g) => g.race?.id === r.id));
   const payConfigured = isMembershipConfigured(membership);
   const payMeta = membershipDisplayMeta(membership);
   const archived = athlete.status === "archived";
@@ -265,19 +272,18 @@ export default async function AtletaDetailPage({
         </div>
 
         <div className="flex flex-col gap-4">
-          {/* goal */}
+          {/* goal: the races the athlete has lined up */}
           <div
             className="rounded-[18px] border p-5 shadow-[var(--shadow)]"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
           >
             <div className="mb-3.5 flex items-center justify-between">
               <div className="text-base font-bold">Objetivo</div>
-              <div className="flex items-center gap-1.5">
+              {raceDefined ? (
+                <RaceGoalDialog athleteId={athlete.id} goal={null} races={racesToAdd} />
+              ) : (
                 <Target size={18} style={{ color: "var(--text-3)" }} />
-                {raceDefined && (
-                  <EditGoalDialog athleteId={athlete.id} goal={activeGoal} races={races} defined />
-                )}
-              </div>
+              )}
             </div>
             {raceDefined && activeGoal ? (
               <>
@@ -288,13 +294,14 @@ export default async function AtletaDetailPage({
                   >
                     <Flag size={20} />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[15px] font-bold">{activeGoal.raceName}</div>
                     <div className="text-[12.5px]" style={{ color: "var(--text-2)" }}>
                       {activeGoal.race && `${raceSummary(activeGoal.race)} · `}
                       {activeGoal.raceDate && formatDateEs(activeGoal.raceDate)}
                     </div>
                   </div>
+                  <RaceGoalActions athleteId={athlete.id} goal={activeGoal} races={racesToAdd} />
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1 rounded-xl p-3.5 text-center" style={{ background: "var(--coral-tint)" }}>
@@ -319,6 +326,8 @@ export default async function AtletaDetailPage({
                     </div>
                   </div>
                 </div>
+                <RaceGoalList label="Siguientes" athleteId={athlete.id} goals={nextGoals} races={racesToAdd} />
+                <RaceGoalList label="Corridas" athleteId={athlete.id} goals={runGoals} races={racesToAdd} />
               </>
             ) : (
               <div className="flex flex-col gap-3.5">
@@ -343,7 +352,7 @@ export default async function AtletaDetailPage({
                     </div>
                   </div>
                 </div>
-                <EditGoalDialog athleteId={athlete.id} goal={activeGoal} races={races} defined={false} />
+                <RaceGoalDialog athleteId={athlete.id} goal={null} races={racesToAdd} cta />
               </div>
             )}
           </div>
@@ -539,6 +548,59 @@ export default async function AtletaDetailPage({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function RaceGoalActions({ athleteId, goal, races }: { athleteId: string; goal: Goal; races: Race[] }) {
+  return (
+    <div className="flex flex-none items-center">
+      <RaceGoalDialog athleteId={athleteId} goal={goal} races={races} />
+      <RemoveRaceGoalButton athleteId={athleteId} goal={goal} />
+    </div>
+  );
+}
+
+/** More of the athlete's races, past the one they train for now. */
+function RaceGoalList({
+  label,
+  athleteId,
+  goals,
+  races,
+}: {
+  label: string;
+  athleteId: string;
+  goals: Goal[];
+  races: Race[];
+}) {
+  if (goals.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <div className="mb-1 text-[11.5px] font-bold uppercase tracking-[.4px]" style={{ color: "var(--text-3)" }}>
+        {label}
+      </div>
+      {goals.map((goal) => {
+        const countdown = raceCountdown(goal);
+        const target = goalTarget(goal);
+        return (
+          <div
+            key={goal.id}
+            className="flex items-center gap-3 border-b py-2.5 last:border-b-0"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13.5px] font-semibold">{goal.raceName}</div>
+              <div className="truncate text-[12px]" style={{ color: "var(--text-2)" }}>
+                {goal.raceDate && formatDateEs(goal.raceDate)}
+                {countdown?.status === "upcoming" && ` · ${countdown.days} ${countdown.days === 1 ? "día" : "días"}`}
+                {target.value !== "—" && ` · ${target.value}`}
+              </div>
+            </div>
+            <RaceGoalActions athleteId={athleteId} goal={goal} races={races} />
+          </div>
+        );
+      })}
     </div>
   );
 }
