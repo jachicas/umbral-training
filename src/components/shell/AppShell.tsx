@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Bell, LogIn, LogOut, Menu, Moon, Plus, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV_GROUPS, NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
-import { BrandMark, type ShellBrand } from "./brand";
+import { BrandMark, UMBRAL_BRAND, type ShellBrand } from "./brand";
 import { toggleTheme } from "./theme";
 import { HeaderSearch, HeaderSearchFallback } from "./HeaderSearch";
 import { signOutAction } from "@/app/login/actions";
@@ -33,7 +33,7 @@ const roundButtonClass =
 export function AppShell({
   children,
   user,
-  brand,
+  brand: clubBrand,
   viewing,
   badges = {},
 }: {
@@ -46,6 +46,8 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const adminPages = user?.role === "admin" && (pathname === "/admin" || pathname.startsWith("/admin/"));
+  // Back in /admin from a club, this shell still holds its brand.
+  const brand = adminPages ? UMBRAL_BRAND : clubBrand;
   const navGroups = adminPages ? ADMIN_NAV_GROUPS : NAV_GROUPS;
   const activeItem = activeNavItem(pathname, navGroups);
   const [collapsed, setCollapsed] = useState(false);
@@ -79,7 +81,7 @@ export function AppShell({
         <aside
           className={cn(
             "glass flex h-full w-[74px] flex-none flex-col gap-1 rounded-[26px] px-3 py-4 transition-[width] duration-150 md:w-[var(--sidebar-w)]",
-            brand.sidebar && !adminPages && "club-sidebar"
+            brand.sidebar && "club-sidebar"
           )}
           style={{ "--sidebar-w": expanded ? "256px" : "74px" } as React.CSSProperties}
         >
