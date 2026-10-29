@@ -75,6 +75,11 @@ export interface RaceRecordInput {
   note?: string;
 }
 
+/** One athlete's time in a sheet of several. */
+export interface AthleteRaceRecordInput extends RaceRecordInput {
+  athleteId: string;
+}
+
 /** Name, contact and biographical basics — never framework- or discipline-specific. */
 export interface AthleteIdentityInput {
   fullName: string;
@@ -153,6 +158,8 @@ export interface AthleteRepository {
     coachId: string,
     input: RaceRecordInput
   ): Promise<RaceRecord>;
+  /** Several athletes' times at once, all or none; a refusal names each entry by its position. */
+  addRaceRecords(entries: AthleteRaceRecordInput[]): Promise<RaceRecord[]>;
   /** Takes the athlete off the lists; their fee stops accruing from this month (what they owed stays). */
   archiveAthlete(athleteId: string): Promise<Athlete>;
   /** Brings an archived athlete back; billing resumes this month. */

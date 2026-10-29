@@ -18,9 +18,9 @@ import type {
   RaceSport,
 } from "@/lib/domain/types";
 import { parseDuration } from "@/lib/domain/time";
-import { FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
+import { EntryErrors, FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
 
-export { FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
+export { EntryErrors, FieldValidationError, ValidationErrors, type ValidationField } from "./errors";
 
 /*
  * The athletes module runs on the Laravel API, which owns every rule
@@ -348,6 +348,39 @@ export async function addRaceRecords(
       throw error;
     }
   }
+}
+
+export interface SheetEntry {
+  athleteId: string;
+  reference: RaceReference;
+  /** "h:mm:ss" as joined from the boxes. */
+  time: string;
+  recordedOn: string;
+  note?: string;
+}
+
+/**
+ * Records a sheet of times (several athletes, one or more distances), all or
+ * none. Every time is parsed before anything is sent; a refusal names each
+ * entry by its position.
+ */
+export async function addRaceRecordSheet(entries: SheetEntry[]): Promise<RaceRecord[]> {
+  const seconds = entries.map((e) => parseDuration(e.time.trim()));
+  const unreadable: Record<number, string> = {};
+  seconds.forEach((s, i) => {
+    if (s === null) unreadable[i] = "Los minutos y segundos van de 0 a 59.";
+  });
+  if (Object.keys(unreadable).length > 0) throw new EntryErrors(unreadable);
+
+  return getRepo().addRaceRecords(
+    entries.map((e, i) => ({
+      athleteId: e.athleteId,
+      reference: e.reference,
+      timeSeconds: seconds[i] as number,
+      recordedOn: e.recordedOn.trim(),
+      note: blankToUndefined(e.note),
+    }))
+  );
 }
 
 export async function archiveAthlete(athleteId: string): Promise<Athlete> {
