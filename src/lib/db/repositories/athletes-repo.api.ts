@@ -21,7 +21,7 @@ import type {
   RaceReference,
   RaceSport,
 } from "@/lib/domain/types";
-import { ValidationErrors, type ValidationField } from "@/lib/services/athletes";
+import { EntryErrors, ValidationErrors, type ValidationField } from "@/lib/services/athletes";
 
 /* ------------------------------------------------------------------ */
 /* API shapes (docs/api.md in ../umbral-training-api): camelCase, null  */
@@ -419,6 +419,32 @@ export const apiAthleteRepository: AthleteRepository = {
       })
     );
     return toRecord(record);
+  },
+
+  async addRaceRecords(entries) {
+    try {
+      const records = await apiFetch<ApiRecord[]>("POST", "/v1/records", {
+        records: entries.map((e) => ({
+          athleteId: e.athleteId,
+          reference: e.reference,
+          timeSeconds: e.timeSeconds,
+          recordedOn: e.recordedOn,
+          note: e.note ?? null,
+        })),
+      });
+      return records.map(toRecord);
+    } catch (error) {
+      if (error instanceof ApiValidationError) {
+        // Keyed by entry: "records.3.timeSeconds".
+        const byEntry: Record<number, string> = {};
+        for (const [key, messages] of Object.entries(error.errors)) {
+          const index = Number(/^records\.(\d+)\./.exec(key)?.[1]);
+          if (Number.isInteger(index)) byEntry[index] ??= messages[0];
+        }
+        throw Object.keys(byEntry).length > 0 ? new EntryErrors(byEntry) : new Error(error.message);
+      }
+      throw error;
+    }
   },
 
   async archiveAthlete(athleteId) {

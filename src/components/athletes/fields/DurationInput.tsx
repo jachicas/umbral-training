@@ -39,12 +39,15 @@ export function DurationInput({
   value,
   onChange,
   invalid,
+  of,
 }: {
   /** Goes on the hours box, for the field's <Label>. */
-  id: string;
+  id?: string;
   value: DurationParts;
   onChange: (value: DurationParts) => void;
   invalid?: boolean;
+  /** Whose time it is, when several sit side by side ("Minutos, Ana López"). */
+  of?: string;
 }) {
   return (
     <div className="flex items-center gap-1.5">
@@ -52,7 +55,7 @@ export function DurationInput({
         <label key={key} className="flex min-w-0 flex-1 items-center gap-1">
           <Input
             id={key === "h" ? id : undefined}
-            aria-label={label}
+            aria-label={of ? `${label}, ${of}` : label}
             aria-invalid={invalid || undefined}
             inputMode="numeric"
             maxLength={2}

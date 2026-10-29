@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import { Activity, Building2, LayoutGrid, Settings, Users, Wallet } from "lucide-react";
+import { Activity, Building2, LayoutGrid, Settings, Trophy, Users, Wallet } from "lucide-react";
 
-export type NavId = "dashboard" | "athletes" | "workouts" | "payments" | "settings" | "clubs";
+export type NavId = "dashboard" | "athletes" | "workouts" | "records" | "payments" | "settings" | "clubs";
 
 export interface NavItem {
   id: NavId;
@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { id: "dashboard", label: "Dashboard", href: "/", icon: LayoutGrid },
       { id: "athletes", label: "Atletas", href: "/athletes", icon: Users },
       { id: "workouts", label: "Entrenos", href: "/workouts", icon: Activity },
+      { id: "records", label: "Marcas", href: "/records", icon: Trophy },
     ],
   },
   {

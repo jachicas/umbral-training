@@ -53,6 +53,13 @@ export class FieldValidationError extends Error {
   }
 }
 
+/** A list of entries sent at once (a sheet of times) that was refused: the first message per entry, by position. */
+export class EntryErrors extends Error {
+  constructor(public entries: Record<number, string>) {
+    super(Object.values(entries)[0] ?? "Datos no válidos.");
+  }
+}
+
 /** Rule violations reported by the API (422), mapped to form fields. */
 export class ValidationErrors extends Error {
   constructor(public errors: Partial<Record<ValidationField, string>>) {
