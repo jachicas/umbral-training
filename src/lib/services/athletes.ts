@@ -1,5 +1,5 @@
 import { apiAthleteRepository } from "@/lib/db/repositories/athletes-repo.api";
-import type { AthleteRepository, GoalInput, RaceInput, SportProfileInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, RaceGoalInput, RaceInput, SportProfileInput } from "@/lib/domain/repositories";
 import type {
   Athlete,
   AthleteDetail,
@@ -126,8 +126,11 @@ function buildRaceInput(input: RaceFormInput): RaceInput {
 }
 
 function buildGoalInput(input: SaveGoalInput): GoalInput {
+  return { type: input.type as GoalType, ...buildRaceGoalInput(input) };
+}
+
+function buildRaceGoalInput(input: SaveGoalInput): RaceGoalInput {
   return {
-    type: input.type as GoalType,
     raceId: blankToUndefined(input.raceId),
     race: input.race && !input.raceId ? buildRaceInput(input.race) : undefined,
     targetPaceSecPerKm: parsePace(input.targetPace, "targetPace"),
@@ -237,12 +240,21 @@ export async function saveSportProfile(
   return getRepo().updateSportProfile(athleteId, coachId, buildSportProfile(input));
 }
 
-export async function saveGoal(
+/** Adds a race to the athlete's line-up, or changes one (`goalId`). */
+export async function saveRaceGoal(
   athleteId: string,
   coachId: string,
+  goalId: string | null,
   input: SaveGoalInput
 ): Promise<Goal> {
-  return getRepo().upsertActiveGoal(athleteId, coachId, buildGoalInput(input));
+  const goal = buildRaceGoalInput(input);
+  return goalId
+    ? getRepo().updateRaceGoal(athleteId, coachId, goalId, goal)
+    : getRepo().addRaceGoal(athleteId, coachId, goal);
+}
+
+export async function removeRaceGoal(athleteId: string, coachId: string, goalId: string): Promise<void> {
+  return getRepo().removeRaceGoal(athleteId, coachId, goalId);
 }
 
 export interface SaveMembershipInput {

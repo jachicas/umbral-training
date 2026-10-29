@@ -126,14 +126,16 @@ export async function saveSportProfileAction(
   return { success: true };
 }
 
-export async function saveGoalAction(
+/** Adds a race to the athlete's line-up, or changes one (`goalId`). */
+export async function saveRaceGoalAction(
   athleteId: string,
+  goalId: string | null,
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
   try {
     const coachId = await getCurrentCoachId();
-    await athletesService.saveGoal(athleteId, coachId, goalFrom(formData));
+    await athletesService.saveRaceGoal(athleteId, coachId, goalId, goalFrom(formData));
   } catch (error) {
     return fieldErrorState(error);
   }
@@ -141,6 +143,18 @@ export async function saveGoalAction(
   revalidatePath("/athletes");
   revalidatePath(`/athletes/${athleteId}`);
   return { success: true };
+}
+
+export async function removeRaceGoalAction(athleteId: string, goalId: string): Promise<InviteActionResult> {
+  try {
+    const coachId = await getCurrentCoachId();
+    await athletesService.removeRaceGoal(athleteId, coachId, goalId);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudo quitar." };
+  }
+  revalidatePath("/athletes");
+  revalidatePath(`/athletes/${athleteId}`);
+  return {};
 }
 
 export async function saveMembershipAction(

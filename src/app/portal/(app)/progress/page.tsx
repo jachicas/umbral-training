@@ -14,9 +14,12 @@ export const metadata: Metadata = { title: "Mi progreso · Umbral Training" };
 
 /** The athlete's race goal and their reference times, the ones their paces come from. */
 export default async function PortalProgressPage() {
-  const { goal, records, referencePaces, today } = await getPortalHome();
+  const { goal, goals, records, referencePaces, today } = await getPortalHome();
   const race = goal && isRaceGoalDefined(goal) ? goal : null;
-  const countdown = race ? raceCountdown(race, new Date(today + "T00:00:00")) : null;
+  const from = new Date(today + "T00:00:00");
+  const countdown = race ? raceCountdown(race, from) : null;
+  // The races lined up after the one they train for now.
+  const nextRaces = goals.filter((g) => g.id !== race?.id && raceCountdown(g, from)?.status !== "past");
   const target = race ? goalTarget(race) : null;
   const history = [...records].reverse();
 
@@ -60,6 +63,25 @@ export default async function PortalProgressPage() {
           <p className="mt-2 mb-0 text-[14px]" style={{ color: "var(--text-2)" }}>
             Sin carrera por ahora: tu coach te tiene en <b style={{ color: "var(--text)" }}>mantenimiento</b>.
           </p>
+        )}
+        {nextRaces.length > 0 && (
+          <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--border)" }}>
+            <div className="mb-1 text-[12px] font-bold uppercase" style={{ color: "var(--text-3)" }}>
+              Siguientes
+            </div>
+            {nextRaces.map((g) => {
+              const days = raceCountdown(g, from);
+              return (
+                <div key={g.id} className="flex items-baseline justify-between gap-3 py-1.5">
+                  <span className="min-w-0 truncate text-[14px] font-semibold">{g.raceName}</span>
+                  <span className="flex-none text-[12.5px] tabular-nums" style={{ color: "var(--text-2)" }}>
+                    {g.raceDate && formatDateEs(g.raceDate)}
+                    {days?.status === "upcoming" && ` · ${days.days} ${days.days === 1 ? "día" : "días"}`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </PortalCard>
 

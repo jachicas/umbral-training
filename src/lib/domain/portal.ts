@@ -41,7 +41,10 @@ export interface PortalHome {
   latestSentWeek?: string;
   athlete: PortalAthlete;
   coach: { fullName: string; email: string };
+  /** The race they train for now. */
   goal: Goal | null;
+  /** The races they have lined up, soonest first. */
+  goals: Goal[];
   /** Oldest first. */
   records: RaceRecord[];
   /** Latest time per distance as a pace, or estimated from another distance. */
