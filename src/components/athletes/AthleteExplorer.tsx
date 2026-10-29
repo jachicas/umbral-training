@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { FilterSelect, type FilterOption } from "@/components/ui/filter-select";
 import { isPendingOrOverdue } from "@/lib/domain/payments";
-import { AthleteTable } from "./AthleteTable";
+import { AthleteTable, isInvitable } from "./AthleteTable";
 import { AddAthleteButton } from "./AddAthleteButton";
+import { BulkInviteBar, BulkInviteResult } from "./BulkInviteBar";
+import type { InvitesActionResult } from "@/app/athletes/actions";
 import type { AthleteRowVM } from "./types";
 
 type PayFilter = "all" | "paid" | "pending" | "free";
@@ -28,6 +30,9 @@ const ACCESS_FILTERS: FilterOption<AccessFilter>[] = [
 export function AthleteExplorer({ athletes, archived = false }: { athletes: AthleteRowVM[]; archived?: boolean }) {
   const [pay, setPay] = useState<PayFilter>("all");
   const [access, setAccess] = useState<AccessFilter>("all");
+  // Picked to invite at once. Only those still shown and invitable count, so a filter hides them from the send too.
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [inviteResult, setInviteResult] = useState<InvitesActionResult | null>(null);
 
   const filtered = useMemo(() => {
     return athletes.filter((a) => {
@@ -41,6 +46,13 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
       return true;
     });
   }, [athletes, pay, access]);
+
+  const pickedIds = filtered.filter((a) => selected.has(a.id) && isInvitable(a)).map((a) => a.id);
+
+  function invitesSent(result: InvitesActionResult) {
+    setSelected(new Set());
+    setInviteResult(result);
+  }
 
   function clearFilters() {
     setPay("all");
@@ -77,7 +89,12 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
       <div className="flex flex-wrap items-center gap-2">
         <FilterSelect label="Pago" value={pay} defaultValue="all" options={PAY_FILTERS} onChange={setPay} />
         <FilterSelect label="Acceso" value={access} defaultValue="all" options={ACCESS_FILTERS} onChange={setAccess} />
+        {pickedIds.length > 0 && (
+          <BulkInviteBar athleteIds={pickedIds} onClear={() => setSelected(new Set())} onDone={invitesSent} />
+        )}
       </div>
+
+      {inviteResult && <BulkInviteResult result={inviteResult} onDismiss={() => setInviteResult(null)} />}
 
       {filtered.length === 0 ? (
         <div
@@ -100,7 +117,11 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
           </div>
         </div>
       ) : (
-        <AthleteTable athletes={filtered} />
+        <AthleteTable
+          athletes={filtered}
+          selected={archived ? undefined : selected}
+          onSelectedChange={archived ? undefined : setSelected}
+        />
       )}
     </div>
   );

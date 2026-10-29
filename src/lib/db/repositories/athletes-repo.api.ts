@@ -1,6 +1,6 @@
 import { ApiNotFoundError, ApiValidationError, apiFetch } from "@/lib/api/client";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
-import type { AthleteRepository, GoalInput, RaceGoalInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, InvitesResult, RaceGoalInput } from "@/lib/domain/repositories";
 import type {
   AccessStatus,
   Athlete,
@@ -348,6 +348,10 @@ export const apiAthleteRepository: AthleteRepository = {
 
   async cancelInvite(athleteId) {
     return toAthlete(await call(() => apiFetch<ApiAthlete>("DELETE", `${athletePath(athleteId)}/invite`)));
+  },
+
+  async sendInvites(athleteIds) {
+    return call(() => apiFetch<InvitesResult>("POST", "/v1/athletes/invites", { athleteIds }));
   },
 
   async updateAthlete(athleteId, _coachId, input) {

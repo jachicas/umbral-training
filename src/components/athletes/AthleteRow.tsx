@@ -9,19 +9,41 @@ import type { AthleteRowVM } from "./types";
 
 export const ATHLETE_ROW_GRID_COLS = "1.7fr .5fr .8fr .55fr minmax(150px,1.15fr) 20px";
 
+/** With a leading checkbox column, when the list lets the coach pick athletes. */
+export const athleteRowGridCols = (selectable: boolean) =>
+  selectable ? `18px ${ATHLETE_ROW_GRID_COLS}` : ATHLETE_ROW_GRID_COLS;
+
+export interface RowSelection {
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}
+
 /**
  * The whole row is clickable through a stretched link: the name's <Link>
  * spreads an ::after overlay across the row, and the invite controls sit above
- * it (`relative z-10`) so buttons never end up nested inside an <a>.
+ * it (`relative z-10`) so buttons never end up nested inside an <a>; so does
+ * the selection checkbox.
  */
-export function AthleteRow({ athlete: a }: { athlete: AthleteRowVM }) {
+export function AthleteRow({ athlete: a, selection }: { athlete: AthleteRowVM; selection?: RowSelection }) {
   const payMeta = paymentDisplayMeta(a.paymentStatus, a.paymentConfigured);
 
   return (
     <div
       className="relative grid items-center gap-4 px-5 py-[13px] text-[13.5px] transition-colors hover:bg-[var(--surface-2)]"
-      style={{ gridTemplateColumns: ATHLETE_ROW_GRID_COLS, color: "var(--text)" }}
+      style={{ gridTemplateColumns: athleteRowGridCols(!!selection), color: "var(--text)" }}
     >
+      {selection && (
+        <input
+          type="checkbox"
+          aria-label={`Seleccionar a ${a.fullName}`}
+          checked={selection.checked}
+          disabled={selection.disabled}
+          onChange={selection.onToggle}
+          className="relative z-10 size-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ accentColor: "var(--coral)" }}
+        />
+      )}
       <div className="flex min-w-0 items-center gap-2.5">
         <AthleteAvatar fullName={a.fullName} color={a.avatarColor} size={32} radius={999} />
         <div className="min-w-0">

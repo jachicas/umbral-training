@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getCurrentCoachId } from "@/lib/auth/current-user";
 import * as athletesService from "@/lib/services/athletes";
 import { RACE_REFERENCES } from "@/lib/domain/time";
+import type { InvitesResult } from "@/lib/domain/repositories";
 
 /** Errors keyed by field name so each input can render its own message. */
 export interface FormState {
@@ -224,6 +225,22 @@ export async function sendInviteAction(
   revalidatePath("/athletes");
   revalidatePath(`/athletes/${athleteId}`);
   return {};
+}
+
+export interface InvitesActionResult extends InviteActionResult {
+  invitedCount?: number;
+  skipped?: InvitesResult["skipped"];
+}
+
+export async function sendInvitesAction(athleteIds: string[]): Promise<InvitesActionResult> {
+  let result: InvitesResult;
+  try {
+    result = await athletesService.sendInvites(athleteIds);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No se pudieron enviar las invitaciones." };
+  }
+  revalidatePath("/athletes");
+  return { invitedCount: result.invited.length, skipped: result.skipped };
 }
 
 export async function cancelInviteAction(athleteId: string): Promise<InviteActionResult> {

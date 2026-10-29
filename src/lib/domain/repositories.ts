@@ -99,6 +99,12 @@ export interface SportProfileInput {
  * to the signed-in coach from the access token, so `coachId` is not sent;
  * it stays in the signature for the workouts mock and for callers.
  */
+/** What inviting several athletes at once did: who's invited now, and who wasn't and why. */
+export interface InvitesResult {
+  invited: string[];
+  skipped: { athleteId: string; fullName: string; reason: string }[];
+}
+
 export interface AthleteRepository {
   listByCoach(coachId: string): Promise<Athlete[]>;
   /** Full detail (records/goal/membership) for every athlete — powers the list card grid. */
@@ -118,6 +124,8 @@ export interface AthleteRepository {
   /** Sends (or resends) the portal invite. `email` backfills a draft athlete that had none yet. */
   sendInvite(athleteId: string, coachId: string, email?: string): Promise<Athlete>;
   cancelInvite(athleteId: string, coachId: string): Promise<Athlete>;
+  /** Invites several athletes at once; their emails go out on the API's queue. */
+  sendInvites(athleteIds: string[]): Promise<InvitesResult>;
   updateAthlete(
     athleteId: string,
     coachId: string,
