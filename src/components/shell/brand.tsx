@@ -67,11 +67,6 @@ export function brandCss(palette: ClubPalette | undefined): string {
   ].join("");
 }
 
-export function BrandStyle({ palette }: { palette: ClubPalette | undefined }) {
-  const css = brandCss(palette);
-  return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
-}
-
 /** The club's mark in a shell: its logo, or Umbral's on its dark tile. */
 export function BrandMark({ brand, className }: { brand: ShellBrand; className: string }) {
   if (brand.logoUrl) {

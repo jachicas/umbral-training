@@ -5,8 +5,9 @@ import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addRecordAction } from "@/app/athletes/actions";
-import { RACE_REFERENCES, formatDuration } from "@/lib/domain/time";
+import { RACE_REFERENCES } from "@/lib/domain/time";
 import type { RaceReference } from "@/lib/domain/types";
+import { BLANK_DURATION, DurationInput, durationParts, joinDuration, type DurationParts } from "./fields/DurationInput";
 import { FieldError } from "./fields/FieldError";
 import { FormDialog } from "./fields/FormDialog";
 import { Segmented } from "./fields/Segmented";
@@ -45,7 +46,7 @@ export function AddRecordDialog({ athleteId, latest }: { athleteId: string; late
 }
 
 interface Entry {
-  time: string;
+  time: DurationParts;
   recordedOn: string;
   note: string;
 }
@@ -66,8 +67,8 @@ function RecordFields({ errors, latest }: { errors: Record<string, string | unde
           return [
             r,
             mark
-              ? { time: formatDuration(mark.timeSeconds), recordedOn: mark.recordedOn, note: mark.note ?? "" }
-              : { time: "", recordedOn: todayLocalISO(), note: "" },
+              ? { time: durationParts(mark.timeSeconds), recordedOn: mark.recordedOn, note: mark.note ?? "" }
+              : { time: BLANK_DURATION, recordedOn: todayLocalISO(), note: "" },
           ];
         })
       ) as Record<RaceReference, Entry>
@@ -78,8 +79,8 @@ function RecordFields({ errors, latest }: { errors: Record<string, string | unde
   const entry = entries[reference];
   // Only distances that differ from their current mark get saved (no duplicates).
   const changed = (r: RaceReference) =>
-    entries[r].time.trim() !== "" &&
-    (entries[r].time.trim() !== initial[r].time ||
+    joinDuration(entries[r].time) !== "" &&
+    (joinDuration(entries[r].time) !== joinDuration(initial[r].time) ||
       entries[r].recordedOn !== initial[r].recordedOn ||
       entries[r].note.trim() !== initial[r].note);
   const set = (patch: Partial<Entry>) => setEntries((all) => ({ ...all, [reference]: { ...all[reference], ...patch } }));
@@ -103,18 +104,14 @@ function RecordFields({ errors, latest }: { errors: Record<string, string | unde
         />
       </div>
 
-      <div className="flex gap-2.5">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Label htmlFor="time">Tiempo</Label>
-          <Input id="time" placeholder="21:30" value={entry.time} onChange={(e) => set({ time: e.target.value })} />
-          <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-            mm:ss o h:mm:ss
-          </p>
-        </div>
-        <div className="flex flex-1 flex-col gap-1.5">
-          <Label htmlFor="recordedOn">Fecha</Label>
-          <Input id="recordedOn" type="date" value={entry.recordedOn} onChange={(e) => set({ recordedOn: e.target.value })} />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="time">Tiempo</Label>
+        <DurationInput id="time" value={entry.time} onChange={(time) => set({ time })} invalid={!!errors.time} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="recordedOn">Fecha</Label>
+        <Input id="recordedOn" type="date" value={entry.recordedOn} onChange={(e) => set({ recordedOn: e.target.value })} />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -131,7 +128,7 @@ function RecordFields({ errors, latest }: { errors: Record<string, string | unde
 
       {RACE_REFERENCES.map((r) => (
         <span key={r} hidden>
-          <input type="hidden" name={`time_${r}`} value={changed(r) ? entries[r].time : ""} />
+          <input type="hidden" name={`time_${r}`} value={changed(r) ? joinDuration(entries[r].time) : ""} />
           <input type="hidden" name={`recordedOn_${r}`} value={entries[r].recordedOn} />
           <input type="hidden" name={`note_${r}`} value={entries[r].note} />
         </span>
