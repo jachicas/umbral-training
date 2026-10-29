@@ -75,6 +75,7 @@ export interface ApiMembership {
   mode: MembershipMode;
   amount: number | null;
   currency: string;
+  billingStartsOn: string | null;
   currentPeriod: string;
   currentPeriodStatus: PaymentPeriodStatus;
   periodsOwed: number;
@@ -199,6 +200,7 @@ export function toMembership(api: ApiMembership): Membership {
     mode: api.mode,
     amount: orUndefined(api.amount),
     currency: api.currency,
+    billingStartsOn: orUndefined(api.billingStartsOn),
     currentPeriodLabel: periodLabel(api.currentPeriod),
     currentPeriodStatus: api.currentPeriodStatus,
     periodsOwed: api.periodsOwed,
@@ -275,6 +277,7 @@ const FIELD_FOR_API_KEY: Record<string, ValidationField> = {
   targetPaceSecPerKm: "targetPace",
   targetTimeSeconds: "targetTime",
   amount: "amount",
+  billingStartsOn: "billingStartsOn",
   timeSeconds: "time",
   recordedOn: "recordedOn",
   paidOn: "paidOn",
@@ -428,6 +431,7 @@ export const apiAthleteRepository: AthleteRepository = {
         mode: input.mode,
         amount: input.amount ?? null,
         currency: input.currency,
+        billingStartsOn: input.billingStartsOn ?? null,
       })
     );
     return toMembership(membership);

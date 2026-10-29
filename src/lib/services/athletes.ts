@@ -266,6 +266,8 @@ export interface SaveMembershipInput {
   /** Free-form amount as typed; parsed here. */
   amount?: string;
   currency: string;
+  /** "YYYY-MM", or blank to keep the API's default. */
+  billingStartsOn?: string;
 }
 
 export async function saveMembership(
@@ -278,6 +280,7 @@ export async function saveMembership(
     mode,
     amount: mode === "free" ? undefined : parseNumber(input.amount),
     currency: input.currency.trim(),
+    billingStartsOn: mode === "free" ? undefined : blankToUndefined(input.billingStartsOn),
   });
 }
 

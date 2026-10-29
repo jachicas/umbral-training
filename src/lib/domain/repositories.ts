@@ -78,6 +78,8 @@ export interface MembershipInput {
   mode: MembershipMode;
   amount?: number;
   currency: string;
+  /** "YYYY-MM": the month billing starts in, when the coach picks one. */
+  billingStartsOn?: string;
 }
 
 export interface RaceRecordInput {

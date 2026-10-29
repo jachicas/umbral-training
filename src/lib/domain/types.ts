@@ -112,6 +112,8 @@ export interface Membership {
   mode: MembershipMode;
   amount?: number;
   currency: string;
+  /** "YYYY-MM": the first month billed; absent when nothing is billed. */
+  billingStartsOn?: string;
   currentPeriodLabel: string;
   currentPeriodStatus: PaymentPeriodStatus;
   /** Months owed, the shown one included (computed by the API). */

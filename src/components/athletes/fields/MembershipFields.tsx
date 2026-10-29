@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { periodTitle } from "@/lib/domain/payments";
 import type { Membership, MembershipMode } from "@/lib/domain/types";
 import type { ValidationField } from "@/lib/services/athletes";
 import { FieldError } from "./FieldError";
@@ -10,8 +12,22 @@ import { Segmented } from "./Segmented";
 
 type Errors = Partial<Record<ValidationField, string>>;
 
+/** "YYYY-MM", `offset` months from this one. */
+function monthFromNow(offset: number): string {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** The months billing can start in: a year either side of this one, and the current start if it's older. */
+function startMonths(current: string): string[] {
+  const months = Array.from({ length: 25 }, (_, i) => monthFromNow(i - 12));
+  return current < months[0] ? [current, ...months] : months;
+}
+
 /**
- * Payment mode and, for a paid plan, the agreed monthly amount. "Pasarela" is
+ * Payment mode and, for a paid plan, the agreed monthly amount and the month
+ * billing starts in (this one unless the coach picks another). "Pasarela" is
  * shown but disabled — a payment gateway is out of scope for now, and hiding
  * it entirely would make the roadmap invisible to the coach.
  */
@@ -27,6 +43,7 @@ export function MembershipFields({
   // completes, which would wipe the coach's input every failed validation.
   const [currency, setCurrency] = useState(membership?.currency ?? "$");
   const [amount, setAmount] = useState(membership?.amount?.toString() ?? "");
+  const [startsOn, setStartsOn] = useState(membership?.billingStartsOn ?? monthFromNow(0));
 
   return (
     <>
@@ -74,6 +91,26 @@ export function MembershipFields({
             />
             <FieldError message={errors?.amount} />
           </div>
+        </div>
+      )}
+
+      {mode !== "free" && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="billingStartsOn">Cobrar desde</Label>
+          <NativeSelect
+            id="billingStartsOn"
+            name="billingStartsOn"
+            value={startsOn}
+            onChange={(e) => setStartsOn(e.target.value)}
+            className="w-full"
+          >
+            {startMonths(startsOn).map((m) => (
+              <option key={m} value={m}>
+                {periodTitle(m)}
+              </option>
+            ))}
+          </NativeSelect>
+          <FieldError message={errors?.billingStartsOn} />
         </div>
       )}
     </>

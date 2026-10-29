@@ -156,6 +156,7 @@ export async function saveMembershipAction(
       mode: String(formData.get("mode") ?? "manual"),
       amount: String(formData.get("amount") ?? ""),
       currency: String(formData.get("currency") ?? "$"),
+      billingStartsOn: String(formData.get("billingStartsOn") ?? ""),
     });
   } catch (error) {
     return fieldErrorState(error);
