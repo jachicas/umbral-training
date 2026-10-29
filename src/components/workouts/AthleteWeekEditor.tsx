@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { ChevronRight, FileDown, UserRound } from "lucide-react";
-import type { AthletePaces, PlanChange, WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
+import { missingReferences, type AthletePaces, type PlanChange, type WeekPlan, type WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
 import { addAthleteSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, ModifiedTag, SentBanner } from "./WeekParts";
+import { AddSessionButton, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
 import { WeekPreviewButton } from "./WeekPreviewDialog";
 import { DISCIPLINE_ICON } from "./discipline-icons";
 import { ChangesCard } from "./ChangesCard";
@@ -53,6 +53,7 @@ export function AthleteWeekEditor({
 }) {
   const weekStart = weekDates[0];
   const changedSessions = new Set(changes.filter((c) => c.kind !== "removed").map((c) => c.sessionId));
+  const missing = plan ? missingReferences(plan, paces) : [];
 
 
   return (
@@ -65,6 +66,11 @@ export function AthleteWeekEditor({
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="m-0 text-[24px] font-extrabold tracking-[-.5px]">Semana de {athlete.fullName}</h1>
             {changes.length > 0 && <ModifiedTag />}
+            {missing.map((r) => (
+              <Link key={r} href={`/records/${r}`}>
+                <MissingRecordTag reference={r} />
+              </Link>
+            ))}
           </div>
           <div className="mt-0.5" style={{ color: "var(--text-2)" }}>
             {weekLabel}

@@ -9,8 +9,9 @@ import {
   listGroups,
   listSessionLibrary,
   listWeekPlans,
+  resolvePaces,
 } from "@/lib/services/workouts";
-import { customWeekOf } from "@/lib/domain/workouts";
+import { customWeekOf, missingReferences } from "@/lib/domain/workouts";
 import { weekDatesISO } from "@/lib/domain/time";
 import { WeekPlanEditor, type GroupWeekAthlete } from "@/components/workouts/WeekPlanEditor";
 import { countLabel, weekRangeLabel } from "@/components/workouts/format";
@@ -37,20 +38,25 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
   const group = groups.find((g) => g.id === groupId);
   const dates = weekDatesISO(plan.weekStart);
 
+  const athleteIds = (group?.athleteIds ?? []).filter((id) => details.some((d) => d.athlete.id === id));
+  const groupPaces = athleteIds.length > 0 ? await resolvePaces(plan.id, athleteIds) : {};
+
   const athletes: GroupWeekAthlete[] = await Promise.all(
-    (group?.athleteIds ?? []).flatMap((athleteId) => {
-      const detail = details.find((d) => d.athlete.id === athleteId);
-      if (!detail) return [];
+    athleteIds.map(async (athleteId) => {
+      const detail = details.find((d) => d.athlete.id === athleteId)!;
       const custom = customWeekOf(athleteId, weekPlans);
-      return [
-        (custom ? getAthleteWeekChanges(custom) : Promise.resolve([])).then((changes) => ({
-          id: athleteId,
-          fullName: detail.athlete.fullName,
-          avatarColor: detail.athlete.avatarColor,
-          objectiveLabel: objectiveLabel(detail),
-          modified: changes.length > 0,
-        })),
-      ];
+      const [changes, paces] = await Promise.all([
+        custom ? getAthleteWeekChanges(custom) : [],
+        custom ? resolvePaces(custom.id, [athleteId]) : groupPaces,
+      ]);
+      return {
+        id: athleteId,
+        fullName: detail.athlete.fullName,
+        avatarColor: detail.athlete.avatarColor,
+        objectiveLabel: objectiveLabel(detail),
+        modified: changes.length > 0,
+        missingReferences: missingReferences(custom ?? plan, paces[athleteId] ?? {}),
+      };
     })
   );
 
