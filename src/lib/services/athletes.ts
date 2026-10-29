@@ -138,13 +138,13 @@ function buildRaceGoalInput(input: SaveGoalInput): RaceGoalInput {
   };
 }
 
-/** "3:45:00" → seconds; a bare "45:00" reads as minutes and seconds. */
+/** "h:mm:ss" (joined from the h/min/s boxes) → seconds. */
 function parseTime(raw: string | undefined): number | undefined {
   const trimmed = blankToUndefined(raw);
   if (trimmed === undefined) return undefined;
   const parsed = parseDuration(trimmed);
   if (parsed === null) {
-    throw new FieldValidationError("targetTime", "Usa el formato h:mm:ss (por ejemplo 3:45:00).");
+    throw new FieldValidationError("targetTime", "Los minutos y segundos van de 0 a 59.");
   }
   return parsed;
 }
@@ -297,7 +297,7 @@ export async function addRaceRecord(
   const time = blankToUndefined(input.time);
   const timeSeconds = time === undefined ? undefined : parseDuration(time);
   if (timeSeconds === null) {
-    throw new FieldValidationError("time", "Usa el formato mm:ss o h:mm:ss (por ejemplo 21:30).");
+    throw new FieldValidationError("time", "Los minutos y segundos van de 0 a 59.");
   }
 
   return getRepo().addRaceRecord(athleteId, coachId, {
@@ -333,7 +333,7 @@ export async function addRaceRecords(
   }
   for (const [reference, e] of filled) {
     if (parseDuration(e.time.trim()) === null) {
-      throw new FieldValidationError("time", `${reference.toUpperCase()}: usa el formato mm:ss o h:mm:ss (por ejemplo 21:30).`);
+      throw new FieldValidationError("time", `${reference.toUpperCase()}: los minutos y segundos van de 0 a 59.`);
     }
   }
 

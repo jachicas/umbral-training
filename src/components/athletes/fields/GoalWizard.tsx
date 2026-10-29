@@ -17,6 +17,7 @@ import {
 import { formatDateEs, formatDuration } from "@/lib/domain/time";
 import type { Goal, GoalType, Race, RaceDistanceKey, RaceSport } from "@/lib/domain/types";
 import type { SaveGoalInput, ValidationField } from "@/lib/services/athletes";
+import { DurationInput, durationParts, joinDuration } from "./DurationInput";
 import { FieldError } from "./FieldError";
 import { Segmented } from "./Segmented";
 
@@ -95,7 +96,7 @@ export function GoalWizard({
   const [draft, setDraft] = useState<NewRace>(blankRace);
   const [query, setQuery] = useState("");
   const [targetPace, setTargetPace] = useState(goal?.targetPaceSecPerKm ? formatDuration(goal.targetPaceSecPerKm) : "");
-  const [targetTime, setTargetTime] = useState(goal?.targetTimeSeconds ? formatDuration(goal.targetTimeSeconds) : "");
+  const [targetTime, setTargetTime] = useState(() => durationParts(goal?.targetTimeSeconds));
 
   // After a failed save, open the step that holds the error. Compared by
   // content: forms pass a fresh `{}` on every render.
@@ -115,7 +116,7 @@ export function GoalWizard({
 
   function payload(): SaveGoalInput {
     if (type === "maintenance") return { type };
-    const target = aimsForPace ? { targetPace } : { targetTime };
+    const target = aimsForPace ? { targetPace } : { targetTime: joinDuration(targetTime) };
     if (!creating) return { type, raceId: raceId ?? undefined, ...target };
 
     const keys = raceDistanceFields(draft.sport, draft.format).map((f) => f.key);
@@ -206,15 +207,11 @@ export function GoalWizard({
               error={errors.targetPace}
             />
           ) : (
-            <TextField
-              id="targetTime"
-              label="Tiempo objetivo"
-              hint="Opcional, en h:mm:ss."
-              placeholder="5:30:00"
-              value={targetTime}
-              onChange={setTargetTime}
-              error={errors.targetTime}
-            />
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="targetTime">Tiempo objetivo</Label>
+              <DurationInput id="targetTime" value={targetTime} onChange={setTargetTime} invalid={!!errors.targetTime} />
+              <FieldError message={errors.targetTime} />
+            </div>
           )}
         </div>
       )}
