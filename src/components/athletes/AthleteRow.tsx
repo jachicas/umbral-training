@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AthleteAvatar } from "./AthleteAvatar";
 import { DisciplineIcon } from "./DisciplineIcon";
 import { AccessStatusPill } from "./AccessStatusPill";
@@ -30,20 +32,25 @@ export function AthleteRow({ athlete: a, selection }: { athlete: AthleteRowVM; s
 
   return (
     <div
-      className="relative grid items-center gap-4 px-5 py-[13px] text-[13.5px] transition-colors hover:bg-[var(--surface-2)]"
+      className={cn(
+        "relative grid items-center gap-4 px-5 py-[13px] text-[13.5px] transition-colors",
+        selection?.checked
+          ? "bg-[color-mix(in_srgb,var(--coral)_9%,transparent)] hover:bg-[color-mix(in_srgb,var(--coral)_13%,transparent)]"
+          : "hover:bg-[var(--surface-2)]"
+      )}
       style={{ gridTemplateColumns: athleteRowGridCols(!!selection), color: "var(--text)" }}
     >
-      {selection && (
-        <input
-          type="checkbox"
-          aria-label={`Seleccionar a ${a.fullName}`}
-          checked={selection.checked}
-          disabled={selection.disabled}
-          onChange={selection.onToggle}
-          className="relative z-10 size-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-          style={{ accentColor: "var(--coral)" }}
-        />
-      )}
+      {selection &&
+        (selection.disabled ? (
+          <span aria-hidden />
+        ) : (
+          <Checkbox
+            label={`Seleccionar a ${a.fullName}`}
+            checked={selection.checked}
+            onChange={selection.onToggle}
+            className="relative z-10"
+          />
+        ))}
       <div className="flex min-w-0 items-center gap-2.5">
         <AthleteAvatar fullName={a.fullName} color={a.avatarColor} size={32} radius={999} />
         <div className="min-w-0">

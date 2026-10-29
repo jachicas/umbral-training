@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AthleteRow, athleteRowGridCols } from "./AthleteRow";
 import type { AthleteRowVM } from "./types";
 
@@ -52,11 +52,12 @@ export function AthleteTable({
         }}
       >
         {selectable && (
-          <HeaderCheckbox
+          <Checkbox
+            label="Seleccionar todos"
             checked={allPicked}
             indeterminate={pickedCount > 0 && !allPicked}
             disabled={invitable.length === 0}
-            onToggle={toggleAll}
+            onChange={toggleAll}
           />
         )}
         <span>Atleta</span>
@@ -82,36 +83,5 @@ export function AthleteTable({
         ))}
       </div>
     </div>
-  );
-}
-
-function HeaderCheckbox({
-  checked,
-  indeterminate,
-  disabled,
-  onToggle,
-}: {
-  checked: boolean;
-  indeterminate: boolean;
-  disabled: boolean;
-  onToggle: () => void;
-}) {
-  const ref = useRef<HTMLInputElement>(null);
-  // `indeterminate` is a DOM property only, with no attribute for React to set.
-  useEffect(() => {
-    if (ref.current) ref.current.indeterminate = indeterminate;
-  }, [indeterminate]);
-
-  return (
-    <input
-      ref={ref}
-      type="checkbox"
-      aria-label="Seleccionar todos"
-      checked={checked}
-      disabled={disabled}
-      onChange={onToggle}
-      className="size-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-      style={{ accentColor: "var(--coral)" }}
-    />
   );
 }
