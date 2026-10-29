@@ -15,6 +15,7 @@ export type ValidationField =
   | "targetPace"
   | "targetTime"
   | "amount"
+  | "billingStartsOn"
   | "time"
   | "recordedOn"
   | "paidOn"
