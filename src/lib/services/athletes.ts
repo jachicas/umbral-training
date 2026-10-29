@@ -1,5 +1,5 @@
 import { apiAthleteRepository } from "@/lib/db/repositories/athletes-repo.api";
-import type { AthleteRepository, GoalInput, RaceGoalInput, RaceInput, SportProfileInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, InvitesResult, RaceGoalInput, RaceInput, SportProfileInput } from "@/lib/domain/repositories";
 import type {
   Athlete,
   AthleteDetail,
@@ -204,6 +204,10 @@ export async function sendInvite(
   email?: string
 ): Promise<Athlete> {
   return getRepo().sendInvite(athleteId, coachId, blankToUndefined(email));
+}
+
+export async function sendInvites(athleteIds: string[]): Promise<InvitesResult> {
+  return getRepo().sendInvites(athleteIds);
 }
 
 export async function cancelInvite(athleteId: string, coachId: string): Promise<Athlete> {

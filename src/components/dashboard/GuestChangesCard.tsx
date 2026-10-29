@@ -16,6 +16,7 @@ const ACTION_LABELS: Record<string, string> = {
   "PUT athletes/{athlete}/goals/{goal}": "Editó una carrera",
   "DELETE athletes/{athlete}/goals/{goal}": "Quitó una carrera",
   "POST athletes/{athlete}/invite": "Invitó al portal",
+  "POST athletes/invites": "Invitó al portal a varios atletas",
   "DELETE athletes/{athlete}/invite": "Canceló la invitación al portal",
   "POST athletes/{athlete}/records": "Registró un tiempo",
   "PUT athletes/{athlete}/membership": "Cambió la membresía",
