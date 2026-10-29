@@ -6,7 +6,8 @@ import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { markWeekSentAction } from "@/app/workouts/actions";
 import { BackLink } from "./WorkoutsHeader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { SentBanner } from "./WeekParts";
+import { MissingRecordTag, SentBanner } from "./WeekParts";
+import type { RaceReference } from "@/lib/domain/types";
 
 export interface AthleteMessage {
   athleteId: string;
@@ -16,6 +17,8 @@ export interface AthleteMessage {
   /** Where the week's PDF goes when the week is sent. */
   email?: string;
   workoutCount: number;
+  /** Distances their week's paces need that they have no time over. */
+  missingReferences: RaceReference[];
   text: string;
 }
 
@@ -48,6 +51,7 @@ export function SendWeek({
   const [sendError, setSendError] = useState<string>();
 
   const withEmail = messages.filter((m) => m.email).length;
+  const withoutRecords = messages.filter((m) => m.missingReferences.length > 0).length;
 
   function send() {
     startSending(async () => {
@@ -122,7 +126,11 @@ export function SendWeek({
         description={
           (withEmail > 0
             ? `PDF por email a ${withEmail} de ${messages.length} ${messages.length === 1 ? "atleta" : "atletas"}.`
-            : "Ningún atleta tiene email.") + " Después ya no se puede cambiar."
+            : "Ningún atleta tiene email.") +
+          (withoutRecords > 0
+            ? ` ${withoutRecords} ${withoutRecords === 1 ? "atleta" : "atletas"} sin marca de referencia.`
+            : "") +
+          " Después ya no se puede cambiar."
         }
         confirmLabel={sending ? "Enviando…" : "Enviar"}
         tone="primary"
@@ -157,7 +165,12 @@ export function SendWeek({
                   >
                     <AthleteAvatar fullName={m.fullName} color={m.avatarColor} size={32} radius={9} />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13.5px] font-semibold">{m.fullName}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-[13.5px] font-semibold">{m.fullName}</span>
+                        {m.missingReferences.map((r) => (
+                          <MissingRecordTag key={r} reference={r} />
+                        ))}
+                      </div>
                       <div className="text-[11.5px]" style={{ color: "var(--text-3)" }}>
                         {m.workoutCount} {m.workoutCount === 1 ? "entreno" : "entrenos"}
                         {!m.email && " · sin email"}

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getCurrentCoachId } from "@/lib/auth/current-user";
 import { listAthleteDetails } from "@/lib/services/athletes";
 import { getWeekSentOn, listGroups, listWeekPlans, resolvePaces } from "@/lib/services/workouts";
-import { effectivePlanFor, planSessions } from "@/lib/domain/workouts";
+import { effectivePlanFor, missingReferences, planSessions } from "@/lib/domain/workouts";
 import { SendWeek, type AthleteMessage } from "@/components/workouts/SendWeek";
 import { weekMessage, weekRangeLabel } from "@/components/workouts/format";
 import { resolveWeek } from "../week";
@@ -39,6 +39,7 @@ export default async function SendWeekPage({
         phone: athlete.phone,
         email: athlete.email,
         workoutCount: planSessions(plan).length,
+        missingReferences: missingReferences(plan, paces[athlete.id] ?? {}),
         text: weekMessage(athlete.fullName, dates, plan, { paces: paces[athlete.id] }),
       };
     })

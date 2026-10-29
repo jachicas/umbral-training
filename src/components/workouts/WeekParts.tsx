@@ -6,6 +6,7 @@ import { Lock, Minus, Plus } from "lucide-react";
 import type { AthletePaces, WorkoutSession, WorkoutStep } from "@/lib/domain/workouts";
 import { stepKey } from "@/lib/domain/workouts";
 import { DISCIPLINE_META, DISCIPLINE_ORDER } from "@/lib/domain/discipline";
+import type { RaceReference } from "@/lib/domain/types";
 import type { ActionState } from "@/app/workouts/actions";
 import { describeSession, formatPace, formatStepDuration, sessionSummary, stepTail, targetLabel } from "./format";
 import { formatDateEs } from "@/lib/domain/time";
@@ -34,6 +35,18 @@ export function ModifiedTag() {
       style={{ background: "rgba(124,58,237,.16)", color: "var(--modified)" }}
     >
       Modificado
+    </span>
+  );
+}
+
+/** A distance the week's paces need that the athlete has no time over. */
+export function MissingRecordTag({ reference }: { reference: RaceReference }) {
+  return (
+    <span
+      className="rounded-[6px] px-1.5 py-0.5 text-[10.5px] font-bold tracking-[.02em] whitespace-nowrap uppercase"
+      style={{ background: "rgba(217,119,6,.14)", color: "var(--pend)" }}
+    >
+      Sin {reference.toUpperCase()}
     </span>
   );
 }

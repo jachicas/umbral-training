@@ -6,10 +6,11 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ArrowRight, Send, X } from "lucide-react";
 import type { WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
+import type { RaceReference } from "@/lib/domain/types";
 import { addSessionAction, removeSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, ModifiedTag, SentBanner } from "./WeekParts";
+import { AddSessionButton, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
 import { dayLabel, sessionSummary } from "./format";
 
 export interface GroupWeekAthlete {
@@ -19,6 +20,8 @@ export interface GroupWeekAthlete {
   objectiveLabel: string;
   /** Their own week has edits compared to the group's. */
   modified: boolean;
+  /** Distances their week's paces need that they have no time over. */
+  missingReferences: RaceReference[];
 }
 
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
@@ -168,6 +171,9 @@ export function WeekPlanEditor({
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[13.5px] font-semibold">{a.fullName}</span>
                     {a.modified && <ModifiedTag />}
+                    {a.missingReferences.map((r) => (
+                      <MissingRecordTag key={r} reference={r} />
+                    ))}
                   </div>
                   <div className="truncate text-[11.5px]" style={{ color: "var(--text-3)" }}>
                     {a.objectiveLabel}

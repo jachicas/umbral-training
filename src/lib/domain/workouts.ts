@@ -128,6 +128,21 @@ export function sessionRelativeSteps(session: WorkoutSession): WorkoutStep[] {
     .filter((s) => s.target.kind === "relative");
 }
 
+/**
+ * References the plan's relative steps use that the athlete has no time
+ * over: their pace came back estimated, or not at all.
+ */
+export function missingReferences(plan: WeekPlan, paces: AthletePaces): RaceReference[] {
+  const missing = new Set<RaceReference>();
+  for (const session of planSessions(plan)) {
+    for (const step of sessionRelativeSteps(session)) {
+      const pace = paces[stepKey(session.id, step.id)];
+      if (step.target.kind === "relative" && (!pace || pace.estimated)) missing.add(step.target.reference);
+    }
+  }
+  return [...missing];
+}
+
 /** Sessions that differ per athlete (paces or sets) — the ones worth reviewing athlete by athlete. */
 export function isPersonalized(session: WorkoutSession): boolean {
   return sessionRelativeSteps(session).length > 0 || sessionRepeats(session).length > 0;
