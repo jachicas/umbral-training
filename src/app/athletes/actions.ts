@@ -6,25 +6,12 @@ import { getCurrentCoachId } from "@/lib/auth/current-user";
 import * as athletesService from "@/lib/services/athletes";
 import { RACE_REFERENCES } from "@/lib/domain/time";
 import type { InvitesResult } from "@/lib/domain/repositories";
+import { fieldErrorState, type FormState } from "@/app/form-state";
 
-/** Errors keyed by field name so each input can render its own message. */
-export interface FormState {
-  errors?: Partial<Record<athletesService.ValidationField, string>>;
-  success?: boolean;
-}
+export type { FormState } from "@/app/form-state";
 
 /** Kept as an alias so the create dialog keeps its original, more descriptive type name. */
 export type CreateAthleteState = FormState;
-
-function fieldErrorState(error: unknown): FormState {
-  if (error instanceof athletesService.ValidationErrors) {
-    return { errors: error.errors };
-  }
-  if (error instanceof athletesService.FieldValidationError) {
-    return { errors: { [error.field]: error.message } };
-  }
-  return { errors: { general: error instanceof Error ? error.message : "Algo salió mal." } };
-}
 
 /** Raw strings only — the API whitelists every enum before anything is stored. */
 function disciplinesFrom(formData: FormData): string[] {

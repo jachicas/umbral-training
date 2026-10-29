@@ -86,7 +86,7 @@ function buildSportProfile(input: SportProfileFormInput): SportProfileInput {
   };
 }
 
-/** A new race as typed in the goal wizard: every value a string, parsed here. */
+/** A race as typed (the goal wizard, the races page): every value a string, parsed here. */
 export interface RaceFormInput {
   name?: string;
   date?: string;
@@ -107,7 +107,7 @@ export interface SaveGoalInput {
   targetTime?: string;
 }
 
-function buildRaceInput(input: RaceFormInput): RaceInput {
+export function buildRaceInput(input: RaceFormInput): RaceInput {
   const distances = Object.fromEntries(
     Object.entries(input.distances ?? {})
       .map(([key, raw]) => [key, parseNumber(raw)])
