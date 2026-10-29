@@ -1,6 +1,6 @@
 import { ApiNotFoundError, ApiValidationError, apiFetch } from "@/lib/api/client";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
-import type { AthleteRepository, GoalInput, InvitesResult, RaceGoalInput } from "@/lib/domain/repositories";
+import type { AthleteRepository, GoalInput, InvitesResult, RaceGoalInput, RaceInput } from "@/lib/domain/repositories";
 import type {
   AccessStatus,
   Athlete,
@@ -28,7 +28,7 @@ import { EntryErrors, ValidationErrors, type ValidationField } from "@/lib/servi
 /* where the domain uses undefined.                                     */
 /* ------------------------------------------------------------------ */
 
-interface ApiRace {
+export interface ApiRace {
   id: string;
   name: string;
   date: string;
@@ -38,6 +38,14 @@ interface ApiRace {
   format: string | null;
   distances: RaceDistances | null;
   athleteCount?: number;
+  athletes?: {
+    id: string;
+    fullName: string;
+    disciplines: Discipline[];
+    goalId: string;
+    targetPaceSecPerKm: number | null;
+    targetTimeSeconds: number | null;
+  }[];
 }
 
 export interface ApiGoal {
@@ -135,8 +143,7 @@ function toAthlete(api: ApiAthlete): Athlete {
     weeklyAvailabilityDays: orUndefined(api.weeklyAvailabilityDays),
     weeklyAvailabilityHours: orUndefined(api.weeklyAvailabilityHours),
     thresholds: toThresholds(api.thresholds),
-    // Presentation only: the API doesn't store colors.
-    avatarColor: api.disciplines[0] ? DISCIPLINE_META[api.disciplines[0]].colorVar : "var(--coral)",
+    avatarColor: avatarColorOf(api.disciplines),
     createdAt: api.createdAt.slice(0, 10),
   };
 }
@@ -155,7 +162,11 @@ export function toGoal(api: ApiGoal): Goal {
   };
 }
 
-function toRace(api: ApiRace): Race {
+/** Presentation only: the API doesn't store colors. */
+const avatarColorOf = (disciplines: Discipline[]) =>
+  disciplines[0] ? DISCIPLINE_META[disciplines[0]].colorVar : "var(--coral)";
+
+export function toRace(api: ApiRace): Race {
   return {
     id: api.id,
     name: api.name,
@@ -166,6 +177,14 @@ function toRace(api: ApiRace): Race {
     format: orUndefined(api.format),
     distances: orUndefined(api.distances),
     athleteCount: api.athleteCount,
+    athletes: api.athletes?.map((a) => ({
+      id: a.id,
+      fullName: a.fullName,
+      avatarColor: avatarColorOf(a.disciplines),
+      goalId: a.goalId,
+      targetPaceSecPerKm: orUndefined(a.targetPaceSecPerKm),
+      targetTimeSeconds: orUndefined(a.targetTimeSeconds),
+    })),
   };
 }
 
@@ -211,20 +230,22 @@ function goalBody(goal: GoalInput) {
   return { type: goal.type, ...raceGoalBody(goal) };
 }
 
+export function raceBody(race: RaceInput) {
+  return {
+    name: race.name,
+    date: race.date,
+    location: race.location ?? null,
+    sport: race.sport,
+    sportLabel: race.sportLabel ?? null,
+    format: race.format ?? null,
+    distances: race.distances,
+  };
+}
+
 function raceGoalBody(goal: RaceGoalInput) {
   return {
     raceId: goal.raceId ?? null,
-    race: goal.race
-      ? {
-          name: goal.race.name,
-          date: goal.race.date,
-          location: goal.race.location ?? null,
-          sport: goal.race.sport,
-          sportLabel: goal.race.sportLabel ?? null,
-          format: goal.race.format ?? null,
-          distances: goal.race.distances,
-        }
-      : null,
+    race: goal.race ? raceBody(goal.race) : null,
     targetPaceSecPerKm: goal.targetPaceSecPerKm ?? null,
     targetTimeSeconds: goal.targetTimeSeconds ?? null,
   };
@@ -275,15 +296,18 @@ function fieldFor(apiKey: string): ValidationField {
   return FIELD_FOR_API_KEY[apiKey] ?? FIELD_FOR_API_KEY[key] ?? "general";
 }
 
-/** Runs an API call, turning a 422 into field errors the forms can show. */
-export async function call<T>(request: () => Promise<T>): Promise<T> {
+/**
+ * Runs an API call, turning a 422 into field errors the forms can show.
+ * `keyPrefix` reads the API's keys as nested ones ("race." makes `name` the race's).
+ */
+export async function call<T>(request: () => Promise<T>, keyPrefix = ""): Promise<T> {
   try {
     return await request();
   } catch (error) {
     if (error instanceof ApiValidationError) {
       const errors: Partial<Record<ValidationField, string>> = {};
       for (const [key, messages] of Object.entries(error.errors)) {
-        const field = fieldFor(key);
+        const field = fieldFor(keyPrefix + key);
         errors[field] ??= messages[0];
       }
       throw new ValidationErrors(errors);

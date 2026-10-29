@@ -74,6 +74,18 @@ export interface Race {
   distances?: RaceDistances;
   /** Athletes with it as their active goal (catalog listings only). */
   athleteCount?: number;
+  /** Who runs it: active athletes with it in their line-up, by name (catalog listings only). */
+  athletes?: RaceRunner[];
+}
+
+export interface RaceRunner {
+  id: string;
+  fullName: string;
+  avatarColor: string;
+  /** Their goal for this race. */
+  goalId: string;
+  targetPaceSecPerKm?: number;
+  targetTimeSeconds?: number;
 }
 
 export interface Goal {

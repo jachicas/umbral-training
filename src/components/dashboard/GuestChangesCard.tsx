@@ -51,6 +51,7 @@ const ACTION_LABELS: Record<string, string> = {
   "POST races": "Agregó una carrera",
   "PUT races/{race}": "Editó una carrera",
   "PATCH races/{race}": "Editó una carrera",
+  "DELETE races/{race}": "Eliminó una carrera",
 };
 
 /** "28 oct 2026 · 14:05": `createdAt` already comes in the coach's timezone. */

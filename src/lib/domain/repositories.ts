@@ -50,6 +50,18 @@ export interface RaceInput {
   distances: RaceDistances;
 }
 
+/** The coach's race catalog. */
+export interface RaceRepository {
+  /** From today on, soonest first. */
+  listUpcoming(): Promise<Race[]>;
+  get(raceId: string): Promise<Race | null>;
+  create(input: RaceInput): Promise<Race>;
+  /** Every athlete with it in their line-up sees the change. */
+  update(raceId: string, input: RaceInput): Promise<Race>;
+  /** Refused while some athlete has, or had, it in their line-up. */
+  remove(raceId: string): Promise<void>;
+}
+
 /** A race goal points to a catalog race (`raceId`) or registers a new one (`race`). */
 export interface GoalInput {
   type: GoalType;

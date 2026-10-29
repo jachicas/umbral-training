@@ -3,23 +3,14 @@
 import { useState, type ReactNode } from "react";
 import { Check, ChevronLeft, Flag, Plus, Search, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
-import {
-  RACE_SPORTS,
-  normalizeRaceName,
-  raceAimsForPace,
-  raceDistanceFields,
-  raceFormats,
-  raceSummary,
-} from "@/lib/domain/races";
+import { normalizeRaceName, raceAimsForPace, raceSummary } from "@/lib/domain/races";
 import { formatDateEs, formatDuration } from "@/lib/domain/time";
-import type { Goal, GoalType, Race, RaceDistanceKey, RaceSport } from "@/lib/domain/types";
+import type { Goal, GoalType, Race } from "@/lib/domain/types";
 import type { SaveGoalInput, ValidationField } from "@/lib/services/athletes";
 import { DurationInput, durationParts, joinDuration } from "./DurationInput";
 import { FieldError } from "./FieldError";
-import { Segmented } from "./Segmented";
+import { RaceFields, TextField, blankRace, racePayload, type RaceDraft } from "./RaceFields";
 
 type Errors = Partial<Record<ValidationField, string>>;
 type Step = "type" | "race" | "details";
@@ -37,26 +28,6 @@ const DETAIL_FIELDS: ValidationField[] = [
   "targetPace",
   "targetTime",
 ];
-
-interface NewRace {
-  name: string;
-  date: string;
-  location: string;
-  sport: RaceSport;
-  sportLabel: string;
-  format: string;
-  distances: Partial<Record<RaceDistanceKey, string>>;
-}
-
-const blankRace = (name = ""): NewRace => ({
-  name,
-  date: "",
-  location: "",
-  sport: "road",
-  sportLabel: "",
-  format: "10k",
-  distances: {},
-});
 
 /** The step a set of errors points to: the one holding the first field in error. */
 function stepForErrors(errors: Errors): Step | null {
@@ -93,7 +64,7 @@ export function GoalWizard({
   const [step, setStep] = useState<Step>(raceOnly ? (goal?.race ? "details" : "race") : "type");
   const [raceId, setRaceId] = useState<string | null>(goal?.race?.id ?? null);
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState<NewRace>(blankRace);
+  const [draft, setDraft] = useState<RaceDraft>(blankRace);
   const [query, setQuery] = useState("");
   const [targetPace, setTargetPace] = useState(goal?.targetPaceSecPerKm ? formatDuration(goal.targetPaceSecPerKm) : "");
   const [targetTime, setTargetTime] = useState(() => durationParts(goal?.targetTimeSeconds));
@@ -119,20 +90,7 @@ export function GoalWizard({
     const target = aimsForPace ? { targetPace } : { targetTime: joinDuration(targetTime) };
     if (!creating) return { type, raceId: raceId ?? undefined, ...target };
 
-    const keys = raceDistanceFields(draft.sport, draft.format).map((f) => f.key);
-    return {
-      type,
-      race: {
-        name: draft.name,
-        date: draft.date,
-        location: draft.location,
-        sport: draft.sport,
-        sportLabel: draft.sport === "other" ? draft.sportLabel : undefined,
-        format: raceFormats(draft.sport) ? draft.format : undefined,
-        distances: Object.fromEntries(keys.map((k) => [k, draft.distances[k] ?? ""])),
-      },
-      ...target,
-    };
+    return { type, race: racePayload(draft), ...target };
   }
 
   function pick(race: Race) {
@@ -185,7 +143,7 @@ export function GoalWizard({
       {step === "details" && (
         <div className="flex flex-col gap-4">
           {creating ? (
-            <NewRaceFields
+            <RaceFields
               draft={draft}
               onChange={setDraft}
               races={catalog}
@@ -406,193 +364,6 @@ function ChosenRace({ race, onChange }: { race: Race; onChange: () => void }) {
       <button type="button" onClick={onChange} className="text-[12.5px] font-bold" style={{ color: "var(--coral)" }}>
         Cambiar
       </button>
-    </div>
-  );
-}
-
-function NewRaceFields({
-  draft,
-  onChange,
-  races,
-  onPick,
-  errors,
-}: {
-  draft: NewRace;
-  onChange: (draft: NewRace) => void;
-  races: Race[];
-  onPick: (race: Race) => void;
-  errors: Errors;
-}) {
-  const set = (patch: Partial<NewRace>) => onChange({ ...draft, ...patch });
-  const formats = raceFormats(draft.sport);
-  const distances = raceDistanceFields(draft.sport, draft.format);
-
-  // A race the coach may be typing again: offer the one already registered.
-  const needle = normalizeRaceName(draft.name);
-  const existing = needle.length >= 3 ? races.find((r) => normalizeRaceName(r.name).includes(needle)) : undefined;
-
-  return (
-    <>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="raceSport">Tipo de carrera</Label>
-        <NativeSelect
-          id="raceSport"
-          value={draft.sport}
-          className="w-full"
-          onChange={(e) => {
-            const sport = e.target.value as RaceSport;
-            set({ sport, format: raceFormats(sport)?.[0].id ?? "" });
-          }}
-        >
-          {RACE_SPORTS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </NativeSelect>
-        <FieldError message={errors.raceSport} />
-      </div>
-
-      {draft.sport === "other" && (
-        <TextField
-          id="raceSportLabel"
-          label="¿Qué carrera es?"
-          placeholder="Aguas abiertas, aventura…"
-          value={draft.sportLabel}
-          onChange={(sportLabel) => set({ sportLabel })}
-          error={errors.raceSportLabel}
-        />
-      )}
-
-      {formats && (
-        <div className="flex flex-col gap-1.5">
-          <span id="raceFormat-label" className="text-sm font-medium">
-            {draft.sport === "hyrox" ? "Categoría" : "Distancia"}
-          </span>
-          <Segmented
-            name="_raceFormat"
-            labelId="raceFormat-label"
-            value={draft.format}
-            onChange={(format) => set({ format })}
-            options={formats}
-          />
-          <FieldError message={errors.raceFormat} />
-        </div>
-      )}
-
-      {distances.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <div className={`grid gap-2 ${distances.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
-            {distances.map((f) => (
-              <div key={f.key} className="flex flex-col gap-1.5">
-                <Label htmlFor={`distance-${f.key}`}>
-                  {f.label}
-                  {!f.required && (
-                    <span className="font-normal" style={{ color: "var(--text-3)" }}>
-                      {" "}
-                      (opcional)
-                    </span>
-                  )}
-                </Label>
-                <div className="relative">
-                  <Input
-                    id={`distance-${f.key}`}
-                    inputMode="decimal"
-                    className="pr-9"
-                    value={draft.distances[f.key] ?? ""}
-                    onChange={(e) => set({ distances: { ...draft.distances, [f.key]: e.target.value } })}
-                  />
-                  <span
-                    className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-[12px]"
-                    style={{ color: "var(--text-3)" }}
-                  >
-                    {f.unit}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <FieldError message={errors.raceDistances} />
-        </div>
-      )}
-
-      <div className="flex flex-col gap-1.5">
-        <TextField
-          id="raceName"
-          label="Nombre"
-          placeholder="Maratón de San Salvador"
-          value={draft.name}
-          onChange={(name) => set({ name })}
-          error={errors.raceName}
-        />
-        {existing && (
-          <button
-            type="button"
-            onClick={() => onPick(existing)}
-            className="flex items-center justify-between gap-2 rounded-[10px] px-3 py-2 text-left text-[12.5px]"
-            style={{ background: "var(--surface-2)" }}
-          >
-            <span className="min-w-0 truncate" style={{ color: "var(--text-2)" }}>
-              Ya registrada: <b style={{ color: "var(--text)" }}>{existing.name}</b> · {formatDateEs(existing.date)}
-            </span>
-            <span className="flex-none font-bold" style={{ color: "var(--coral)" }}>
-              Usar esta
-            </span>
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <TextField
-          id="raceDate"
-          label="Fecha"
-          type="date"
-          value={draft.date}
-          onChange={(date) => set({ date })}
-          error={errors.raceDate}
-        />
-        <TextField
-          id="raceLocation"
-          label="Lugar"
-          placeholder="Opcional"
-          value={draft.location}
-          onChange={(location) => set({ location })}
-          error={errors.raceLocation}
-        />
-      </div>
-    </>
-  );
-}
-
-function TextField({
-  id,
-  label,
-  hint,
-  type = "text",
-  placeholder,
-  value,
-  onChange,
-  error,
-}: {
-  id: string;
-  label: string;
-  hint?: string;
-  type?: string;
-  placeholder?: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} />
-      {hint && (
-        <p className="text-[12px]" style={{ color: "var(--text-3)" }}>
-          {hint}
-        </p>
-      )}
-      <FieldError message={error} />
     </div>
   );
 }
