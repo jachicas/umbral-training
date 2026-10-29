@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogIn, LogOut, Menu, Moon, Plus, Search, Sun } from "lucide-react";
+import { Bell, LogIn, LogOut, Menu, Moon, Plus, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV_GROUPS, NAV_GROUPS, activeNavItem, navGroupLabel, type NavBadge, type NavBadges } from "./nav";
 import { BrandMark, type ShellBrand } from "./brand";
 import { toggleTheme } from "./theme";
+import { HeaderSearch, HeaderSearchFallback } from "./HeaderSearch";
 import { signOutAction } from "@/app/login/actions";
 import { leaveClubAction } from "@/app/admin/actions";
 import type { AccountRole } from "@/lib/domain/portal";
@@ -258,25 +259,13 @@ export function AppShell({
               </div>
             )}
 
-            <label
-              className={cn(
-                "glass ml-0 flex h-11 min-w-0 max-w-[540px] flex-1 cursor-text items-center gap-2.5 rounded-full px-4 lg:ml-6",
-                adminPages && "invisible"
-              )}
-            >
-              <Search size={17} className="flex-none" style={{ color: "var(--text-3)" }} />
-              <input
-                placeholder="Buscar atletas, entrenos, carreras…"
-                className="w-full min-w-0 bg-transparent text-[14px] outline-none placeholder:text-[var(--text-3)]"
-                style={{ color: "var(--text)" }}
-              />
-              <kbd
-                className="flex-none rounded-md border px-1.5 py-0.5 font-sans text-[11px] font-semibold max-md:hidden"
-                style={{ color: "var(--text-2)", borderColor: "var(--border-2)", background: "var(--surface-2)" }}
-              >
-                ⌘K
-              </kbd>
-            </label>
+            {adminPages ? (
+              <div className="min-w-0 max-w-[540px] flex-1 lg:ml-6" />
+            ) : (
+              <Suspense fallback={<HeaderSearchFallback className="lg:ml-6" />}>
+                <HeaderSearch className="lg:ml-6" />
+              </Suspense>
+            )}
 
             <div className="flex-1" />
 

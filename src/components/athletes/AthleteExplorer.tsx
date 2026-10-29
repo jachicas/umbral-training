@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FilterSelect, type FilterOption } from "@/components/ui/filter-select";
+import { Pagination } from "@/components/ui/pagination";
 import { isPendingOrOverdue } from "@/lib/domain/payments";
 import { AthleteTable, isInvitable } from "./AthleteTable";
 import { AddAthleteButton } from "./AddAthleteButton";
@@ -26,16 +28,32 @@ const ACCESS_FILTERS: FilterOption<AccessFilter>[] = [
   { value: "linked", label: "Vinculado" },
 ];
 
+const PAGE_SIZE = 20;
+
+/** Lowercase and without accents, so "umana" finds "Umaña". */
+const normalize = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+
 /** `archived`: the list of archived athletes, which only differs in its empty state. */
 export function AthleteExplorer({ athletes, archived = false }: { athletes: AthleteRowVM[]; archived?: boolean }) {
+  // Typed in the header's search (`HeaderSearch`), which keeps it in the URL.
+  const query = useSearchParams().get("q")?.trim() ?? "";
   const [pay, setPay] = useState<PayFilter>("all");
   const [access, setAccess] = useState<AccessFilter>("all");
+  // Back to the first page whenever the filters or the search change.
+  const filterKey = `${pay}|${access}|${query}`;
+  const [pageAt, setPageAt] = useState({ key: filterKey, page: 1 });
+  const listRef = useRef<HTMLDivElement>(null);
   // Picked to invite at once. Only those still shown and invitable count, so a filter hides them from the send too.
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [inviteResult, setInviteResult] = useState<InvitesActionResult | null>(null);
 
   const filtered = useMemo(() => {
+    const terms = normalize(query).split(/\s+/).filter(Boolean);
     return athletes.filter((a) => {
+      if (terms.length > 0) {
+        const haystack = normalize(`${a.fullName} ${a.email ?? ""} ${a.objectiveLabel}`);
+        if (!terms.every((t) => haystack.includes(t))) return false;
+      }
       if (pay === "paid" && a.paymentStatus !== "paid") return false;
       // An athlete with no agreed fee owes nothing, so it is not "pending".
       if (pay === "pending" && !(a.paymentConfigured && isPendingOrOverdue(a.paymentStatus))) {
@@ -45,7 +63,11 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
       if (access !== "all" && a.accessStatus !== access) return false;
       return true;
     });
-  }, [athletes, pay, access]);
+  }, [athletes, pay, access, query]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = pageAt.key === filterKey ? Math.min(pageAt.page, pageCount) : 1;
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const pickedIds = filtered.filter((a) => selected.has(a.id) && isInvitable(a)).map((a) => a.id);
 
@@ -57,6 +79,15 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
   function clearFilters() {
     setPay("all");
     setAccess("all");
+    const params = new URLSearchParams(window.location.search);
+    params.delete("q");
+    const rest = params.toString();
+    window.history.replaceState(null, "", rest ? `${window.location.pathname}?${rest}` : window.location.pathname);
+  }
+
+  function changePage(p: number) {
+    setPageAt({ key: filterKey, page: p });
+    listRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
   }
 
   if (athletes.length === 0 && archived) {
@@ -117,11 +148,19 @@ export function AthleteExplorer({ athletes, archived = false }: { athletes: Athl
           </div>
         </div>
       ) : (
-        <AthleteTable
-          athletes={filtered}
-          selected={archived ? undefined : selected}
-          onSelectedChange={archived ? undefined : setSelected}
-        />
+        <div ref={listRef} className="flex scroll-mt-4 flex-col gap-4">
+          <AthleteTable
+            athletes={pageRows}
+            selected={archived ? undefined : selected}
+            onSelectedChange={archived ? undefined : setSelected}
+          />
+          <Pagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={filtered.length}
+            onPageChange={changePage}
+          />
+        </div>
       )}
     </div>
   );
