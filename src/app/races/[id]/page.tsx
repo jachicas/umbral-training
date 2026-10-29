@@ -43,7 +43,7 @@ export default async function RacePage({ params }: { params: Promise<{ id: strin
           <div className="mt-1 flex flex-wrap gap-x-2 text-[14px]" style={{ color: "var(--text-2)" }}>
             <span>{formatDateEs(race.date)}</span>
             <span aria-hidden>·</span>
-            <span className="font-semibold" style={{ color: "var(--coral)" }}>
+            <span className="font-semibold" style={{ color: "var(--text)" }}>
               {daysLeftLabel(race.date)}
             </span>
             <span aria-hidden>·</span>

@@ -32,12 +32,15 @@ export function RaceList({ races }: { races: Race[] }) {
             className="flex items-center gap-4 px-5 py-4 text-inherit transition-colors hover:bg-[var(--surface-2)] hover:text-inherit"
             style={i > 0 ? { borderTop: "1px solid var(--border)" } : undefined}
           >
+            {/* Neutral on purpose: a club's color may not read as text on its own tint (dark mode). */}
             <div
-              className="flex size-[52px] flex-none flex-col items-center justify-center rounded-[14px]"
-              style={{ background: "var(--coral-tint)", color: "var(--coral)" }}
+              className="flex size-12 flex-none flex-col items-center justify-center rounded-[12px] border"
+              style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
             >
-              <span className="text-[19px] leading-none font-extrabold tabular-nums">{Number(day)}</span>
-              <span className="mt-0.5 text-[11px] font-bold uppercase">{MONTHS[Number(month) - 1]}</span>
+              <span className="text-[18px] leading-none font-extrabold tabular-nums">{Number(day)}</span>
+              <span className="mt-0.5 text-[10.5px] font-bold tracking-[.04em] uppercase" style={{ color: "var(--text-2)" }}>
+                {MONTHS[Number(month) - 1]}
+              </span>
             </div>
 
             <div className="min-w-0 flex-1">
@@ -51,13 +54,21 @@ export function RaceList({ races }: { races: Race[] }) {
                     <span className="truncate">{race.location}</span>
                   </>
                 )}
-              </div>
-              <div className="mt-0.5 text-[12px] font-semibold" style={{ color: "var(--text-3)" }}>
-                {daysLeftLabel(race.date)}
+                <span aria-hidden className="sm:hidden">
+                  ·
+                </span>
+                <span className="flex-none sm:hidden">{daysLeftLabel(race.date)}</span>
               </div>
             </div>
 
-            <div className="hidden items-center gap-2.5 sm:flex">
+            <span
+              className="hidden w-[92px] flex-none text-right text-[13px] font-semibold tabular-nums sm:block"
+              style={{ color: "var(--text-2)" }}
+            >
+              {daysLeftLabel(race.date)}
+            </span>
+
+            <div className="hidden w-[150px] flex-none items-center justify-end gap-2.5 sm:flex">
               <div className="flex -space-x-2" aria-hidden>
                 {runners.slice(0, SHOWN_AVATARS).map((a) => (
                   <AthleteAvatar
