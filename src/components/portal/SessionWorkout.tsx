@@ -17,6 +17,7 @@ const KIND: Record<WorkoutStep["kind"], { label?: string; color: string }> = {
   warmup: { label: "Calentamiento", color: "var(--bike)" },
   work: { color: "var(--coral)" },
   recovery: { label: "Recuperación", color: "var(--text-3)" },
+  rest: { label: "Descanso", color: "var(--text-3)" },
   cooldown: { label: "Enfriamiento", color: "var(--swim)" },
 };
 
@@ -51,9 +52,10 @@ export function totals(session: WorkoutSession): string[] {
   ].filter((t): t is string => t !== null);
 }
 
-/** A rest the coach wrote as a feel ("Descanso", "Pausa") is standing still. */
+/** A rest step, or a recovery the coach wrote as "Descanso" or "Pausa", is standing still. */
 const isStandingRest = (step: WorkoutStep) =>
-  step.kind === "recovery" && step.target.kind === "feel" && /^(descanso|descansar|pausa|parado)$/i.test(step.target.label.trim());
+  step.kind === "rest" ||
+  (step.kind === "recovery" && step.target.kind === "feel" && /^(descanso|descansar|pausa|parado)$/i.test(step.target.label.trim()));
 
 /**
  * `compact` sits inside another card (a day of the week): no glass of its
@@ -176,7 +178,7 @@ function RepeatBlock({ session, repeat, paces }: { session: WorkoutSession; repe
 function StepCard({ session, step, paces }: { session: WorkoutSession; step: WorkoutStep; paces: AthletePaces }) {
   const kind = KIND[step.kind];
   const pace = step.target.kind === "relative" ? paces[stepKey(session.id, step.id)] : undefined;
-  const soft = step.kind === "recovery";
+  const soft = step.kind === "recovery" || step.kind === "rest";
 
   return (
     <div

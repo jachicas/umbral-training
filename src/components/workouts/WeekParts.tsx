@@ -8,7 +8,7 @@ import { stepKey } from "@/lib/domain/workouts";
 import { DISCIPLINE_META, DISCIPLINE_ORDER } from "@/lib/domain/discipline";
 import type { RaceReference } from "@/lib/domain/types";
 import type { ActionState } from "@/app/workouts/actions";
-import { describeSession, formatPace, formatStepDuration, sessionSummary, stepTail, targetLabel } from "./format";
+import { describeSession, formatPace, formatStepDuration, isBreak, sessionSummary, stepTail, targetLabel } from "./format";
 import { formatDateEs } from "@/lib/domain/time";
 
 /* Pieces shared by the group-week and athlete-week editors. */
@@ -100,9 +100,9 @@ export function SetsStepper({
   );
 }
 
-/** Time steps in whole minutes can be lengthened or shortened per athlete (recoveries stay as written). */
+/** Time steps in whole minutes can be lengthened or shortened per athlete (recoveries and rests stay as written). */
 function isMinuteEditable(step: WorkoutStep): boolean {
-  return step.kind !== "recovery" && step.duration.kind === "time" && step.duration.seconds % 60 === 0;
+  return !isBreak(step) && step.duration.kind === "time" && step.duration.seconds % 60 === 0;
 }
 
 /** Minutes stepper: 1-minute steps up to 20', 5-minute steps above. */
@@ -222,8 +222,8 @@ export function SessionLines({
     <div className="flex flex-col items-start gap-1">
       {session.nodes.map((node, i) => {
         if (node.type === "repeat") {
-          const work = node.steps.filter((s) => s.kind !== "recovery");
-          const recovery = node.steps.filter((s) => s.kind === "recovery");
+          const work = node.steps.filter((s) => !isBreak(s));
+          const breaks = node.steps.filter(isBreak);
           return (
             <div key={node.id} className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               {onSetTimes ? (
@@ -235,9 +235,9 @@ export function SessionLines({
               {work.map((s) => (
                 <StepTarget key={s.id} session={session} step={s} paces={paces} onSetMinutes={onSetMinutes} />
               ))}
-              {recovery.map((s) => (
+              {breaks.map((s) => (
                 <span key={s.id} className="text-[11.5px]" style={{ color: "var(--text-3)" }}>
-                  · rec. {formatStepDuration(s.duration)}
+                  · {s.kind === "rest" ? "desc." : "rec."} {formatStepDuration(s.duration)}
                 </span>
               ))}
             </div>

@@ -15,6 +15,7 @@ const KIND_LABEL: Record<WorkoutStep["kind"], string> = {
   warmup: "Calentamiento",
   work: "",
   recovery: "Recuperación",
+  rest: "Descanso",
   cooldown: "Enfriamiento",
 };
 

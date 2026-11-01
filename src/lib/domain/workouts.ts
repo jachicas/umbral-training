@@ -14,7 +14,7 @@ import type { Discipline, RaceReference } from "./types";
  * nothing in this app turns "85% of the 1k" into a pace.
  */
 
-export type WorkoutStepKind = "warmup" | "work" | "recovery" | "cooldown";
+export type WorkoutStepKind = "warmup" | "work" | "recovery" | "rest" | "cooldown";
 
 export type StepDuration =
   | { kind: "distance"; meters: number }

@@ -6,6 +6,7 @@ const DURATION_LABEL: Record<WorkoutStepKind, string> = {
   warmup: "calentamiento",
   work: "duración",
   recovery: "recuperación",
+  rest: "descanso",
   cooldown: "enfriamiento",
 };
 
