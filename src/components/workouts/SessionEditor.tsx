@@ -41,6 +41,7 @@ const STEP_KIND_LABEL: Record<WorkoutStepKind, string> = {
   warmup: "Calentamiento",
   work: "Trabajo",
   recovery: "Recuperación",
+  rest: "Descanso",
   cooldown: "Enfriamiento",
 };
 const STEP_KINDS = Object.keys(STEP_KIND_LABEL) as WorkoutStepKind[];

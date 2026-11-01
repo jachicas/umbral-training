@@ -68,6 +68,7 @@ const KIND_WORD: Record<WorkoutStep["kind"], string> = {
   warmup: "calentamiento",
   work: "",
   recovery: "recuperación",
+  rest: "descanso",
   cooldown: "enfriamiento",
 };
 
@@ -85,6 +86,9 @@ function stepPhrase(session: WorkoutSession, step: WorkoutStep, paces?: AthleteP
   return `${formatStepDuration(step.duration)} ${stepTail(session, step, paces)}`;
 }
 
+/** Recoveries and rests: the pause between the work of a repeat. */
+export const isBreak = (step: WorkoutStep) => step.kind === "recovery" || step.kind === "rest";
+
 /**
  * One line per block, e.g. "10 × 400 m a 4:30/km · rec. 1' trote".
  * Without athlete paces it reads as the coach wrote it ("al 85% del 1k").
@@ -93,11 +97,15 @@ export function describeSession(session: WorkoutSession, view: AthleteView = {})
   return session.nodes.map((node) => {
     if (node.type === "note") return node.text;
     if (node.type === "step") return stepPhrase(session, node, view.paces);
-    const work = node.steps.filter((s) => s.kind !== "recovery").map((s) => stepPhrase(session, s, view.paces));
-    const recovery = node.steps
-      .filter((s) => s.kind === "recovery")
-      .map((s) => `rec. ${formatStepDuration(s.duration)} ${targetPhrase(s.target)}`);
-    return [`${node.times} × ${work.join(" + ")}`, ...recovery].join(" · ");
+    const work = node.steps.filter((s) => !isBreak(s)).map((s) => stepPhrase(session, s, view.paces));
+    const breaks = node.steps
+      .filter(isBreak)
+      .map((s) =>
+        s.kind === "rest"
+          ? `desc. ${formatStepDuration(s.duration)}`
+          : `rec. ${formatStepDuration(s.duration)} ${targetPhrase(s.target)}`
+      );
+    return [`${node.times} × ${work.join(" + ")}`, ...breaks].join(" · ");
   });
 }
 
