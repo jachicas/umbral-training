@@ -264,6 +264,8 @@ export interface WorkoutRepository {
   setAthleteStepSeconds(athleteId: string, weekStart: string, sessionId: string, stepId: string, seconds: number): Promise<AthleteWeek>;
   /** Sends the week to the athletes and locks it (each one with an email gets their PDF); returns the date it was sent. */
   markWeekSent(weekStart: string): Promise<string>;
+  /** Sends one group's week ahead of the rest and locks it, with its athletes' own weeks; returns the date. */
+  markGroupSent(groupId: string, weekStart: string): Promise<string>;
   /** The athlete's week as they receive it, as a PDF. */
   getWeekPdf(athleteId: string, weekStart: string): Promise<DownloadFile>;
   /** Every athlete's PDF of the week, in a zip. */

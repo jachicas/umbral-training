@@ -41,6 +41,7 @@ export default async function SendWeekPage({
         workoutCount: planSessions(plan).length,
         missingReferences: missingReferences(plan, paces[athlete.id] ?? {}),
         text: weekMessage(athlete.fullName, dates, plan, { paces: paces[athlete.id] }),
+        sentOn: plan.sentOn ?? null,
       };
     })
   );

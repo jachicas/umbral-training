@@ -98,6 +98,11 @@ export const apiWorkoutRepository: WorkoutRepository = {
     return sentOn;
   },
 
+  async markGroupSent(groupId, weekStart) {
+    const { sentOn } = await apiFetch<{ sentOn: string }>("POST", path("weeks", weekStart, "groups", groupId, "send"));
+    return sentOn;
+  },
+
   getWeekPdf: (athleteId, weekStart) => apiFile(athleteWeekPath(athleteId, weekStart, "pdf")),
   getWeekPdfZip: (weekStart) => apiFile(path("weeks", weekStart, "pdfs")),
 

@@ -7,7 +7,7 @@ import { ArrowRight, Send, X } from "lucide-react";
 import type { WeekPlan, WorkoutSession } from "@/lib/domain/workouts";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
 import type { RaceReference } from "@/lib/domain/types";
-import { addSessionAction, removeSessionAction } from "@/app/workouts/actions";
+import { addSessionAction, markGroupSentAction, removeSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
 import { AddSessionButton, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
@@ -22,6 +22,8 @@ export interface GroupWeekAthlete {
   modified: boolean;
   /** Distances their week's paces need that they have no time over. */
   missingReferences: RaceReference[];
+  /** Where the week's PDF goes when it's sent. */
+  hasEmail: boolean;
 }
 
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
@@ -78,6 +80,70 @@ function SessionCard({ planId, session, locked }: { planId: string; session: Wor
   );
 }
 
+/** Sends just this group's week, ahead of the rest of the week. */
+function SendGroupButton({
+  groupId,
+  weekStart,
+  title,
+  athletes,
+}: {
+  groupId: string;
+  weekStart: string;
+  title: string;
+  athletes: GroupWeekAthlete[];
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [sending, startSending] = useTransition();
+  const [error, setError] = useState<string>();
+
+  const withEmail = athletes.filter((a) => a.hasEmail).length;
+  const withoutRecords = athletes.filter((a) => a.missingReferences.length > 0).length;
+
+  function send() {
+    startSending(async () => {
+      const result = await markGroupSentAction(groupId, weekStart);
+      setError(result?.error);
+      setConfirming(false);
+    });
+  }
+
+  return (
+    <span className="inline-flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="flex h-[42px] items-center gap-[7px] rounded-[10px] px-[18px] text-[13.5px] font-bold text-[var(--on-coral)] shadow-[var(--shadow)] transition-[filter] hover:brightness-110"
+        style={{ background: "var(--coral)" }}
+      >
+        <Send size={15} /> Enviar grupo
+      </button>
+      {error && (
+        <span className="text-[11.5px] font-semibold" style={{ color: "var(--danger)" }}>
+          {error}
+        </span>
+      )}
+      <ConfirmDialog
+        open={confirming}
+        title={`Enviar ${title}`}
+        description={
+          (withEmail > 0
+            ? `PDF por email a ${withEmail} de ${athletes.length} ${athletes.length === 1 ? "atleta" : "atletas"}.`
+            : "Ningún atleta del grupo tiene email.") +
+          (withoutRecords > 0
+            ? ` ${withoutRecords} ${withoutRecords === 1 ? "atleta" : "atletas"} sin marca de referencia.`
+            : "") +
+          " Después ya no se puede cambiar."
+        }
+        confirmLabel={sending ? "Enviando…" : "Enviar"}
+        tone="primary"
+        pending={sending}
+        onConfirm={send}
+        onCancel={() => setConfirming(false)}
+      />
+    </span>
+  );
+}
+
 /** A group's week: build it day by day; each athlete's own week is one click away. */
 export function WeekPlanEditor({
   plan,
@@ -94,9 +160,10 @@ export function WeekPlanEditor({
   weekDates: string[];
   library: WorkoutSession[];
   athletes: GroupWeekAthlete[];
-  /** Set once the week was sent: then it's read-only. */
+  /** Set once the week, or this group on its own, was sent: then it's read-only. */
   sentOn: string | null;
 }) {
+  const groupId = plan.owner.kind === "group" ? plan.owner.groupId : null;
   return (
     <div className="flex flex-col gap-5">
       <BackLink href={`/workouts?week=${plan.weekStart}`}>Semana</BackLink>
@@ -108,13 +175,18 @@ export function WeekPlanEditor({
             {subtitle}
           </div>
         </div>
-        <Link
-          href={`/workouts/send?week=${plan.weekStart}`}
-          className="flex h-[42px] items-center gap-[7px] rounded-[10px] border px-[18px] text-[13.5px] font-bold transition-[filter] hover:brightness-110"
-          style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
-        >
-          <Send size={15} /> Enviar semana
-        </Link>
+        <div className="flex flex-wrap items-start gap-2.5">
+          <Link
+            href={`/workouts/send?week=${plan.weekStart}`}
+            className="flex h-[42px] items-center gap-[7px] rounded-[10px] border px-[18px] text-[13.5px] font-bold transition-[filter] hover:brightness-110"
+            style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--text)" }}
+          >
+            <Send size={15} /> Enviar semana
+          </Link>
+          {groupId && !sentOn && (
+            <SendGroupButton groupId={groupId} weekStart={plan.weekStart} title={title} athletes={athletes} />
+          )}
+        </div>
       </div>
 
       {sentOn && <SentBanner sentOn={sentOn} />}

@@ -40,6 +40,10 @@ export async function markWeekSent(weekStart: string): Promise<string> {
   return getRepo().markWeekSent(weekStart);
 }
 
+export async function markGroupSent(groupId: string, weekStart: string): Promise<string> {
+  return getRepo().markGroupSent(groupId, weekStart);
+}
+
 export async function getWeekPdf(athleteId: string, weekStart: string): Promise<DownloadFile> {
   return getRepo().getWeekPdf(athleteId, weekStart);
 }

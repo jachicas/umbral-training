@@ -102,7 +102,9 @@ export default async function WorkoutsWeekPage({
                 <>
                   {countLabel(group.athleteIds.length, "atleta", "atletas")}
                   {" · "}
-                  <b style={{ color: plan ? "var(--ok)" : "var(--pend)" }}>{plan ? "Semana armada" : "Sin armar"}</b>
+                  <b style={{ color: plan ? "var(--ok)" : "var(--pend)" }}>
+                    {plan?.sentOn ? `Enviada el ${formatDateEs(plan.sentOn)}` : plan ? "Semana armada" : "Sin armar"}
+                  </b>
                 </>
               }
               athletes={athletesOf(group.athleteIds)}

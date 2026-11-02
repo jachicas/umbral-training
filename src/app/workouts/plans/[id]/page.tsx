@@ -56,6 +56,7 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
         objectiveLabel: objectiveLabel(detail),
         modified: changes.length > 0,
         missingReferences: missingReferences(custom ?? plan, paces[athleteId] ?? {}),
+        hasEmail: Boolean(detail.athlete.email),
       };
     })
   );
@@ -68,7 +69,7 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
       weekDates={dates}
       library={library}
       athletes={athletes}
-      sentOn={sentOn}
+      sentOn={sentOn ?? plan.sentOn ?? null}
     />
   );
 }

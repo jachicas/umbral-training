@@ -94,6 +94,10 @@ export async function markWeekSentAction(weekStart: string) {
   return mutate(() => workoutsService.markWeekSent(weekStart));
 }
 
+export async function markGroupSentAction(groupId: string, weekStart: string) {
+  return mutate(() => workoutsService.markGroupSent(groupId, weekStart));
+}
+
 export async function moveAthleteAction(athleteId: string, groupId: string | null) {
   return mutate(() => workoutsService.moveAthleteToGroup(athleteId, groupId));
 }
