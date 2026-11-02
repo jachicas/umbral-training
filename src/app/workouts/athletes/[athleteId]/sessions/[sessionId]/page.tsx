@@ -24,9 +24,10 @@ export default async function AthleteSessionPage({
   const detail = await getAthleteDetail(athleteId, await getCurrentCoachId());
   if (!detail) notFound();
 
-  const [{ plan }, sentOn] = await Promise.all([getAthleteWeek(athleteId, monday), getWeekSentOn(monday)]);
+  const [{ plan }, weekSentOn] = await Promise.all([getAthleteWeek(athleteId, monday), getWeekSentOn(monday)]);
   const session = plan?.days.flat().find((s) => s.id === sessionId);
   if (!plan || !session) notFound();
+  const sentOn = weekSentOn ?? plan.sentOn;
 
   const name = detail.athlete.fullName;
   const firstName = name.trim().split(/\s+/)[0];

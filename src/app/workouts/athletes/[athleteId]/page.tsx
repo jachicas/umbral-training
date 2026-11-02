@@ -52,7 +52,7 @@ export default async function AthleteWeekPage({
       groupName={group?.name ?? null}
       groupPlanHref={groupPlan ? `/workouts/plans/${groupPlan.id}` : null}
       plan={plan}
-      sentOn={sentOn}
+      sentOn={sentOn ?? plan?.sentOn ?? null}
       changes={changes}
       paces={paces}
       weekDates={dates}

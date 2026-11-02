@@ -8,6 +8,7 @@ import { BackLink } from "./WorkoutsHeader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MissingRecordTag, SentBanner } from "./WeekParts";
 import type { RaceReference } from "@/lib/domain/types";
+import { formatDateEs } from "@/lib/domain/time";
 
 export interface AthleteMessage {
   athleteId: string;
@@ -20,6 +21,8 @@ export interface AthleteMessage {
   /** Distances their week's paces need that they have no time over. */
   missingReferences: RaceReference[];
   text: string;
+  /** Set when their group already went out on its own. */
+  sentOn: string | null;
 }
 
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
@@ -50,8 +53,10 @@ export function SendWeek({
   const [sending, startSending] = useTransition();
   const [sendError, setSendError] = useState<string>();
 
-  const withEmail = messages.filter((m) => m.email).length;
-  const withoutRecords = messages.filter((m) => m.missingReferences.length > 0).length;
+  // Athletes whose group already went out got their PDF then.
+  const pending = messages.filter((m) => !m.sentOn);
+  const withEmail = pending.filter((m) => m.email).length;
+  const withoutRecords = pending.filter((m) => m.missingReferences.length > 0).length;
 
   function send() {
     startSending(async () => {
@@ -125,8 +130,10 @@ export function SendWeek({
         title={`Enviar semana ${weekLabel}`}
         description={
           (withEmail > 0
-            ? `PDF por email a ${withEmail} de ${messages.length} ${messages.length === 1 ? "atleta" : "atletas"}.`
-            : "Ningún atleta tiene email.") +
+            ? `PDF por email a ${withEmail} de ${pending.length} ${pending.length === 1 ? "atleta" : "atletas"}.`
+            : pending.length > 0
+              ? "Ningún atleta tiene email."
+              : "Todos los grupos ya se enviaron.") +
           (withoutRecords > 0
             ? ` ${withoutRecords} ${withoutRecords === 1 ? "atleta" : "atletas"} sin marca de referencia.`
             : "") +
@@ -174,6 +181,7 @@ export function SendWeek({
                       <div className="text-[11.5px]" style={{ color: "var(--text-3)" }}>
                         {m.workoutCount} {m.workoutCount === 1 ? "entreno" : "entrenos"}
                         {!m.email && " · sin email"}
+                        {m.sentOn && ` · enviado el ${formatDateEs(m.sentOn)}`}
                       </div>
                     </div>
                     {isCopied && (

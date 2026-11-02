@@ -97,6 +97,8 @@ export interface WeekPlan {
   owner: WeekPlanOwner;
   /** Seven entries, Monday first; each holds that day's sessions in order. */
   days: WorkoutSession[][];
+  /** Set when it went out with its group, ahead of the whole week; locked from then on. */
+  sentOn?: string | null;
 }
 
 /** A pace resolved by the backend; `estimated` when the reference time was derived from another distance. */
