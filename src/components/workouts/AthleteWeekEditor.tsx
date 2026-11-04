@@ -7,7 +7,7 @@ import { DISCIPLINE_META } from "@/lib/domain/discipline";
 import { addAthleteSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
+import { AddSessionButton, BirthdayTag, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
 import { WeekPreviewButton } from "./WeekPreviewDialog";
 import { DISCIPLINE_ICON } from "./discipline-icons";
 import { ChangesCard } from "./ChangesCard";
@@ -36,7 +36,8 @@ export function AthleteWeekEditor({
   library,
   previousCheckin,
 }: {
-  athlete: { id: string; fullName: string; avatarColor: string };
+  /** `birthdayOn` when their birthday falls this week. */
+  athlete: { id: string; fullName: string; avatarColor: string; birthdayOn?: string };
   groupName: string | null;
   groupPlanHref: string | null;
   plan: WeekPlan | null;
@@ -66,6 +67,7 @@ export function AthleteWeekEditor({
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="m-0 text-[24px] font-extrabold tracking-[-.5px]">Semana de {athlete.fullName}</h1>
             {changes.length > 0 && <ModifiedTag />}
+            {athlete.birthdayOn && <BirthdayTag date={athlete.birthdayOn} />}
             {missing.map((r) => (
               <Link key={r} href={`/records/${r}`}>
                 <MissingRecordTag reference={r} />

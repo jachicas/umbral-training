@@ -15,6 +15,7 @@ export async function updateProfileAction(_prev: ProfileState, formData: FormDat
       phone: String(formData.get("phone") ?? ""),
       weeklyAvailabilityDays: String(formData.get("weeklyAvailabilityDays") ?? ""),
       weeklyAvailabilityHours: String(formData.get("weeklyAvailabilityHours") ?? ""),
+      birthDate: String(formData.get("birthDate") ?? ""),
     });
   } catch (error) {
     if (error instanceof ValidationErrors) return { errors: error.errors };

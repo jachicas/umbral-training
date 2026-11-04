@@ -24,6 +24,8 @@ export interface PortalAthlete {
   fullName: string;
   email?: string;
   phone?: string;
+  /** "YYYY-MM-DD"; theirs to fill only while missing. */
+  birthDate?: string;
   status: AthleteStatus;
   disciplines: Discipline[];
   level?: ExperienceLevel;
@@ -51,6 +53,7 @@ export interface PortalHome {
   referencePaces: Partial<Record<RaceReference, ResolvedPace>>;
   /** Last week's check-in, while it's open and they haven't answered. */
   pendingCheckin?: { weekStart: string; closesOn: string };
+  birthdayToday: boolean;
 }
 
 /** A week once the coach sent it; before that (or with nothing to train) there's no plan. */
@@ -113,9 +116,10 @@ export interface PortalPayments {
   reports: PaymentReport[];
 }
 
-/** What athletes may change about themselves. */
+/** What athletes may change about themselves; the birth date only while they have none. */
 export interface PortalProfileInput {
   phone?: string;
   weeklyAvailabilityDays?: number;
   weeklyAvailabilityHours?: number;
+  birthDate?: string;
 }

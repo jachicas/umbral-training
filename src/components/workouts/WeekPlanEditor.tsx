@@ -10,7 +10,7 @@ import type { RaceReference } from "@/lib/domain/types";
 import { addSessionAction, markGroupSentAction, removeSessionAction } from "@/app/workouts/actions";
 import { AthleteAvatar } from "@/components/athletes/AthleteAvatar";
 import { BackLink } from "./WorkoutsHeader";
-import { AddSessionButton, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
+import { AddSessionButton, BirthdayTag, MissingRecordTag, ModifiedTag, SentBanner } from "./WeekParts";
 import { dayLabel, sessionSummary } from "./format";
 
 export interface GroupWeekAthlete {
@@ -24,6 +24,8 @@ export interface GroupWeekAthlete {
   missingReferences: RaceReference[];
   /** Where the week's PDF goes when it's sent. */
   hasEmail: boolean;
+  /** Their birthday, when it falls this week. */
+  birthdayOn?: string;
 }
 
 const cardClass = "rounded-[18px] border p-5 shadow-[var(--shadow)]";
@@ -243,6 +245,7 @@ export function WeekPlanEditor({
                   <div className="flex items-center gap-2">
                     <span className="truncate text-[13.5px] font-semibold">{a.fullName}</span>
                     {a.modified && <ModifiedTag />}
+                    {a.birthdayOn && <BirthdayTag date={a.birthdayOn} />}
                     {a.missingReferences.map((r) => (
                       <MissingRecordTag key={r} reference={r} />
                     ))}

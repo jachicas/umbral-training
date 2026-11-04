@@ -15,7 +15,7 @@ import { customWeekOf, missingReferences } from "@/lib/domain/workouts";
 import { weekDatesISO } from "@/lib/domain/time";
 import { WeekPlanEditor, type GroupWeekAthlete } from "@/components/workouts/WeekPlanEditor";
 import { countLabel, weekRangeLabel } from "@/components/workouts/format";
-import { objectiveLabel } from "../../week";
+import { birthdayIn, objectiveLabel } from "../../week";
 
 export const metadata: Metadata = { title: "Semana del grupo · Umbral Training" };
 
@@ -57,6 +57,7 @@ export default async function GroupWeekPage({ params }: { params: Promise<{ id: 
         modified: changes.length > 0,
         missingReferences: missingReferences(custom ?? plan, paces[athleteId] ?? {}),
         hasEmail: Boolean(detail.athlete.email),
+        birthdayOn: birthdayIn(dates, detail.athlete.nextBirthday),
       };
     })
   );

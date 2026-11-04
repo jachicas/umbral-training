@@ -42,8 +42,23 @@
   }
 
   body {
-    font-family: var(--font-inter), Inter, system-ui, sans-serif;
+    font-family: var(--font-solitus), system-ui, sans-serif;
   }
+}
+
+/* ---------- page titles ----------
+   Gloock has one weight, so the titles' bold classes must not fake a
+   heavier one. Unlayered, so it beats those utilities. */
+h1 {
+  font-family: var(--font-heading);
+  font-synthesis: none;
+}
+
+/* ---------- numbers in columns ----------
+   Solitus' digits differ in width, so paces, times and amounts that line up
+   (`tabular-nums`) take Inter's fixed-width ones. */
+.tabular-nums {
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 
 /* ---------- liquid glass ----------
@@ -70,8 +85,8 @@
 }
 
 @theme inline {
-  --font-heading: var(--font-inter);
-  --font-sans: var(--font-inter);
+  --font-heading: var(--font-gloock), Georgia, serif;
+  --font-sans: var(--font-solitus), system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

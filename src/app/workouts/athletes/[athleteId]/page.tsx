@@ -14,7 +14,7 @@ import {
 } from "@/lib/services/workouts";
 import { AthleteWeekEditor } from "@/components/workouts/AthleteWeekEditor";
 import { weekRangeLabel } from "@/components/workouts/format";
-import { resolveWeek } from "../../week";
+import { birthdayIn, resolveWeek } from "../../week";
 
 export const metadata: Metadata = { title: "Semana del atleta · Umbral Training" };
 
@@ -48,7 +48,12 @@ export default async function AthleteWeekPage({
 
   return (
     <AthleteWeekEditor
-      athlete={{ id: athleteId, fullName: detail.athlete.fullName, avatarColor: detail.athlete.avatarColor }}
+      athlete={{
+        id: athleteId,
+        fullName: detail.athlete.fullName,
+        avatarColor: detail.athlete.avatarColor,
+        birthdayOn: birthdayIn(dates, detail.athlete.nextBirthday),
+      }}
       groupName={group?.name ?? null}
       groupPlanHref={groupPlan ? `/workouts/plans/${groupPlan.id}` : null}
       plan={plan}

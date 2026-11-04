@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 import { getPortalHome } from "@/lib/services/portal";
 import { DISCIPLINE_META } from "@/lib/domain/discipline";
+import { formatDateEs } from "@/lib/domain/time";
 import { PortalCard, PortalLabel } from "@/components/portal/PortalShell";
 import { ProfileForm } from "@/components/portal/ProfileForm";
 
@@ -20,6 +21,7 @@ export default async function PortalProfilePage() {
         <dl className="mt-3 mb-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2.5 text-[14px]">
           <Row label="Nombre">{athlete.fullName}</Row>
           <Row label="Email">{athlete.email ?? "—"}</Row>
+          {athlete.birthDate && <Row label="Nacimiento">{formatDateEs(athlete.birthDate)}</Row>}
           {athlete.groupName && <Row label="Grupo">{athlete.groupName}</Row>}
           {athlete.disciplines.length > 0 && (
             <Row label="Deportes">{athlete.disciplines.map((d) => DISCIPLINE_META[d].label).join(", ")}</Row>

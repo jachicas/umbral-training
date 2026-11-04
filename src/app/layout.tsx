@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Gloock, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/shell/AppShell";
@@ -11,10 +12,25 @@ import { getOwingCounts } from "@/lib/services/payments";
 import type { NavBadges } from "@/components/shell/nav";
 import { THEME_INIT_SCRIPT } from "@/components/shell/theme";
 
+// Text: Solitus, one regular cut (OFL, src/app/fonts/Solitus-OFL.txt).
+const solitus = localFont({
+  src: "./fonts/Solitus.woff2",
+  variable: "--font-solitus",
+  weight: "400",
+});
+
+// Numbers in columns (`tabular-nums`): Solitus has no fixed-width figures.
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   weight: ["400", "500", "600", "700", "800"],
+});
+
+// Page titles: Gloock, one regular cut.
+const gloock = Gloock({
+  subsets: ["latin"],
+  variable: "--font-gloock",
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +50,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
   return (
     // The theme script may add `dark` to <html> before hydration.
-    <html lang="es" className={cn("h-full", "antialiased", inter.variable, "font-sans")} suppressHydrationWarning>
+    <html lang="es" className={cn("h-full", "antialiased", solitus.variable, inter.variable, gloock.variable, "font-sans")} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <BrandStyle palette={club?.palette} />

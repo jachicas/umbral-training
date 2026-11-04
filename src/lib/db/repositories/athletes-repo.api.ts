@@ -93,6 +93,7 @@ interface ApiAthlete {
   email: string | null;
   phone: string | null;
   birthDate: string | null;
+  nextBirthday: string | null;
   sex: AthleteSex | null;
   status: AthleteStatus;
   accessStatus: AccessStatus;
@@ -136,6 +137,7 @@ function toAthlete(api: ApiAthlete): Athlete {
     email: orUndefined(api.email),
     phone: orUndefined(api.phone),
     birthDate: orUndefined(api.birthDate),
+    nextBirthday: orUndefined(api.nextBirthday),
     sex: orUndefined(api.sex),
     status: api.status,
     accessStatus: api.accessStatus,

@@ -62,6 +62,7 @@ export interface PortalProfileFormInput {
   phone?: string;
   weeklyAvailabilityDays?: string;
   weeklyAvailabilityHours?: string;
+  birthDate?: string;
 }
 
 /** "6,5" or "6.5" → 6.5; blank → undefined (clears it). */
@@ -99,5 +100,7 @@ export async function updatePortalProfile(input: PortalProfileFormInput): Promis
     phone: input.phone?.trim() || undefined,
     weeklyAvailabilityDays: parseNumber(input.weeklyAvailabilityDays, "weeklyDays"),
     weeklyAvailabilityHours: parseNumber(input.weeklyAvailabilityHours, "weeklyHours"),
+    // Left out when blank, so a date already set stays.
+    birthDate: input.birthDate?.trim() || undefined,
   });
 }
