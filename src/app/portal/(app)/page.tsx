@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, ChevronRight, Download, Flag, MessageCircleHeart, Moon } from "lucide-react";
+import { Cake, CalendarClock, ChevronRight, Download, Flag, MessageCircleHeart, Moon } from "lucide-react";
 import { getPortalHome, getPortalWeek } from "@/lib/services/portal";
 import { addDaysISO, daysUntil, weekDatesISO } from "@/lib/domain/time";
 import { weekRangeLabel } from "@/components/workouts/format";
@@ -70,6 +70,21 @@ export default async function PortalTodayPage() {
           </Link>
         )}
       </div>
+
+      {home.birthdayToday && (
+        <section
+          className="flex items-center gap-3 rounded-[22px] p-4 shadow-[var(--glass-shadow)] md:p-5"
+          style={{ background: "var(--coral)", color: "var(--on-coral)" }}
+        >
+          <span className="flex size-10 flex-none items-center justify-center rounded-full bg-white/20">
+            <Cake size={20} />
+          </span>
+          <div className="min-w-0">
+            <div className="text-[17px] font-extrabold tracking-[-.2px]">¡Feliz cumpleaños, {firstName}!</div>
+            <div className="text-[13px] opacity-85">Hoy el equipo corre por ti.</div>
+          </div>
+        </section>
+      )}
 
       {home.pendingCheckin && (
         <Link

@@ -21,6 +21,7 @@ interface ApiPortalAthlete {
   fullName: string;
   email: string | null;
   phone: string | null;
+  birthDate: string | null;
   status: AthleteStatus;
   disciplines: Discipline[];
   level: ExperienceLevel | null;
@@ -40,6 +41,7 @@ interface ApiPortalHome {
   records: ApiRecord[];
   referencePaces: Partial<Record<RaceReference, ResolvedPace>>;
   pendingCheckin: { weekStart: string; closesOn: string } | null;
+  birthdayToday: boolean;
 }
 
 interface ApiPortalCheckin {
@@ -90,6 +92,7 @@ const toAthlete = (api: ApiPortalAthlete): PortalAthlete => ({
   fullName: api.fullName,
   email: orUndefined(api.email),
   phone: orUndefined(api.phone),
+  birthDate: orUndefined(api.birthDate),
   status: api.status,
   disciplines: api.disciplines,
   level: orUndefined(api.level),
@@ -109,6 +112,7 @@ const toHome = (api: ApiPortalHome): PortalHome => ({
   records: api.records.map(toRecord),
   referencePaces: api.referencePaces,
   pendingCheckin: orUndefined(api.pendingCheckin),
+  birthdayToday: api.birthdayToday,
 });
 
 const path = (...parts: string[]) => "/v1/portal" + parts.map((p) => "/" + encodeURIComponent(p)).join("");

@@ -8,6 +8,7 @@ import { DISCIPLINE_ICON } from "@/components/workouts/discipline-icons";
 import { CheckinsCard } from "@/components/checkins/CheckinsCard";
 import type { GuestChange } from "@/lib/domain/guest-changes";
 import { GuestChangesCard } from "./GuestChangesCard";
+import { BirthdaysCard } from "./BirthdaysCard";
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 const MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
@@ -298,6 +299,8 @@ export function DashboardView({ data, guestChanges }: { data: Dashboard; guestCh
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
+          <BirthdaysCard birthdays={data.birthdays} today={data.today} className={cardClass} style={cardStyle} />
+
           <div className={cardClass} style={cardStyle}>
             <CardTitle title="Por cobrar" href="/payments" linkLabel="Ver pagos" />
             {data.payments.owing.length === 0 ? (

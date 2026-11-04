@@ -30,6 +30,8 @@ export interface Athlete {
   email?: string;
   phone?: string;
   birthDate?: string;
+  /** Their next birthday, today or later ("YYYY-MM-DD"). */
+  nextBirthday?: string;
   sex?: AthleteSex;
   status: AthleteStatus;
   accessStatus: AccessStatus;

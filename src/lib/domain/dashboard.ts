@@ -49,6 +49,16 @@ export interface DashboardSession {
   discipline: Discipline;
 }
 
+export interface DashboardBirthday {
+  athleteId: string;
+  fullName: string;
+  date: string;
+  /** The age they turn, for the coach only. */
+  age: number;
+  /** Their phone as wa.me wants it, when they have one. */
+  whatsapp: string | null;
+}
+
 export interface Dashboard {
   coachName: string;
   today: string;
@@ -68,4 +78,6 @@ export interface Dashboard {
   week: DashboardDay[];
   /** Today's and tomorrow's, by day then athlete. */
   upcomingSessions: DashboardSession[];
+  /** Today's and the next 7 days', soonest first. */
+  birthdays: DashboardBirthday[];
 }

@@ -11,7 +11,7 @@ import type { PortalAthlete } from "@/lib/domain/portal";
 
 const initialState: ProfileState = {};
 
-/** The bits the athlete keeps up to date themselves: phone and how much they can train. */
+/** The bits the athlete keeps up to date themselves: phone, how much they can train, and their birth date while it's missing. */
 export function ProfileForm({ athlete }: { athlete: PortalAthlete }) {
   const [state, formAction, pending] = useActionState(updateProfileAction, initialState);
   const errors = state.errors ?? {};
@@ -23,6 +23,13 @@ export function ProfileForm({ athlete }: { athlete: PortalAthlete }) {
         <Input id="phone" name="phone" type="tel" autoComplete="tel" defaultValue={athlete.phone ?? ""} placeholder="7777-1234" />
         <FieldError message={errors.phone} />
       </div>
+      {!athlete.birthDate && (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+          <Input id="birthDate" name="birthDate" type="date" autoComplete="bday" />
+          <FieldError message={errors.birthDate} />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="weeklyAvailabilityDays">Días por semana</Label>

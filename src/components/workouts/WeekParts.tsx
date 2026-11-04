@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Lock, Minus, Plus } from "lucide-react";
+import { Cake, Lock, Minus, Plus } from "lucide-react";
 import type { AthletePaces, WorkoutSession, WorkoutStep } from "@/lib/domain/workouts";
 import { stepKey } from "@/lib/domain/workouts";
 import { DISCIPLINE_META, DISCIPLINE_ORDER } from "@/lib/domain/discipline";
@@ -47,6 +47,20 @@ export function MissingRecordTag({ reference }: { reference: RaceReference }) {
       style={{ background: "rgba(217,119,6,.14)", color: "var(--pend)" }}
     >
       Sin {reference.toUpperCase()}
+    </span>
+  );
+}
+
+const WEEKDAYS_SHORT = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
+/** The athlete's birthday falls this week: "Cumple el jue". */
+export function BirthdayTag({ date }: { date: string }) {
+  return (
+    <span
+      className="flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[10.5px] font-bold tracking-[.02em] whitespace-nowrap uppercase"
+      style={{ background: "var(--coral-tint)", color: "var(--coral)" }}
+    >
+      <Cake size={11} /> Cumple el {WEEKDAYS_SHORT[new Date(date + "T00:00:00").getDay()]}
     </span>
   );
 }

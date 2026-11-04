@@ -14,3 +14,8 @@ export function objectiveLabel(detail: AthleteDetail): string {
   const goal = detail.activeGoal;
   return isRaceGoal(goal) ? goal.raceName ?? "Carrera" : "Mantenimiento";
 }
+
+/** The athlete's next birthday (from the API) when it falls on one of the week's dates. */
+export function birthdayIn(dates: string[], nextBirthday: string | undefined): string | undefined {
+  return nextBirthday && dates.includes(nextBirthday) ? nextBirthday : undefined;
+}
